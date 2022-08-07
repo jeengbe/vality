@@ -1,0 +1,10 @@
+{
+  "name": "vality",
+  "private": true,
+  "packageManager": "pnpm@7.9.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r --filter !docs test",
+    "lint": "pnpm -r --filter !docs lint"
+  }
+}

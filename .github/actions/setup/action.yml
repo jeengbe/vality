@@ -1,0 +1,20 @@
+name: Build vality
+description: Build vality
+
+inputs:
+  node-version:
+    description: The Node version to install
+    required: false
+    default: "18"
+
+runs:
+  using: composite
+  steps:
+   - uses: pnpm/action-setup@v2
+   - uses: actions/setup-node@v3
+     with:
+      node-version: ${{ inputs.node-version }}
+      registry-url: https://registry.npmjs.org/
+      cache: "pnpm"
+   - shell: bash
+     run: pnpm install
