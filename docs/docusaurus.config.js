@@ -10,7 +10,7 @@ const config = {
   tagline: "A TypeScript schema descriptor library with zero dependencies.",
   url: "https://ts-vality.io",
   baseUrl: "/",
-  onBrokenLinks: "throw",
+  onBrokenLinks: "warn",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
 
