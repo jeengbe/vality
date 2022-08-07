@@ -3,7 +3,9 @@
 
 A TypeScript schema descriptor library with zero dependencies.
 
-[![Version](https://img.shields.io/npm/v/vality)](https://www.npmjs.com/package/vality) [![License](https://img.shields.io/npm/l/vality)](https://github.com/jeengbe/vality)
+[![License](https://img.shields.io/npm/l/vality)](https://github.com/jeengbe/vality)
+[![Version](https://img.shields.io/npm/v/vality)](https://www.npmjs.com/package/vality)
+[![Build Status](https://img.shields.io/github/workflow/status/jeengbe/vality/publish)](https://github.com/jeengbe/vality)
 
 </div>
 

@@ -5,7 +5,7 @@ on:
 
 jobs:
   jest:
-    name: "Run jest (Node ${{ matrix.node-version}})"
+    name: jest (Node ${{ matrix.node-version}})
     runs-on: ubuntu-latest
 
     strategy:
@@ -22,7 +22,7 @@ jobs:
       run: pnpm test
 
   lint:
-    name: "Run eslint"
+    name: eslint
     runs-on: ubuntu-latest
 
     steps:
