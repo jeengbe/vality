@@ -1,8 +1,0 @@
-**/.*
-
-lib/
-node_modules/
-tests/
-
-jest.config.ts
-tsconfig.json
