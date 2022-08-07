@@ -15,7 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/build-docs
+      - uses: ./.github/actions/setup
+      - shell: bash
+        run: pnpm --filter docs build
       - uses: actions/upload-pages-artifact@v1
         with:
           path: docs/build/
@@ -24,7 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/build-vality
+      - uses: ./.github/actions/setup
+      - shell: bash
+        run: pnpm --filter src build
       - uses: actions/upload-artifact@v3
         with:
           name: publish-vality

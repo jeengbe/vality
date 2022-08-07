@@ -1,9 +1,0 @@
-name: Build docs
-description: Build docs
-
-runs:
-  using: composite
-  steps:
-   - uses: ./.github/actions/setup
-   - shell: bash
-     run: pnpm --filter docs build

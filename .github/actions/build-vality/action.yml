@@ -1,9 +1,0 @@
-name: Build vality
-description: Build vality
-
-runs:
-  using: composite
-  steps:
-   - uses: ./.github/actions/setup
-   - shell: bash
-     run: pnpm --filter src build
