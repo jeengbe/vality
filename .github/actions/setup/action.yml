@@ -1,5 +1,5 @@
-name: Build vality
-description: Build vality
+name: Build Vality
+description: Build Vality
 
 inputs:
   node-version:
