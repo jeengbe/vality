@@ -2,6 +2,8 @@ export { };
 
 declare global {
   namespace vality {
-    // type RelationType = number;
+    interface Config {
+      // RelationType: number;
+    }
   }
 }
