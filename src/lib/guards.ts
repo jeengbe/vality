@@ -62,4 +62,5 @@ vality.boolean = guard("boolean", val => typeof val === "boolean");
 
 vality.literal = lit => guard("literal", val => val === lit);
 
+// TODO: Accept user defined relation checks (we already support types so right now, those are lying)
 vality.relation = () => guard("relation", val => typeof val === "number" && val > 0 && val % 1 === 0);

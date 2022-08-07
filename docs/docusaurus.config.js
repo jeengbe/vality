@@ -6,7 +6,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "vality",
+  title: "Vality",
   tagline: "A TypeScript schema descriptor library with zero dependencies.",
   url: "https://ts-vality.io",
   baseUrl: "/",
@@ -33,10 +33,11 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       {
         docs: {
+          routeBasePath: "/",
           sidebarPath: require.resolve("./sidebars.js"),
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/jeengbe/vality/",
+          editUrl: "https://github.com/jeengbe/vality/tree/master/docs/",
         },
         blog: false,
         theme: {
@@ -56,18 +57,22 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      colorMode: {
+        defaultMode: "dark",
+        respectPrefersColorScheme: true,
+      },
       navbar: {
-        title: "vality",
+        title: "Vality",
         logo: {
-          alt: "vality logo",
+          alt: "Vality logo",
           src: "img/logo.svg",
         },
         items: [
           {
             type: "doc",
-            docId: "intro",
+            docId: "getting-started",
             position: "left",
-            label: "Tutorial",
+            label: "Schema",
           },
           {
             href: "https://github.com/jeengbe/vality",
@@ -83,8 +88,8 @@ const config = {
             title: "Docs",
             items: [
               {
-                label: "Tutorial",
-                to: "/docs/intro",
+                label: "Schema",
+                to: "/getting-started",
               },
             ],
           },
