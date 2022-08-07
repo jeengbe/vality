@@ -13,6 +13,12 @@ declare global {
         {
           minLength?: number;
           maxLength?: number;
+          /**
+           * If true, stops validating after the first error.
+           *
+           * @default false
+           */
+          bail?: boolean;
         }
       >;
       tuple: <E extends Eny[]>(...es: E) => Valit<E>;
@@ -23,6 +29,11 @@ declare global {
       ) => Valit<
         E,
         {
+          /**
+           * If true, stops validating after the first error.
+           *
+           * @default false
+           */
           bail?: boolean;
         }
       >;
@@ -35,12 +46,19 @@ vality.array = valit(
   e => (val, path, options) => {
     if (!Array.isArray(val)) return { valid: false, errors: [{ message: "vality.array.type", path, options, val }] };
     const fn = enyToGuardFn(e);
-    const errors = flat(val.map((_, i) => i).map(i => fn(val[i], [...path, i]).errors));
+    const errors: Error[] = [];
+    for (const k in e) {
+      // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
+      const res = enyToGuardFn(e[k])(val[k as keyof typeof val], [...path, k]);
+      errors.push(...res.errors);
+      if (!res.valid && options.bail) break;
+    }
     return { valid: errors.length === 0, errors };
   },
   {
     minLength: (val, o) => val.length >= o,
     maxLength: (val, o) => val.length <= o,
+    bail: val => true,
   }
 );
 
