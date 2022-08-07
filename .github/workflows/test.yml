@@ -37,4 +37,5 @@ jobs:
       - uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          name: Status Check
           conclusion: ${{ job.status }}
