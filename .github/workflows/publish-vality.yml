@@ -1,26 +1,14 @@
-name: publish
+name: publish-vality
 
 on:
-  push:
-    branches:
-      - master
-  workflow_dispatch:
+  release:
+    types: [published]
 
 concurrency:
-  group: publish
+  group: publish-vality
   cancel-in-progress: true
 
 jobs:
-  build-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
-      - run: pnpm --filter docs build
-      - uses: actions/upload-pages-artifact@v1
-        with:
-          path: docs/build/
-
   build-vality:
     runs-on: ubuntu-latest
     steps:
@@ -37,20 +25,6 @@ jobs:
             ./src/yarn.lock
             ./src/LICENSE.md
             ./src/README.md
-
-  deploy-docs:
-    name: Deploy to GitHub Pages
-    runs-on: ubuntu-latest
-    needs: build-docs
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/deploy-pages@v1
-        id: deployment
 
   publish-vality:
     name: Publish to NPM

@@ -17,7 +17,7 @@ declare global {
       >;
       tuple: <E extends Eny[]>(...es: E) => Valit<E>;
       optional: <E extends Eny>(e: E) => Valit<E | undefined>;
-      enum: <E extends Eny>(...es: E[]) => Valit<E>;
+      enum: <E extends Eny[]>(...es: E) => Valit<E[number]>;
       object: <E extends Record<string, Eny>>(
         v: E
       ) => Valit<
