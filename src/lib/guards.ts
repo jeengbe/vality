@@ -26,8 +26,14 @@ declare global {
         }
       >;
       boolean: Guard<boolean>;
+      /**
+       * @usage vality.literal(7)
+       */
       literal<T extends Primitive>(lit: T): Guard<T>;
       // type S is solely used to infer and keep the type of the relation
+      /**
+       * @usage vality.relation(SomeModel)
+       */
       relation<S extends () => RSE>(type: S): Guard<S>;
     }
   }
