@@ -12,7 +12,7 @@ A TypeScript schema descriptor library with zero dependencies.
 <h2 id="getting-started">Getting Started</h2>
 vality offers a simple and compact way to describe your schema:
 
-<div id="getting-started-model" />
+<div id="getting-started-model"></div>
 
 ```ts
 import { v, validate, Parse } from "vality";
@@ -29,7 +29,7 @@ const Person = () => ({
 });
 ```
 
-<div id="getting-started-type" />
+<div id="getting-started-type"></div>
 
 ```ts
 // And can easily be converted into a type:
@@ -45,7 +45,7 @@ type PersonModel = Parse<typeof Person>;
 //   }
 ```
 
-<div id="getting-started-validate" />
+<div id="getting-started-validate"></div>
 
 ```ts
 // Or used directly in a validation function:
