@@ -16,8 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
-      - shell: bash
-        run: pnpm --filter docs build
+      - run: pnpm --filter docs build
       - uses: actions/upload-pages-artifact@v1
         with:
           path: docs/build/
@@ -27,8 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
-      - shell: bash
-        run: pnpm --filter src build
+      - run: pnpm --filter src build
+      - run: cp README.md src/README.md
       - uses: actions/upload-artifact@v3
         with:
           name: publish-vality
