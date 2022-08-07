@@ -28,7 +28,6 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm --filter vality build
       - run: cp ./README.md ./src/README.md
-      - run: ls -la
       - uses: actions/upload-artifact@v3
         with:
           name: publish-vality
