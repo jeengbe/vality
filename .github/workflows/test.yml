@@ -29,7 +29,3 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Run eslint
         run: pnpm lint
-
-  status:
-    needs: ["jest", "lint"]
-    runs-on: ubuntu-latest
