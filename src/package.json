@@ -25,7 +25,7 @@
 	"main": "./dist/index.js",
 	"scripts": {
 		"build": "tsc -p lib/tsconfig.json",
-		"test": "jest --coverage && make-coverage-badge --output-path ./badges/coverage.svg",
+		"test": "jest --coverage",
 		"lint": "echo \"Error: no linting configured\"",
 		"test-watch": "jest --watchAll --coverage"
 	}
