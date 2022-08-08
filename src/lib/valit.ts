@@ -10,28 +10,29 @@ export type Valit<V, Options extends RSA = RSN> = Valitate<V> & ((options: Parti
 
 export function valit<Arg extends any[], Type, Options extends RSA = RSN>(
   name: string,
-  fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>) => ValidationResult<Type>,
+  fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>) => ValidationResult,
   handleOptions?: {
-    [K in keyof Options]: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
+    [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
   },
   defaultOptions?: {
     [K in keyof Options]?: Options[K];
   }
 ): (...args: Arg) => Valit<Type, Options> {
   return (...args): Valit<Type, Options> => {
-    const fnWithValit: ValidateFn<Type> = (val, path = []) => {
+    const fnWithValit: ValidateFn = (val, path = []) => {
       return fn(...args)(val, path, defaultOptions ?? {});
     };
 
     return Object.assign(
       (options: Partial<Options>): Valitate<Type> => {
-        const fnWithValitWithOptions: ValidateFn<Type> = (value, path = []) => {
+        const fnWithValitWithOptions: ValidateFn = (value, path = []) => {
           const valid = fn(...args)(value, path, { ...defaultOptions, ...options });
           if (!valid.valid) return valid;
           assert<Type>(value);
           if (handleOptions === undefined) return { valid: true, errors: [] };
           const keysWithError = Object.keys(options).filter(
-            k => k in handleOptions && !handleOptions[k](value, options[k]!, options as MakeRequired<Options, typeof k>)
+            k =>
+              handleOptions[k] !== undefined && !handleOptions[k]!(value, options[k]!, options as MakeRequired<Options, typeof k>)
           );
           return {
             valid: keysWithError.length === 0,

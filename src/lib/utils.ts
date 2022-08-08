@@ -58,7 +58,7 @@ export function enyToGuard(eny: Eny): EnyToGuard<Eny> {
   return vality.object(eny as RSA);
 }
 
-export function enyToGuardFn(v: Eny): ValidateFn<any> {
+export function enyToGuardFn(v: Eny): ValidateFn {
   return enyToGuard(v)[_validate];
 }
 

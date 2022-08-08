@@ -9,13 +9,13 @@ export interface Error {
   value: any;
 }
 
-export type ValidationResult<T> = { valid: boolean; [_type]?: T; errors: Error[] };
-export type Validate<T> = { [_validate]: ValidateFn<T> };
-export type ValidateFn<T> = (val: unknown, path?: Path) => ValidationResult<T>;
+export type ValidationResult = { valid: boolean;errors: Error[] };
+export type Validate<T> = { [_validate]: ValidateFn; [_type]?: T };
+export type ValidateFn = (val: unknown, path?: Path) => ValidationResult;
 export type Path = (string | number)[];
 
 // NOTE: bail only works for purely passed schemas, not object guards
-export function validate(schema: Eny, val: unknown, bail = false): ValidationResult<any> {
+export function validate(schema: Eny, val: unknown, bail = false): ValidationResult {
   if (typeof schema === "function" && !(_validate in schema)) schema = vality.object((schema as () => RSE)())({ bail });
 
   return enyToGuardFn(schema)(val);
