@@ -10,6 +10,7 @@ declare global {
         {
           minLength?: number;
           maxLength?: number;
+          match?: RegExp;
         }
       >;
       number: Guard<
@@ -17,6 +18,10 @@ declare global {
         {
           min?: number;
           max?: number;
+          /**
+           * @default false
+           */
+          integer?: boolean;
         }
       >;
       boolean: Guard<boolean>;
@@ -36,11 +41,14 @@ declare global {
 vality.string = guard("string", val => typeof val === "string", {
   minLength: (val, o) => val.length >= o,
   maxLength: (val, o) => val.length <= o,
+  match: (val, o) => o.test(val),
 });
 
-vality.number = guard("number", val => typeof val === "number" && Number.isFinite(val), {
+// prettier-ignore
+vality.number = guard("number", val => (typeof val === "number" && val > Number.MIN_SAFE_INTEGER && val < Number.MAX_SAFE_INTEGER), {
   min: (val, o) => val >= o,
   max: (val, o) => val <= o,
+  integer: (val, o) => (val % 1 === 0 ? o : !o),
 });
 
 vality.boolean = guard("boolean", val => typeof val === "boolean");

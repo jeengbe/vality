@@ -215,6 +215,11 @@ describe("built-in guards", () => {
         valid: ["", "_", "__"],
         invalid: ["___", "____"],
       },
+      match: {
+        value: /^[a-z]+$/,
+        valid: ["a", "z", "sdgasdfgsdfg"],
+        invalid: ["A", "Z", "0", "9", " ", "", "__", "___"],
+      },
     }
   );
 
@@ -235,6 +240,18 @@ describe("built-in guards", () => {
         valid: [-1, 0, 1],
         invalid: [2],
       },
+      integer: [
+        {
+          value: true,
+          valid: [-1, 0, 1],
+          invalid: [-1.1, 1.1],
+        },
+        {
+          value: false,
+          valid: [-1.1, 1.1],
+          invalid: [-1, 0, 1],
+        },
+      ],
     }
   );
 
