@@ -97,9 +97,8 @@ Literal values are short for `vality.literal(value)` and only match against the 
 
 ```ts twoslash
 import { vality } from "vality";
-const x =
-  // ---cut---
-  "a";
+// ---cut---
+"a";
 // is short for
 vality.literal("a");
 // and matches against "a" only
@@ -116,10 +115,11 @@ When another Model is used as an Eny, it is treated as a relation to that model.
 ```ts twoslash
 import { vality, Parse } from "vality";
 // ---cut---
-const Person = () => ({
-  name: vality.string,
-  pets: [Pet],
-});
+const Person = () =>
+  ({
+    name: vality.string,
+    pets: [Pet],
+  } as const);
 
 const Pet = () => ({
   owner: Person,
@@ -141,13 +141,37 @@ Enys (and Valits) are build in a composable way, meaning you can nest Enys arbit
 ```ts twoslash
 import { vality, Parse } from "vality";
 
-const NeedAGoodExample = () => ({
-  a: [["a", "b", "c"]], // Resolves to vality.array(vality.enum("a", "b", "c"))
-  b: {
-    c: vality.array(vality.number({ min: 5 }))({ maxLength: 10 }), // An array of at most 10 numbers that are greater than or equal to 5
-  },
-} as const);
+const NeedAGoodExample = () =>
+  ({
+    a: [["a", "b", "c"]], // Resolves to vality.array(vality.enum("a", "b", "c"))
+    b: {
+      c: vality.array(vality.number({ min: 5 }))({ maxLength: 10 }), // An array of at most 10 numbers that are greater than or equal to 5
+    },
+  } as const);
 
 type StillNeedOne = Parse<typeof NeedAGoodExample>;
+//   ^?
+```
+
+Another good example is the following:
+
+```ts twoslash
+import { vality, Parse } from "vality";
+
+const Cart = () =>
+  ({
+    voucher: [
+      {
+        type: "percentage",
+        value: vality.number({ min: 0, max: 100 }),
+      },
+      {
+        type: "fixed",
+        value: vality.number({ min: 0 }),
+      },
+    ],
+  } as const);
+
+type Cart = Parse<typeof Cart>;
 //   ^?
 ```
