@@ -1,4 +1,4 @@
-import type { GuardFunction, GuardResult, Validate } from "./guard";
+import type { GuardFunction, Validate, ValidationResult } from "./guard";
 import { _options, _type, _validate } from "./symbols";
 import { MakeRequired, RSA, RSN } from "./utils";
 import type { Path } from "./validate";
@@ -12,7 +12,7 @@ export type Valit<V, Options extends RSA = RSN> = (<O extends Options>(options: 
 
 export function valit<Arg extends any[], Type, Options extends RSA = RSN>(
   name: string,
-  fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>) => GuardResult,
+  fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>) => ValidationResult,
   handleOptions?: {
     [K in keyof Options]-?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
   }

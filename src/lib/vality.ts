@@ -3,9 +3,9 @@ declare global {
     interface guards {}
     interface valits {}
   }
-  interface valits extends vality.guards, vality.valits {}
+  interface vality extends vality.guards, vality.valits {}
 }
 
-export const vality = {} as valits;
+export const vality = {} as vality;
 // Alias
 export const v = vality;

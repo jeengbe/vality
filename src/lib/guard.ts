@@ -2,9 +2,9 @@ import { _options, _type, _validate } from "./symbols";
 import type { MakeRequired, RSA, RSN } from "./utils";
 import type { Error, Path } from "./validate";
 
-export type GuardResult = { valid: boolean; errors: Error[] };
+export type ValidationResult = { valid: boolean; errors: Error[] };
 
-export type Validate = (val: unknown, path?: Path) => GuardResult;
+export type Validate = (val: unknown, path?: Path) => ValidationResult;
 
 export type GuardFunction<Type, Options extends RSA = RSN> = {
   [_validate]: Validate;
