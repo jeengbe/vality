@@ -1,57 +1,56 @@
-import type { GuardFunction, GuardResult, Validate } from "./guard";
-import { _options, _type, _validate } from "./symbols";
-import { MakeRequired, RSA, RSN } from "./utils";
-import type { Path } from "./validate";
+import { _validate } from "./symbols";
+import { assert, MakeRequired, RSA, RSN } from "./utils";
+import type { Path, Validate, ValidateFn, ValidationResult } from "./validate";
 
 // This symbol is used to distingush between a guard and a valit
 export const _valit = Symbol("valit");
 
-export type ValitFunction<V, Options extends RSA = RSN> = { [_valit]?: any } & GuardFunction<V, Options>;
-export type Valit<V, Options extends RSA = RSN> = (<O extends Options>(options: Partial<O>) => ValitFunction<V, O>) &
-  ValitFunction<V>;
+export type Valitate<V> = { [_valit]?: never } & Validate<V>;
+export type Valit<V, Options extends RSA = RSN> = Valitate<V> & ((options: Partial<Options>) => Valitate<V>);
 
 export function valit<Arg extends any[], Type, Options extends RSA = RSN>(
   name: string,
-  fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>) => GuardResult,
+  fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>) => ValidationResult,
   handleOptions?: {
-    [K in keyof Options]-?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
+    [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
+  },
+  defaultOptions?: {
+    [K in keyof Options]?: Options[K];
   }
 ): (...args: Arg) => Valit<Type, Options> {
-  return (...args) => {
-    const fnWithValit: Validate = (val, path = []) => {
-      return fn(...args)(val, path, {});
+  return (...args): Valit<Type, Options> => {
+    const fnWithValit: ValidateFn = (val, path = []) => {
+      return fn(...args)(val, path, defaultOptions ?? {});
     };
 
     return Object.assign(
-      <O extends Options>(options: Partial<O>) => {
-        const fnWithValitWithOptions: Validate = (val, path = []) => {
-          const valid = fn(...args)(val, path, options);
+      (options: Partial<Options>): Valitate<Type> => {
+        const fnWithValitWithOptions: ValidateFn = (value, path = []) => {
+          const valid = fn(...args)(value, path, { ...defaultOptions, ...options });
           if (!valid.valid) return valid;
+          assert<Type>(value);
           if (handleOptions === undefined) return { valid: true, errors: [] };
           const keysWithError = Object.keys(options).filter(
-            k => !handleOptions[k](val as Type, (options as Options)[k], options as MakeRequired<Options, typeof k>)
+            k =>
+              handleOptions[k] !== undefined && !handleOptions[k]!(value, options[k]!, options as MakeRequired<Options, typeof k>)
           );
           return {
             valid: keysWithError.length === 0,
             errors: keysWithError.map(k => ({
               message: `vality.${name}.options.${k}`,
-              path,
               options,
-              val,
+              path,
+              value,
             })),
           };
         };
 
-        return Object.assign({
+        return {
           [_validate]: fnWithValitWithOptions,
-          [_type]: undefined as unknown as Type,
-          [_options]: options,
-        });
+        };
       },
       {
         [_validate]: fnWithValit,
-        [_type]: undefined as unknown as Type,
-        [_options]: {},
       }
     );
   };

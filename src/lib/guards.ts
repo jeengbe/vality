@@ -10,6 +10,7 @@ declare global {
         {
           minLength?: number;
           maxLength?: number;
+          match?: RegExp;
         }
       >;
       number: Guard<
@@ -18,21 +19,19 @@ declare global {
           min?: number;
           max?: number;
           /**
-           * Allow ±NaN, ±Infinity
-           *
            * @default false
            */
-          allowNonFinite?: boolean;
+          integer?: boolean;
         }
       >;
       boolean: Guard<boolean>;
       /**
-       * @usage vality.literal(7)
+       * @example vality.literal(7)
        */
       literal<T extends Primitive>(lit: T): Guard<T>;
       // type S is solely used to infer and keep the type of the relation
       /**
-       * @usage vality.relation(SomeModel)
+       * @example vality.relation(SomeModel)
        */
       relation<S extends () => RSE>(type: S): Guard<S>;
     }
@@ -42,21 +41,15 @@ declare global {
 vality.string = guard("string", val => typeof val === "string", {
   minLength: (val, o) => val.length >= o,
   maxLength: (val, o) => val.length <= o,
+  match: (val, o) => o.test(val),
 });
 
-vality.number = guard(
-  "number",
-  (val, o) => {
-    let valid = typeof val === "number";
-    if (o.allowNonFinite !== true) valid &&= Number.isFinite(val);
-    return valid;
-  },
-  {
-    min: (val, o) => val >= o,
-    max: (val, o) => val <= o,
-    allowNonFinite: val => true,
-  }
-);
+// prettier-ignore
+vality.number = guard("number", val => (typeof val === "number" && val > Number.MIN_SAFE_INTEGER && val < Number.MAX_SAFE_INTEGER), {
+  min: (val, o) => val >= o,
+  max: (val, o) => val <= o,
+  integer: (val, o) => (val % 1 === 0 ? o : !o),
+});
 
 vality.boolean = guard("boolean", val => typeof val === "boolean");
 
