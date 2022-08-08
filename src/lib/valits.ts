@@ -43,13 +43,12 @@ declare global {
 
 vality.array = valit(
   "array",
-  e => (val, path, options) => {
-    if (!Array.isArray(val)) return { valid: false, errors: [{ message: "vality.array.type", path, options, val }] };
-    const fn = enyToGuardFn(e);
+  e => (value, path, options) => {
+    if (!Array.isArray(value)) return { valid: false, errors: [{ message: "vality.array.base", path, options, value }] };
     const errors: Error[] = [];
     for (const k in e) {
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
-      const res = enyToGuardFn(e[k])(val[k as keyof typeof val], [...path, k]);
+      const res = enyToGuardFn(e[k])(value[k as keyof typeof value], [...path, k]);
       errors.push(...res.errors);
       if (!res.valid && options.bail) break;
     }
@@ -62,13 +61,13 @@ vality.array = valit(
   }
 );
 
-vality.object = valit("object", e => (val, path, options) => {
-  if (typeof val !== "object" || val === null)
-    return { valid: false, errors: [{ message: "vality.object.type", path, options, val }] };
+vality.object = valit("object", e => (value, path, options) => {
+  if (typeof value !== "object" || value === null)
+    return { valid: false, errors: [{ message: "vality.object.base", path, options, value }] };
   const errors: Error[] = [];
   for (const k in e) {
     // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
-    const res = enyToGuardFn(e[k])(val[k as keyof typeof val], [...path, k]);
+    const res = enyToGuardFn(e[k])(value[k as keyof typeof value], [...path, k]);
     errors.push(...res.errors);
     if (!res.valid && options.bail) break;
   }
@@ -80,14 +79,14 @@ vality.optional = valit("optional", e => (val, path) => {
   return enyToGuardFn(e)(val, path);
 });
 
-vality.enum = valit("enum", (...es) => (val, path, options) => {
-  const valid = es.some(e => enyToGuardFn(e)(val, path).valid);
-  return { valid, errors: valid ? [] : [{ message: "vality.enum.type", path, options, val }] };
+vality.enum = valit("enum", (...es) => (value, path, options) => {
+  const valid = es.some(e => enyToGuardFn(e)(value, path).valid);
+  return { valid, errors: valid ? [] : [{ message: "vality.enum.base", path, options, value }] };
 });
 
-vality.tuple = valit("tuple", (...es) => (val, path, options) => {
-  if (!Array.isArray(val) || val.length !== es.length)
-    return { valid: false, errors: [{ message: "vality.tuple.type", path, options, val }] };
-  const errors = flat(val.map((_, i) => i).map(i => enyToGuardFn(es[i])(val[i], [...path, i]).errors));
+vality.tuple = valit("tuple", (...es) => (value, path, options) => {
+  if (!Array.isArray(value) || value.length !== es.length)
+    return { valid: false, errors: [{ message: "vality.tuple.base", path, options, value }] };
+  const errors = flat(value.map((_, i) => i).map(i => enyToGuardFn(es[i])(value[i], [...path, i]).errors));
   return { valid: errors.length === 0, errors };
 });

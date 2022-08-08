@@ -1,6 +1,6 @@
-import type { GuardFunction } from "./guard";
 import type { Eny, RSA } from "./utils";
-import type { Valit, ValitFunction } from "./valit";
+import { Validate } from "./validate";
+import type { Valit, Valitate } from "./valit";
 
 // Depending on the direction of the required type, we parse relations differently
 // If the type comes from the api ("out"), we type a relation as the corresponding type
@@ -17,7 +17,7 @@ type ValitToType<T extends Eny, _D> = T extends readonly [infer U]
   ? Parse<U, _D>[]
   : T extends readonly [...any]
   ? Parse<T[number], _D>
-  : T extends ValitFunction<infer U, infer O>
+  : T extends Valitate<infer U>
   ? U extends [...any[]]
     ? {
         [K in keyof U]: Parse<U[K], _D>;
@@ -29,11 +29,11 @@ type ValitToType<T extends Eny, _D> = T extends readonly [infer U]
         [K in keyof U]: Parse<U[K], _D>;
       }
     : Parse<U, _D>
-  : T extends GuardFunction<infer U, infer O>
+  : T extends Validate<infer U>
   ? U
   : T;
 
-export type Parse<T, _D = never> = T extends GuardFunction<any, any> // also catches Mode<any, any>
+export type Parse<T, _D = never> = T extends Validate<any> // also catches Valit<any, any>
   ? ValitToType<T, _D>
   : T extends () => infer U
   ? false extends _D

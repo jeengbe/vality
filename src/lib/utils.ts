@@ -1,6 +1,7 @@
-import type { Guard, GuardFunction, Validate } from "./guard";
+import { Guard } from "./guard";
 import { _validate } from "./symbols";
-import type { Valit } from "./valit";
+import { ValidateFn } from "./validate";
+import type { Valit, Valitate } from "./valit";
 import { vality } from "./vality";
 
 export type RSA = Record<string, any>;
@@ -13,14 +14,14 @@ export type RSE = {
 export type MaybeArray<T> = T | T[];
 
 export type Primitive = string | number | boolean;
-export type _Eny = Primitive | Guard<Primitive, RSA> | GuardFunction<Primitive, RSA> | (() => RSE) | RSE;
+export type _Eny = Primitive | Guard<Primitive, RSA> | Valitate<Primitive> | (() => RSE) | RSE;
 export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
 
 /**
  * Make all properties in T required whose key is assignable to K
  */
 export type MakeRequired<T extends RSA, K extends keyof T> = {
-  [KK in keyof _MakeRequired<T, K>]: _MakeRequired<T, K>[KK];
+  [P in keyof _MakeRequired<T, K>]: _MakeRequired<T, K>[P];
 };
 type _MakeRequired<T extends RSA, K extends keyof T> = Required<Pick<T, K>> & Pick<T, Exclude<keyof T, K>>;
 
@@ -57,7 +58,7 @@ export function enyToGuard(eny: Eny): EnyToGuard<Eny> {
   return vality.object(eny as RSA);
 }
 
-export function enyToGuardFn(v: Eny): Validate {
+export function enyToGuardFn(v: Eny): ValidateFn<any> {
   return enyToGuard(v)[_validate];
 }
 

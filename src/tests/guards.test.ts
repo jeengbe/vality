@@ -22,7 +22,7 @@ function testGuard<G extends keyof vality.guards, O extends GuardOptions<G>>(
         expect(validate(vality[guard], v)).toBeValid();
       }
       for (const v of simple.invalid) {
-        expect(validate(vality[guard], v)).toBeInvalid();
+        expect(validate(vality[guard], v)).toBeInvalid(`vality.${guard}.base`);
       }
     });
 
@@ -47,6 +47,16 @@ function testGuard<G extends keyof vality.guards, O extends GuardOptions<G>>(
                 )
               ).toBeValid();
             }
+            for (const v of val.invalid) {
+              expect(
+                validate(
+                  (vality[guard] as any)({
+                    [o]: val.value,
+                  }),
+                  v
+                )
+              ).toBeInvalid(`vality.${guard}.options.${o}`);
+            }
           }
         });
       }
@@ -65,7 +75,7 @@ describe("built-in guards", () => {
       expect(mockValid).toHaveBeenCalledWith("__val__", {});
       mockValid.mockClear();
 
-      expect(validate(guard("__test__", mockInvalid), "__val__")).toBeInvalid("vality.__test__.type");
+      expect(validate(guard("__test__", mockInvalid), "__val__")).toBeInvalid("vality.__test__.base");
       expect(validate(guard("__test__", mockInvalid), "__val__")).toBeInvalid();
       expect(mockInvalid).toHaveBeenCalledTimes(2);
       expect(mockInvalid).toHaveBeenCalledWith("__val__", {});
@@ -198,7 +208,7 @@ describe("built-in guards", () => {
       minLength: {
         value: 2,
         valid: ["__", "___"],
-        invalid: ["", "__"],
+        invalid: ["", "_"],
       },
       maxLength: {
         value: 2,
@@ -218,17 +228,12 @@ describe("built-in guards", () => {
       min: {
         value: -1,
         valid: [-1, 0, 1],
-        invalid: [-2, -Infinity, Infinity],
+        invalid: [-2],
       },
       max: {
         value: 1,
         valid: [-1, 0, 1],
-        invalid: [2, -Infinity, Infinity],
-      },
-      allowNonFinite: {
-        value: true,
-        valid: [-2, -1, 0, 1, 2, -Infinity, Infinity, -NaN, NaN],
-        invalid: [undefined, null, "", "a string", true, false, {}, [], () => {}],
+        invalid: [2],
       },
     }
   );
