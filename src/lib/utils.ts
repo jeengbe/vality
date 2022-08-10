@@ -1,6 +1,6 @@
 import { Guard } from "./guard";
 import { _validate } from "./symbols";
-import { ValidateFn } from "./validate";
+import { validate, Validate, ValidateFn } from "./validate";
 import type { Valit, Valitate } from "./valit";
 import { vality } from "./vality";
 
@@ -13,7 +13,7 @@ export type RSE = {
 
 export type MaybeArray<T> = T | T[];
 
-export type Primitive = string | number | boolean;
+export type Primitive = string | number | boolean | null;
 export type _Eny = Primitive | Guard<Primitive, RSA> | Valitate<Primitive> | (() => RSE) | RSE;
 export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
 
@@ -31,7 +31,7 @@ export function assert<T>(val: any, condition?: boolean): asserts val is T {
   }
 }
 
-type EnyToGuard<T> = T extends [infer U]
+export type EnyToGuard<T> = T extends [infer U]
   ? Valit<U[], any>
   : T extends [...infer U]
   ? Valit<U, any>
@@ -49,7 +49,7 @@ export function enyToGuard(eny: Eny): EnyToGuard<Eny> {
     if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
     return vality.enum(...eny.map(enyToGuard));
   }
-  if (typeof eny === "string" || typeof eny === "number" || typeof eny === "boolean") return vality.literal(eny);
+  if (typeof eny === "string" || typeof eny === "number" || typeof eny === "boolean" || eny === null) return vality.literal(eny);
   // Not sure why we have to assert here, a symbol should never be a key in RSA
   if (_validate in eny) return eny as Exclude<typeof eny, RSA>;
   // This should only allow () => RSE at this point...
@@ -64,4 +64,8 @@ export function enyToGuardFn(v: Eny): ValidateFn {
 
 export function flat<T>(arr: T[][]): T[] {
   return ([] as T[]).concat(...arr);
+}
+
+export function compose(...guards: Validate<any>[]): (val: unknown) => boolean {
+  return (val: unknown) => guards.every(g => validate(g, val).valid);
 }

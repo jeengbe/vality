@@ -1,7 +1,6 @@
 import type { Eny, RSA } from "./utils";
 import { Validate } from "./validate";
 import type { Valit, Valitate } from "./valit";
-import { v } from "./vality";
 
 // Depending on the direction of the required type, we parse relations differently
 // If the type comes from the api ("out"), we type a relation as the corresponding type
@@ -52,19 +51,3 @@ export type Parse<T, _D = never> = T extends Validate<any> // also catches Valit
 
 export type ParseOut<T> = Parse<T>;
 export type ParseIn<T> = Parse<T, false>;
-
-
-// Models are defined like this:
-const Person = () => ({
-  name: v.string,
-  age: v.optional(v.number),
-  address: {
-    street: v.string,
-    city: v.string,
-    country: v.string,
-  },
-});
-
-
-// And can easily be converted into a type:
-type PersonModel = Parse<typeof Person>;
