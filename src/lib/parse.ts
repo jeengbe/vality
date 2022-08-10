@@ -11,14 +11,22 @@ import type { Valit, Valitate } from "./valit";
 // For subsequent Enys, _D is then set to true, which means that any relation should be returned as a number
 
 // This is how a relation should be passed to the api
-type RelationType = vality.Config extends { RelationType: infer R } ? R : string;
+type RelationType = vality.Config extends { RelationType: infer R } ? R : number;
 
-type ValitToType<T extends Eny, _D> = T extends readonly [infer U]
+type ValitToType<T extends Eny | undefined, _D> = T extends readonly [infer U]
   ? Parse<U, _D>[]
   : T extends readonly [...any]
   ? Parse<T[number], _D>
-  : T extends Valitate<infer U>
-  ? U extends [...any[]]
+  : T extends Valitate<infer U, infer UD>
+  ? true extends UD
+    ?
+        | undefined
+        | (U extends [...any[]]
+            ? {
+                [K in keyof U]: Parse<U[K], _D>;
+              }
+            : Parse<U, _D>)
+    : U extends [...any[]]
     ? {
         [K in keyof U]: Parse<U[K], _D>;
       }
