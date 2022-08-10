@@ -4,6 +4,6 @@
     "lib": [],
     "types": [],
     "target": "ES2015",
-    "module": "CommonJS",
+    "module": "CommonJS"
   }
 }

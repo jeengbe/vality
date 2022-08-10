@@ -101,9 +101,9 @@ Guards are the most basic way to match against an atomic value. These include bu
 vality.string;
 ```
 
-[List of all built-in Guards](#built-in-guards)
+[List of all built-in guards](#built-in-guards)
 
-Guards also accept arguments, to further constrain the type of the value. These are passed by calling the Guard.
+Guards also accept arguments, to further constrain the type of the value. These are passed by calling the guard.
 
 ```ts
 vality.string({ minLength: 3 }); // String with at least 3 characters
@@ -112,7 +112,7 @@ vality.string({ minLength: 3, maxLength: 8 }); // String with at least 3 and at 
 
 <h3 id="usage-valits">Valit</h3>
 
-While Guards are used to check for atomic values, Valits are used to match against structured data.
+While guards are used to check for atomic values, Valits are used to match against structured data.
 
 ```ts
 vality.array(vality.string); // Array of strings
@@ -128,7 +128,7 @@ vality.object({
 
 [List of all built-in Valits](#built-in-valits)
 
-Similarly to Guards, Valits can also accept arguments, which are passed by calling the Valit after providing the Guard(s).
+Similarly to guards, Valits can also accept arguments, which are passed by calling the Valit after providing the guard(s).
 
 ```ts
 vality.array(vality.string)({ minLength: 3 }); // Array of strings with at least 3 elements
@@ -137,7 +137,7 @@ vality.array(vality.string)({ minLength: 3, maxLength: 8 }); // Array of strings
 
 <h3 id="usage-enys">Enys</h3>
 
-Enys are the best part of vality. An Eny is used as a shorthand for a Valit or Guard, and can be used anywhere where either of the prior is expected.
+Enys are the best part of vality. An eny is used as a shorthand for a Valit or guard, and can be used anywhere where either of the prior is expected.
 
 ```ts
 [vality.string] // Array of strings
@@ -152,11 +152,11 @@ Enys are the best part of vality. An Eny is used as a shorthand for a Valit or G
 }
 ```
 
-[List of all Enys](#built-in-enys)
+[List of all enys](#built-in-enys)
 
 <h3 id="usage-validate">Validate</h3>
 
-Any Eny can be used to validate a value.
+Any eny can be used to validate a value.
 
 ```ts
 validate(vality.string, "Hi"); // Checks if "Hi" is a string
@@ -165,7 +165,7 @@ validate([["a", "b", "c"]], ["a", "x", "a"]); // Checks if ["a", "x", "a"] is an
 
 <h3 id="usage-models">Models</h3>
 
-Models are a way to describe reusable.. well.. models. Models need to be defined as a function, and models that use Enys for literals or arrays must return the object `as const`. ([See explanation](#note-1))
+Models are a way to describe reusable.. well.. models. Models need to be defined as a function, and models that use enys for literals or arrays must return the object `as const`. ([See explanation](#note-1))
 
 ```ts
 const Person = () => ({ // Eny for vality.object({ name: vality.string, ... })
@@ -187,7 +187,7 @@ See [lib/guards.ts](lib/guards.ts) for an up-to-date list of built-in Guards.
 
 <h3 id="built-in-valits">Valits</h3>
 
-Valits are slightly more complicated than Guards. They are defined in `vality.valits` as functions that accept Enys in a specific format (tuples accept `Eny[]`, objects accept `Record<string, Eny>` etc.). The `Valit<E extends Eny, O extends Record<string, any>>` type denotes is returned and describes a Valit with arguments `O`.
+Valits are slightly more complicated than Guards. They are defined in `vality.valits` as functions that accept enys in a specific format (tuples accept `eny[]`, objects accept `Record<string, Eny>` etc.). The `Valit<E extends Eny, O extends Record<string, any>>` type denotes is returned and describes a Valit with arguments `O`.
 
 See [lib/valits.ts](lib/valits.ts) for an up-to-date list of built-in Valits.
 
@@ -195,11 +195,11 @@ See [lib/valits.ts](lib/valits.ts) for an up-to-date list of built-in Valits.
 
 Enys in turn are even more complicated:
 
-- `[E]` where `E` is any Eny, describes an array of `E`, and can be seen as a shorthand for `vality.array(E)`
-- `[E, F, G, ...H]`, where `E`, `F` and `G` are Enys, describes an enum type of `E`, `F` and `G`. This can be seen as a shorthand for `vality.enum(E, F, G, ...H)`
-- An empty array is not a valid Eny
+- `[E]` where `E` is any eny, describes an array of `E`, and can be seen as a shorthand for `vality.array(E)`
+- `[E, F, G, ...H]`, where `E`, `F` and `G` are enys, describes an enum type of `E`, `F` and `G`. This can be seen as a shorthand for `vality.enum(E, F, G, ...H)`
+- An empty array is not a valid eny
 
-- Every Guard and Valit can be used as an Eny
+- Every Guard and Valit can be used as an eny
 - Literal values are short for `vality.literal( ... )`
 - `{ ... }` is short for `vality.object({ ... })`
 - `M` where M is a model is short for `vality.relation(M)`
@@ -275,7 +275,7 @@ const Person = {
 };
 ```
 
-Models that use Enys for literals or arrays must return the object `as const` as TypeScript would elsewise extend the tuple to an array, and literals to their type. Whilst that is the desired behaviour in most cases, here, we need to retain this exact structure.
+Models that use enys for literals or arrays must return the object `as const` as TypeScript would elsewise extend the tuple to an array, and literals to their type. Whilst that is the desired behaviour in most cases, here, we need to retain this exact structure.
 
 ```ts
 const Person = () => ({
