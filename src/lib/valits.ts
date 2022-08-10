@@ -1,4 +1,4 @@
-import { Eny, enyToGuardFn, flat } from "./utils";
+import { Eny, enyToGuardFn, flat, RSN } from "./utils";
 import { Error } from "./validate";
 import { valit, Valit } from "./valit";
 import { vality } from "./vality";
@@ -22,7 +22,7 @@ declare global {
         }
       >;
       tuple: <E extends Eny[]>(...es: E) => Valit<E>;
-      optional: <E extends Eny>(e: E) => Valit<E | undefined>;
+      optional: <E extends Eny>(e: E) => Valit<E, RSN, true>;
       enum: <E extends Eny[]>(...es: E) => Valit<E[number]>;
       object: <E extends Record<string, Eny>>(
         v: E
@@ -45,10 +45,11 @@ vality.array = valit(
   "array",
   e => (value, path, options) => {
     if (!Array.isArray(value)) return { valid: false, errors: [{ message: "vality.array.base", path, options, value }] };
+    const fn = enyToGuardFn(e);
     const errors: Error[] = [];
-    for (const k in e) {
+    for (const k in value) {
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
-      const res = enyToGuardFn(e[k])(value[k as keyof typeof value], [...path, k]);
+      const res = fn(value[k as keyof typeof value], [...path, k]);
       errors.push(...res.errors);
       if (!res.valid && options.bail) break;
     }
