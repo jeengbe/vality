@@ -1,11 +1,14 @@
-import { _undefined, _validate, _valit } from "./symbols";
+import { _validate } from "./symbols";
 import { assert, MakeRequired, RSA, RSN } from "./utils";
 import type { Path, Validate, ValidateFn, ValidationResult } from "./validate";
 
-export type Valitate<V, MaybeUndefined extends boolean> = { [_valit]?: never; [_undefined]?: MaybeUndefined } & Validate<V>;
-export type Valit<V, Options extends RSA = RSN, MaybeUndefined extends boolean = false> = Valitate<V, MaybeUndefined> & ((options: Partial<Options>) => Valitate<V, MaybeUndefined>);
+// This symbol is used to distingush between a guard and a valit
+export const _valit = Symbol("valit");
 
-export function valit<Arg extends any[], Type, Options extends RSA = RSN, MaybeUndefined extends boolean = false>(
+export type Valitate<V> = { [_valit]?: never } & Validate<V>;
+export type Valit<V, Options extends RSA = RSN> = Valitate<V> & ((options: Partial<Options>) => Valitate<V>);
+
+export function valit<Arg extends any[], Type, Options extends RSA = RSN>(
   name: string,
   fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>) => ValidationResult,
   handleOptions?: {
@@ -14,14 +17,14 @@ export function valit<Arg extends any[], Type, Options extends RSA = RSN, MaybeU
   defaultOptions?: {
     [K in keyof Options]?: Options[K];
   }
-): (...args: Arg) => Valit<Type, Options, MaybeUndefined> {
-  return (...args): Valit<Type, Options, MaybeUndefined> => {
+): (...args: Arg) => Valit<Type, Options> {
+  return (...args): Valit<Type, Options> => {
     const fnWithValit: ValidateFn = (val, path = []) => {
       return fn(...args)(val, path, defaultOptions ?? {});
     };
 
     return Object.assign(
-      (options: Partial<Options>): Valitate<Type, MaybeUndefined> => {
+      (options: Partial<Options>): Valitate<Type> => {
         const fnWithValitWithOptions: ValidateFn = (value, path = []) => {
           const valid = fn(...args)(value, path, { ...defaultOptions, ...options });
           if (!valid.valid) return valid;
