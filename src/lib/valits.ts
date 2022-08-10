@@ -1,4 +1,4 @@
-import { Eny, enyToGuardFn, flat, RSN } from "./utils";
+import { Eny, enyToGuardFn, flat } from "./utils";
 import { Error } from "./validate";
 import { valit, Valit } from "./valit";
 import { vality } from "./vality";
@@ -22,7 +22,7 @@ declare global {
         }
       >;
       tuple: <E extends Eny[]>(...es: E) => Valit<E>;
-      optional: <E extends Eny>(e: E) => Valit<E, RSN, true>;
+      optional: <E extends Eny>(e: E) => Valit<E | undefined>;
       enum: <E extends Eny[]>(...es: E) => Valit<E[number]>;
       object: <E extends Record<string, Eny>>(
         v: E

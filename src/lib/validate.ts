@@ -10,7 +10,7 @@ export interface Error {
 }
 
 export type ValidationResult = { valid: boolean;errors: Error[] };
-export type Validate<T> = { [_validate]: ValidateFn; [_type]?: T };
+export type Validate<T> = { [_validate]: ValidateFn; [_type]: T };
 export type ValidateFn = (val: unknown, path?: Path) => ValidationResult;
 export type Path = (string | number)[];
 

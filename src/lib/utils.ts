@@ -1,6 +1,6 @@
 import { Guard } from "./guard";
 import { _validate } from "./symbols";
-import { Validate, validate, ValidateFn } from "./validate";
+import { validate, Validate, ValidateFn } from "./validate";
 import type { Valit, Valitate } from "./valit";
 import { vality } from "./vality";
 
@@ -14,7 +14,7 @@ export type RSE = {
 export type MaybeArray<T> = T | T[];
 
 export type Primitive = string | number | boolean | null;
-export type _Eny = Primitive | Guard<Primitive, RSA> | Valitate<Primitive, boolean> | (() => RSE) | RSE;
+export type _Eny = Primitive | Guard<Primitive, RSA> | Valitate<Primitive> | (() => RSE) | RSE;
 export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
 
 /**
