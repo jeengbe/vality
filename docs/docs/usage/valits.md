@@ -3,7 +3,7 @@ sidebar_position: 3
 title: Valits
 ---
 
-While Guards are used to check for atomic values, Valits are used to match against structured data.
+While guards are used to check for atomic values, valits are used to match against structured data.
 
 ```ts twoslash
 // @noErrors
@@ -21,12 +21,12 @@ vality.object({
 ```
 
 <details>
-  <summary>List of all built-in Valits</summary>
+  <summary>List of all built-in valits</summary>
   <div>
 
-Valits are slightly more complicated than Guards. They are defined in `vality.valits` as functions that accept Enys (don't worry, these will be explained on the next page) in a specific format (tuples accept `Eny[]`, objects accept `Record<string, Eny>` etc.). The `Valit<E extends Eny, O extends Record<string, any>>` type denotes is returned and describes a Valit with arguments `O`.
+Valits are slightly more complicated than guards. They are defined in `vality.valits` as functions that accept enys (don't worry, these will be explained on the next page) in a specific format (tuples accept `Eny[]`, objects accept `Record<string, Eny>` etc.). The `Valit<E extends Eny, O extends Record<string, any>>` type denotes is returned and describes a valit with arguments `O`.
 
-See [lib/valits.ts](https://github.com/jeengbe/vality/blob/master/src/lib/valits.ts#L8) for an up-to-date list of built-in Valits.
+See [lib/valits.ts](https://github.com/jeengbe/vality/blob/master/src/lib/valits.ts#L8) for an up-to-date list of built-in valits.
 
 We know it's not cool simply referring to the source code, but it really is the best way of ensuring an updated list. But check it out, it really contains all you need to know!
 
@@ -35,7 +35,7 @@ We know it's not cool simply referring to the source code, but it really is the 
 
 ## Arguments
 
-Similarly to Guards, Valits can also accept arguments, which are passed by calling the Valit after providing the Eny(s).
+Similarly to guards, valits can also accept arguments, which are passed by calling the valit after providing the eny(s).
 
 ```ts twoslash
 import { vality } from "vality";

@@ -3,9 +3,9 @@ sidebar_position: 3
 title: Enys
 ---
 
-Enys are the core of Vality. Everything that Vality can use to validate aginst is an Eny.
+Enys are the core of Vality. Everything that Vality can use to validate aginst is an eny.
 
-In addition to Guards and Valits, there are some Enys that come as "short hands" for certain Guards and Valits, which will be explained on this page:
+In addition to guards and valits, there are some enys that come as "short hands" for certain guards and valits, which will be explained on this page:
 
 ```ts twoslash
 // @noErrors
@@ -23,17 +23,17 @@ import { vality } from "vality";
 }
 ```
 
-## Available Enys
+## Available enys
 
-Unlike Guards and Valits, Enys are best explained here.
+Unlike guards and valits, enys are best explained here.
 
 :::note
-Valits and Guards are Enys, too.
+Valits and guards are enys, too.
 :::
 
 ### Object
 
-This is arguably the most important, but also the simplest Eny. It is used to match against objects, and that's exactly how it's written.
+This is arguably the most important, but also the simplest eny. It is used to match against objects, and that's exactly how it's written.
 
 ```ts twoslash
 // @noErrors
@@ -62,7 +62,7 @@ vality.object({
 
 ### Array
 
-An array with one Eny `E` is considered an array of `E` (is thus typed appropriately as `E[]`).
+An array with one eny `E` is considered an array of `E` (is thus typed appropriately as `E[]`).
 
 ```ts twoslash
 import { vality } from "vality";
@@ -75,7 +75,7 @@ vality.array(vality.string);
 
 ### Enum
 
-Arrays with more than one Eny in turn, are treated as an enum of the passed Enys (matching any of the passed).
+Arrays with more than one eny in turn, are treated as an enum of the passed enys (matching any of the passed).
 
 ```ts twoslash
 // @noErrors
@@ -88,7 +88,7 @@ vality.enum(vality.literal("a"), vality.literal("b"), vality.literal("c"));
 ```
 
 :::info
-Empty arrays are not valid Enys.
+Empty arrays are not valid enys.
 :::
 
 ### Literal
@@ -110,7 +110,7 @@ vality.literal("a");
 
 ### Relation
 
-When another Model is used as an Eny, it is treated as a relation to that model. Specifically, this means that you can model recursive (and self-referential) structures.
+When another Model is used as an eny, it is treated as a relation to that model. Specifically, this means that you can model recursive (and self-referential) structures.
 
 ```ts twoslash
 import { vality, Parse } from "vality";
@@ -136,7 +136,7 @@ TODO
 
 ## Composability
 
-Enys (and Valits) are build in a composable way, meaning you can nest Enys arbitrarily deeply.
+Enys (and valits) are build in a composable way, meaning you can nest enys arbitrarily deeply.
 
 ```ts twoslash
 import { vality, Parse } from "vality";

@@ -3,7 +3,7 @@ sidebar_position: 1
 title: Validate
 ---
 
-Vality exposes one validation method to rule them all: `validate(eny: Eny, value: unknown): ValidationResult`. It takes in an _Eny_ (will be explained soon) and a value and returns an object that contains the result of the validation.
+Vality exposes one validation method to rule them all: `validate(eny: Eny, value: unknown): ValidationResult`. It takes in an _eny_ (will be explained soon) and a value and returns an object that contains the result of the validation.
 
 ```ts twoslash
 // @noErrors
