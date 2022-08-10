@@ -1,4 +1,4 @@
-import { _validate } from "./symbols";
+import { _type, _validate } from "./symbols";
 import { assert, MakeRequired, RSA, RSN } from "./utils";
 import type { Path, Validate, ValidateFn, ValidationResult } from "./validate";
 
@@ -47,10 +47,12 @@ export function valit<Arg extends any[], Type, Options extends RSA = RSN>(
 
         return {
           [_validate]: fnWithValitWithOptions,
+          [_type]: undefined as unknown as Type
         };
       },
       {
         [_validate]: fnWithValit,
+        [_type]: undefined as unknown as Type
       }
     );
   };
