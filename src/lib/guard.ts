@@ -1,4 +1,4 @@
-import { _type, _validate } from "./symbols";
+import { _options, _type, _validate } from "./symbols";
 import { assert, MakeRequired, RSA, RSN } from "./utils";
 import type { Validate, ValidateFn } from "./validate";
 
@@ -51,12 +51,14 @@ export function guard<Type, Options extends RSA = RSN>(
     (options: Partial<Options>) => {
       return {
         [_validate]: getFnWithErrors({ ...defaultOptions, ...options }),
-        [_type]: undefined as unknown as Type,
+        [_options]: undefined as any,
+        [_type]: undefined as any,
       };
     },
     {
       [_validate]: getFnWithErrors(defaultOptions),
-      [_type]: undefined as unknown as Type,
+      [_options]: undefined as any,
+      [_type]: undefined as any,
     }
   );
 }

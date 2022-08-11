@@ -1,6 +1,6 @@
 import type { Eny, RSA } from "./utils";
 import { Validate } from "./validate";
-import type { Valit, Valitate } from "./valit";
+import type { Valit, Valitate, VirtualValit } from "./valit";
 
 // Depending on the direction of the required type, we parse relations differently
 // If the type comes from the api ("out"), we type a relation as the corresponding type
@@ -13,10 +13,20 @@ import type { Valit, Valitate } from "./valit";
 // This is how a relation should be passed to the api
 type RelationType = vality.Config extends { RelationType: infer R } ? R : string;
 
+type Or<A, B> = A extends true ? true : B extends true ? true : false;
+
 type ValitToType<T extends Eny, _D> = T extends readonly [infer U]
   ? Parse<U, _D>[]
   : T extends readonly [...any]
   ? Parse<T[number], _D>
+  : T extends VirtualValit<infer U>
+  ? Or<false extends _D ? true : false, true extends _D ? true : false> extends true
+    ? never
+    : U extends [...any[]]
+    ? {
+        [K in keyof U]: Parse<U[K], _D>;
+      }
+    : Parse<U, _D>
   : T extends Valitate<infer U>
   ? U extends [...any[]]
     ? {
@@ -45,7 +55,7 @@ export type Parse<T, _D = never> = T extends Validate<any> // also catches Valit
   ? ValitToType<T, _D>
   : T extends RSA
   ? {
-      -readonly [K in keyof T]: Parse<T[K], _D>;
+      -readonly [K in keyof T as Parse<T[K], _D> extends never ? never : K]: Parse<T[K], _D>;
     }
   : ValitToType<T, _D>;
 
