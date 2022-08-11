@@ -1,6 +1,6 @@
 import { Eny, enyToGuardFn, flat } from "./utils";
 import { Error } from "./validate";
-import { valit, Valit } from "./valit";
+import { valit, Valit, VirtualValit } from "./valit";
 import { vality } from "./vality";
 
 declare global {
@@ -37,6 +37,10 @@ declare global {
           bail?: boolean;
         }
       >;
+      /**
+       * This valit wraps the passed eny so that it is ignored by ParseIn
+       */
+      virtual: <E extends Eny>(e: E) => VirtualValit<E>;
     }
   }
 }
@@ -91,3 +95,6 @@ vality.tuple = valit("tuple", (...es) => (value, path, options) => {
   const errors = flat(value.map((_, i) => i).map(i => enyToGuardFn(es[i])(value[i], [...path, i]).errors));
   return { valid: errors.length === 0, errors };
 });
+
+// Gotta parse here as this is the exception where we don't return Valit<E>, but actually VirtualValit<E>
+vality.virtual = valit("virtual", enyToGuardFn) as <E extends Eny>(e: E) => VirtualValit<E>;

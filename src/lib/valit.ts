@@ -1,12 +1,12 @@
-import { _type, _validate } from "./symbols";
+import { _type, _validate, _valit, _virtual } from "./symbols";
 import { assert, MakeRequired, RSA, RSN } from "./utils";
 import type { Path, Validate, ValidateFn, ValidationResult } from "./validate";
 
-// This symbol is used to distingush between a guard and a valit
-export const _valit = Symbol("valit");
-
-export type Valitate<V> = { [_valit]?: never } & Validate<V>;
+export type Valitate<V> = { [_valit]?: typeof _valit;  } & Validate<V>;
 export type Valit<V, Options extends RSA = RSN> = Valitate<V> & ((options: Partial<Options>) => Valitate<V>);
+
+// This is a special type used only by vality.virtual
+export type VirtualValit<T> = { [_virtual]?: typeof _virtual } & Valit<T>;
 
 export function valit<Arg extends any[], Type, Options extends RSA = RSN>(
   name: string,
@@ -47,12 +47,12 @@ export function valit<Arg extends any[], Type, Options extends RSA = RSN>(
 
         return {
           [_validate]: fnWithValitWithOptions,
-          [_type]: undefined as unknown as Type
+          [_type]: undefined as any,
         };
       },
       {
         [_validate]: fnWithValit,
-        [_type]: undefined as unknown as Type
+        [_type]: undefined as any,
       }
     );
   };

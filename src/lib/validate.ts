@@ -1,4 +1,4 @@
-import { _type, _validate } from "./symbols";
+import { _type, _validate, _valit, _virtual } from "./symbols";
 import { Eny, enyToGuardFn, RSE } from "./utils";
 import { vality } from "./vality";
 
@@ -9,8 +9,8 @@ export interface Error {
   value: any;
 }
 
-export type ValidationResult = { valid: boolean;errors: Error[] };
-export type Validate<T> = { [_validate]: ValidateFn; [_type]: T };
+export type ValidationResult = { valid: boolean; errors: Error[] };
+export type Validate<T> = { [_validate]: ValidateFn; [_type]: T; [_virtual]?: false; [_valit]?: false };
 export type ValidateFn = (val: unknown, path?: Path) => ValidationResult;
 export type Path = (string | number)[];
 
