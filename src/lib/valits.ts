@@ -1,5 +1,6 @@
+import { _validate, _virtual } from "./symbols";
 import { Eny, enyToGuardFn, flat } from "./utils";
-import { Error } from "./validate";
+import { Error, Path } from "./validate";
 import { valit, Valit, VirtualValit } from "./valit";
 import { vality } from "./vality";
 
@@ -70,11 +71,27 @@ vality.object = valit("object", e => (value, path, options) => {
   if (typeof value !== "object" || value === null)
     return { valid: false, errors: [{ message: "vality.object.base", path, options, value }] };
   const errors: Error[] = [];
+  // We iterate the passed object (in the model) first
   for (const k in e) {
-    // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
-    const res = enyToGuardFn(e[k])(value[k as keyof typeof value], [...path, k]);
+    const ek = e[k];
+    if (typeof ek === "object" && ek !== null && _virtual in ek) continue; // We'll deal with these later
+      // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
+      const res = enyToGuardFn(ek)(value[k as keyof typeof value], [...path, k]);
     errors.push(...res.errors);
     if (!res.valid && options.bail) break;
+  }
+  // And then check for additioal keys
+  for (const k in value) {
+    const ek = e[k];
+    if (ek === undefined || (typeof ek === "object" && ek !== null && _virtual in ek)) {
+      errors.push({
+        message: "vality.object.extraProperty",
+        path: [...path, k],
+        options,
+        value,
+      });
+      if (options.bail) break;
+    }
   }
   return { valid: errors.length === 0, errors };
 });
@@ -96,5 +113,25 @@ vality.tuple = valit("tuple", (...es) => (value, path, options) => {
   return { valid: errors.length === 0, errors };
 });
 
-// Gotta parse here as this is the exception where we don't return Valit<E>, but actually VirtualValit<E>
-vality.virtual = valit("virtual", enyToGuardFn) as <E extends Eny>(e: E) => VirtualValit<E>;
+// Gotta assert here as this is an exception where we don't just return your average valit, but need to add the _virtual marker
+// This is required as vality.object checks for this symbol to correctly mark virtual proerties as "non-existend", not "required to be of value 'undefined'"
+// Other valits could also mask this error in the future
+// We still attach _validate, though, as, for whatever reason, this valit may still be called, and we really don't want a runtime error in that situation
+vality.virtual = () =>
+  ({
+    [_virtual]: true,
+    [_validate]: (value: any, path: Path) =>
+      value === undefined
+        ? { valid: true, errors: [] }
+        : {
+            valid: false,
+            errors: [
+              {
+                message: "vality.virtual.base",
+                path,
+                options: {},
+                value,
+              },
+            ],
+          },
+  } as unknown as VirtualValit<any>);
