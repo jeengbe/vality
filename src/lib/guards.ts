@@ -25,6 +25,13 @@ declare global {
         }
       >;
       boolean: Guard<boolean>;
+      date: Guard<
+        Date,
+        {
+          min?: Date;
+          max?: Date;
+        }
+      >;
       /**
        * @example vality.literal(7)
        */
@@ -52,6 +59,11 @@ vality.number = guard("number", val => (typeof val === "number" && val > Number.
 });
 
 vality.boolean = guard("boolean", val => typeof val === "boolean");
+
+vality.date = guard("date", val => val instanceof Date, {
+  min: (val, o) => val.getTime() >= o.getTime(),
+  max: (val, o) => val.getTime() <= o.getTime(),
+});
 
 vality.literal = lit => guard("literal", val => val === lit);
 

@@ -131,6 +131,26 @@ describe("built-in guards", () => {
     {}
   );
 
+  testGuard(
+    "date",
+    {
+      valid: [new Date()],
+      invalid: [undefined, null, "", "a string", 0, 1, -1, -2],
+    },
+    {
+      min: {
+        value: new Date(1234),
+        valid: [new Date(1234), new Date()],
+        invalid: [new Date(1233), new Date(0)],
+      },
+      max: {
+        value: new Date(1234),
+        valid: [new Date(1234), new Date(0)],
+        invalid: [new Date(1235), new Date()],
+      },
+    }
+  );
+
   describe("literal", () => {
     it("works without options", () => {
       expect(validate(vality.literal("__foo__"), "__foo__")).toBeValid();
