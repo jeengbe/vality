@@ -1,6 +1,6 @@
 ---
-title: Getting Started
 sidebar_position: 1
+title: Intro
 ---
 
 ```twoslash include person
@@ -19,13 +19,14 @@ const Person = () => ({
 ```
 
 Vality offers a simple and intuitive way to describe your schema:
-<div id="model" />
+
+<h3 id="model">Describe it</h3>
 
 ```ts twoslash
 // @include: person
 ```
 
-<div id="type" />
+<h3 id="type">Type it</h3>
 
 ```ts twoslash
 // @include: person
@@ -37,7 +38,7 @@ type PersonModel = Parse<typeof Person>;
 //   ^?
 ```
 
-<div id="validate" />
+<h3 id="validate">Validate it</h3>
 
 ```ts twoslash
 // @noErrors
@@ -60,16 +61,17 @@ result = validate(Person, {
 // Which yields the following result:
 result = {
   valid: false,
+  data: undefined,
   errors: [{
-    message: "vality.number.type",
+    message: "vality.number.base",
     path: ["age"],
     value: "look ma no number",
     meta: { ... }
   }, {
-    message: "vality.string.type",
+    message: "vality.string.base",
     path: ["address", "city"],
     value: undefined,
     meta: { ... }
   }]
-}
+};
 ```
