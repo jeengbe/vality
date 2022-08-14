@@ -104,7 +104,7 @@ vality.literal("a");
 // and matches against "a" only
 ```
 
-:::info TIP
+:::tip
 `vality.literal(value)` also accepts `null` and can therefore test for null.
 :::
 
