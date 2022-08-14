@@ -1,18 +1,19 @@
 import { validate } from "../lib";
 import { guard } from "../lib/guard";
+import { identity } from "../lib/utils";
 
-const mockValid = jest.fn(() => true);
-const mockInvalid = jest.fn(() => false);
+const mockValid = jest.fn(identity);
+const mockInvalid = jest.fn(() => undefined);
 
 describe("guard", () => {
   it("resolves correctly", () => {
-    expect(validate(guard("__test__", mockValid), "__val__")).toBeValid();
+    expect(validate(guard("__test__" as any, mockValid), "__val__")).toBeValid();
     expect(mockValid).toHaveBeenCalledTimes(1);
     expect(mockValid).toHaveBeenCalledWith("__val__", {});
     mockValid.mockClear();
 
-    expect(validate(guard("__test__", mockInvalid), "__val__")).toBeInvalid("vality.__test__.base");
-    expect(validate(guard("__test__", mockInvalid), "__val__")).toBeInvalid();
+    expect(validate(guard("__test__" as any, mockInvalid), "__val__")).toBeInvalid("vality.__test__.base");
+    expect(validate(guard("__test__" as any, mockInvalid), "__val__")).toBeInvalid();
     expect(mockInvalid).toHaveBeenCalledTimes(2);
     expect(mockInvalid).toHaveBeenCalledWith("__val__", {});
     mockInvalid.mockClear();
@@ -25,13 +26,7 @@ describe("guard", () => {
     // Does it work with no options
     expect(
       validate(
-        guard<
-          any,
-          {
-            foo?: any;
-            bar?: any;
-          }
-        >("__test__", mockValid, {
+        guard("__test__" as any, mockValid, {
           foo: mockOptionValid,
           bar: mockOptionInvalid,
         }),
@@ -49,13 +44,7 @@ describe("guard", () => {
     // Are valid options respected
     expect(
       validate(
-        guard<
-          any,
-          {
-            foo?: any;
-            bar?: any;
-          }
-        >("__test__", mockValid, {
+        guard("__test__" as any, mockValid, {
           foo: mockOptionValid,
           bar: mockOptionInvalid,
         })({
@@ -77,13 +66,7 @@ describe("guard", () => {
     // Are invalid options respected
     expect(
       validate(
-        guard<
-          any,
-          {
-            foo?: any;
-            bar?: any;
-          }
-        >("__test__", mockValid, {
+        guard("__test__" as any, mockValid, {
           foo: mockOptionValid,
           bar: mockOptionInvalid,
         })({
@@ -105,13 +88,7 @@ describe("guard", () => {
     // Do options not bail
     expect(
       validate(
-        guard<
-          any,
-          {
-            foo?: any;
-            bar?: any;
-          }
-        >("__test__", mockValid, {
+        guard("__test__" as any, mockValid, {
           foo: mockOptionValid,
           bar: mockOptionInvalid,
         })({

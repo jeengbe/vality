@@ -7,3 +7,7 @@ declare global {
     }
   }
 }
+
+export const config = {
+  strict: false,
+};

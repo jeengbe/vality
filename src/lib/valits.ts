@@ -1,5 +1,5 @@
 import { _validate, _virtual } from "./symbols";
-import { Eny, enyToGuardFn, flat } from "./utils";
+import { Eny, enyToGuardFn, RSA, RSE } from "./utils";
 import { Error, Path } from "./validate";
 import { valit, Valit, VirtualValit } from "./valit";
 import { vality } from "./vality";
@@ -22,10 +22,20 @@ declare global {
           bail?: boolean;
         }
       >;
-      tuple: <E extends Eny[]>(...es: E) => Valit<E>;
-      optional: <E extends Eny>(e: E) => Valit<E | undefined>;
+      tuple: <E extends Eny[]>(
+        ...es: E
+      ) => Valit<
+        E,
+        {
+          /**
+           * @default false
+           */
+          bail: boolean;
+        }
+      >;
+      optional: <E extends Eny>(e: E) => Valit<undefined | E>;
       enum: <E extends Eny[]>(...es: E) => Valit<E[number]>;
-      object: <E extends Record<string, Eny>>(
+      object: <E extends RSE>(
         v: E
       ) => Valit<
         E,
@@ -49,68 +59,114 @@ declare global {
 vality.array = valit(
   "array",
   e => (value, path, options) => {
-    if (!Array.isArray(value)) return { valid: false, errors: [{ message: "vality.array.base", path, options, value }] };
+    if (!Array.isArray(value))
+      return { valid: false, data: undefined, errors: [{ message: "vality.array.base", path, options, value }] };
     const fn = enyToGuardFn(e);
+    const data: any[] = [];
     const errors: Error[] = [];
     for (const k in value) {
-      // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
-      const res = fn(value[k as keyof typeof value], [...path, k]);
-      errors.push(...res.errors);
-      if (!res.valid && options.bail) break;
+      // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want
+      const res = fn(value[k], [...path, k]);
+      if (!res.valid) {
+        errors.push(...res.errors);
+        if (options.bail) break;
+      } else {
+        data.push(res.data);
+      }
     }
-    return { valid: errors.length === 0, errors };
+    if (errors.length === 0) return { valid: true, data, errors: [] };
+    return { valid: false, data: undefined, errors };
   },
   {
     minLength: (val, o) => val.length >= o,
     maxLength: (val, o) => val.length <= o,
-    bail: val => true,
   }
 );
 
-vality.object = valit("object", e => (value, path, options) => {
-  if (typeof value !== "object" || value === null)
-    return { valid: false, errors: [{ message: "vality.object.base", path, options, value }] };
-  const errors: Error[] = [];
-  // We iterate the passed object (in the model) first
-  for (const k in e) {
-    const ek = e[k];
-    if (typeof ek === "object" && ek !== null && _virtual in ek) continue; // We'll deal with these later
+vality.object = valit(
+  "object",
+  e => (value, path, options) => {
+    if (typeof value !== "object" || value === null)
+      return { valid: false, data: undefined, errors: [{ message: "vality.object.base", path, options, value }] };
+    // This type would really just be ParseIn<typeof e>, but it's too complicated to represent
+    const data: RSA = {};
+    const errors: Error[] = [];
+    // We iterate the passed object (the model) first
+    for (const k in e) {
+      const ek = e[k] as Eny;
+      if (typeof ek === "object" && ek !== null && _virtual in ek) continue; // We'll deal with these later
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
       const res = enyToGuardFn(ek)(value[k as keyof typeof value], [...path, k]);
-    errors.push(...res.errors);
-    if (!res.valid && options.bail) break;
-  }
-  // And then check for additioal keys
-  for (const k in value) {
-    const ek = e[k];
-    if (ek === undefined || (typeof ek === "object" && ek !== null && _virtual in ek)) {
-      errors.push({
-        message: "vality.object.extraProperty",
-        path: [...path, k],
-        options,
-        value,
-      });
-      if (options.bail) break;
+      if (!res.valid) {
+        errors.push(...res.errors);
+        if (options.bail) break;
+      } else {
+        data[k] = res.data;
+      }
     }
+    // And then check for additional keys
+    for (const k in value) {
+      const ek = e[k];
+      if (ek === undefined || (typeof ek === "object" && ek !== null && _virtual in ek)) {
+        errors.push({
+          message: "vality.object.extraProperty",
+          path: [...path, k],
+          options,
+          value,
+        });
+        if (options.bail) break;
+      }
+    }
+    if (errors.length === 0) return { valid: true, data: data as typeof e, errors: [] };
+    return { valid: false, data: undefined, errors };
+  },
+  {},
+  {
+    bail: false,
   }
-  return { valid: errors.length === 0, errors };
-});
+);
 
+// @ts-ignore
 vality.optional = valit("optional", e => (val, path) => {
-  if (val === undefined) return { valid: true, errors: [] };
+  // Not the slightest idea why undefined doesn't work
+  if (val === undefined) return { valid: true, data: undefined as unknown as typeof e };
   return enyToGuardFn(e)(val, path);
 });
 
 vality.enum = valit("enum", (...es) => (value, path, options) => {
-  const valid = es.some(e => enyToGuardFn(e)(value, path).valid);
-  return { valid, errors: valid ? [] : [{ message: "vality.enum.base", path, options, value }] };
+  for (const e of es) {
+    const res = enyToGuardFn(e)(value, path);
+    if (res.valid) return res;
+  }
+  return { valid: false, data: undefined, errors: [{ message: "vality.enum.base", path, options, value }] };
 });
 
 vality.tuple = valit("tuple", (...es) => (value, path, options) => {
   if (!Array.isArray(value) || value.length !== es.length)
-    return { valid: false, errors: [{ message: "vality.tuple.base", path, options, value }] };
-  const errors = flat(value.map((_, i) => i).map(i => enyToGuardFn(es[i])(value[i], [...path, i]).errors));
-  return { valid: errors.length === 0, errors };
+    return { valid: false, data: undefined, errors: [{ message: "vality.tuple.base", path, options, value }] };
+  const data: any[] = [];
+  const errors: Error[] = [];
+  for (let i = 0; i < es.length; i++) {
+    const res = enyToGuardFn(es[i])(value[i], [...path, i]);
+    if (!res.valid) {
+      errors.push(...res.errors);
+      if (options.bail) break;
+    } else {
+      data[i] = res.data;
+    }
+  }
+  for (let i = es.length; i < value.length; i++) {
+    errors.push({
+      message: "vality.tuple.extraProperty",
+      path: [...path, i],
+      options,
+      value,
+    });
+    if (options.bail) break;
+  }
+
+  if (errors.length === 0) return { valid: true, data: data as typeof es, errors: [] };
+  return { valid: false, data: undefined, errors };
 });
 
 // Gotta assert here as this is an exception where we don't just return your average valit, but need to add the _virtual marker
@@ -122,7 +178,7 @@ vality.virtual = () =>
     [_virtual]: true,
     [_validate]: (value: any, path: Path) =>
       value === undefined
-        ? { valid: true, errors: [] }
+        ? { valid: true, data: undefined }
         : {
             valid: false,
             errors: [
