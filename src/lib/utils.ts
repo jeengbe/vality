@@ -1,6 +1,7 @@
 import { Guard } from "./guard";
+import { ParseIn } from "./parse";
 import { _validate } from "./symbols";
-import { validate, Validate, ValidateFn } from "./validate";
+import { ValidateFn } from "./validate";
 import type { Valit, Valitate } from "./valit";
 import { vality } from "./vality";
 
@@ -31,6 +32,10 @@ export function assert<T>(val: any, condition?: boolean): asserts val is T {
   }
 }
 
+export function isValid<Type>(data: Type | undefined): data is Type {
+  return data !== undefined;
+}
+
 export type EnyToGuard<T> = T extends [infer U]
   ? Valit<U[], any>
   : T extends [...infer U]
@@ -41,31 +46,47 @@ export type EnyToGuard<T> = T extends [infer U]
   ? T
   : T extends () => infer U
   ? Guard<U>
-  : Guard<T>;
+  : Valit<T, any>;
 
-export function enyToGuard(eny: Eny): EnyToGuard<Eny> {
+export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
+  // TODO: Fix this type mess -- I have no idea why it does that
   if (Array.isArray(eny)) {
     if (eny.length === 0) throw new Error("Empty array valit");
+    // @ts-ignore
     if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
+    // @ts-ignore
     return vality.enum(...eny.map(enyToGuard));
   }
+  // @ts-ignore
   if (typeof eny === "string" || typeof eny === "number" || typeof eny === "boolean" || eny === null) return vality.literal(eny);
   // Not sure why we have to assert here, a symbol should never be a key in RSA
+  // @ts-ignore
   if (_validate in eny) return eny as Exclude<typeof eny, RSA>;
   // This should only allow () => RSE at this point...
+  // @ts-ignore
   if (typeof eny === "function") return vality.relation(eny as () => RSE);
   // Not sure why we have to assert here, as RSA should be the only type left after narrowing
+  // @ts-ignore
   return vality.object(eny as RSA);
 }
 
-export function enyToGuardFn(v: Eny): ValidateFn {
-  return enyToGuard(v)[_validate];
+export function enyToGuardFn<E extends Eny>(e: E): ValidateFn<ParseIn<E>> {
+  return enyToGuard(e)[_validate] as ValidateFn<ParseIn<E>>;
 }
 
 export function flat<T>(arr: T[][]): T[] {
   return ([] as T[]).concat(...arr);
 }
 
-export function compose(...guards: Validate<any>[]): (val: unknown) => boolean {
-  return (val: unknown) => guards.every(g => validate(g, val).valid);
+export type Identity<T> = T;
+export type IdentityFn<T> = (x: T) => T;
+export function identity<T>(x: T): T {
+  return x;
+}
+
+export function trueFn(..._args: any[]): true {
+  return true;
+}
+export function falseFn(..._args: any[]): false {
+  return false;
 }

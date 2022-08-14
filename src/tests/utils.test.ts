@@ -1,5 +1,5 @@
 import { validate, vality } from "../lib";
-import { assert, enyToGuard, flat } from "../lib/utils";
+import { assert, enyToGuard, flat, identity } from "../lib/utils";
 
 describe("assert", () => {
   it("throws an error if the condition is false", () => {
@@ -135,3 +135,14 @@ it("flat", () => {
   // We only implement a depth of 1 since we don't need more
   expect(flat([[1], [2], [3], [4, 5, [6, 7]]])).toEqual([1, 2, 3, 4, 5, [6, 7]]);
 });
+
+it("identity", () => {
+  expect(identity(1)).toBe(1);
+  expect(identity("a string")).toBe("a string");
+  expect(identity(true)).toBe(true);
+  expect(identity(false)).toBe(false);
+  expect(identity(null)).toBe(null);
+  expect(identity(undefined)).toBe(undefined);
+  expect(identity({})).toEqual({});
+  expect(identity([])).toEqual([]);
+})

@@ -10,7 +10,7 @@ A TypeScript schema descriptor library with zero dependencies.
 </div>
 
 ### Before you read this readme
-While a readme is fine and all, it is missing [one very cool and important feature](https://shikijs.github.io/twoslash/playground) on GitHub, which is why we have put together a documentation with interactive code examples. Vality is best explained with examples. We even registered a custom domain, this must be serious!\
+While a readme is fine and all, it is missing [one very cool and important feature](https://shikijs.github.io/twoslash/playground) on GitHub, which is why I have put together a documentation with interactive code examples. Vality is best explained with examples. I even registered a custom domain for Vality, this must be serious!\
 [https://ts-vality.io/getting-started](https://ts-vality.io/getting-started)
 
 

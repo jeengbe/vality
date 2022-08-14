@@ -1,5 +1,7 @@
+import { config } from "./config";
 import { guard, Guard } from "./guard";
-import { compose, Primitive, RSE } from "./utils";
+import { _validate } from "./symbols";
+import { Primitive, RSE } from "./utils";
 import { vality } from "./vality";
 
 declare global {
@@ -30,6 +32,8 @@ declare global {
         {
           min?: Date;
           max?: Date;
+          past?: boolean;
+          future?: boolean;
         }
       >;
       /**
@@ -45,35 +49,63 @@ declare global {
   }
 }
 
-vality.string = guard("string", val => typeof val === "string", {
+vality.string = guard("string", val => (typeof val === "string" ? val : undefined), {
   minLength: (val, o) => val.length >= o,
   maxLength: (val, o) => val.length <= o,
   match: (val, o) => o.test(val),
 });
 
-// prettier-ignore
-vality.number = guard("number", val => (typeof val === "number" && val > Number.MIN_SAFE_INTEGER && val < Number.MAX_SAFE_INTEGER), {
-  min: (val, o) => val >= o,
-  max: (val, o) => val <= o,
-  integer: (val, o) => (val % 1 === 0 ? o : !o),
+vality.number = guard(
+  "number",
+  val => {
+    const nr = typeof val === "number" ? val : config.strict ? NaN : typeof val === "string" ? Number.parseFloat(val) : NaN;
+    if (nr > Number.MIN_SAFE_INTEGER && nr < Number.MAX_SAFE_INTEGER) return nr;
+    return undefined;
+  },
+  {
+    min: (val, o) => val >= o,
+    max: (val, o) => val <= o,
+    integer: (val, o) => (val % 1 === 0 ? o : !o),
+  }
+);
+
+const y = ["1", 1, "true"];
+const n = ["0", 0, "false"];
+vality.boolean = guard("boolean", val => {
+  if (typeof val === "boolean") return val;
+  if (config.strict) return undefined;
+  if (typeof val !== "string" && typeof val !== "number") return undefined;
+  return y.indexOf(val) !== -1 ? true : n.indexOf(val) !== -1 ? false : undefined;
 });
 
-vality.boolean = guard("boolean", val => typeof val === "boolean");
+vality.date = guard(
+  "date",
+  val => {
+    if (val instanceof Date) return val;
+    if (config.strict) return undefined;
+    if (typeof val !== "string" && typeof val !== "number") return undefined;
+    const date = new Date(val);
+    if (Number.isNaN(date.getTime())) return undefined;
+    return date;
+  },
+  {
+    min: (val, o) => val.getTime() >= o.getTime(),
+    max: (val, o) => val.getTime() <= o.getTime(),
+    past: (val, o) => !o || val < new Date(),
+    future: (val, o) => !o || val > new Date(),
+  }
+);
 
-vality.date = guard("date", val => val instanceof Date, {
-  min: (val, o) => val.getTime() >= o.getTime(),
-  max: (val, o) => val.getTime() <= o.getTime(),
-});
+vality.literal = lit => guard("literal", val => (val === lit ? lit : undefined));
 
-vality.literal = lit => guard("literal", val => val === lit);
-
-vality.relation = () =>
-  guard(
-    "relation",
-    compose(
-      vality.number({
+vality.relation = (s) =>
+  guard("relation", val => {
+    const r = vality
+      .number({
         integer: true,
         min: 0,
       })
-    )
-  );
+      [_validate](val);
+    // Need to assert here as these returns really don't match, and we just simulate the return type of the relation to be the object
+    return r.valid ? (r.data as unknown as typeof s) : undefined;
+  });

@@ -38,9 +38,11 @@ function testGuard<G extends keyof vality.guards, O extends GuardOptions<G>>(
           for (const val of values) {
             for (const v of val.valid) {
               expect(
+                // TODO: Fix this hot mess
+                // @ts-ignore
                 validate(
-                  // TODO: un-any this
-                  (vality[guard] as any)({
+                  // @ts-ignore
+                  (vality[guard])({
                     [o]: val.value,
                   }),
                   v
@@ -49,6 +51,7 @@ function testGuard<G extends keyof vality.guards, O extends GuardOptions<G>>(
             }
             for (const v of val.invalid) {
               expect(
+                // @ts-ignore
                 validate(
                   (vality[guard] as any)({
                     [o]: val.value,
@@ -125,8 +128,8 @@ describe("built-in guards", () => {
   testGuard(
     "boolean",
     {
-      valid: [true, false],
-      invalid: [undefined, null, "", "a string", 0, 1, -1, -2],
+      valid: [true, false, 0, 1, "0", "1", "true", "false"],
+      invalid: [undefined, null, "", "a string"],
     },
     {}
   );
@@ -134,8 +137,8 @@ describe("built-in guards", () => {
   testGuard(
     "date",
     {
-      valid: [new Date()],
-      invalid: [undefined, null, "", "a string", 0, 1, -1, -2],
+      valid: [new Date(), -1, -2, "1995-12-17T03:24:00"],
+      invalid: [undefined, null, "", "a string"],
     },
     {
       min: {
