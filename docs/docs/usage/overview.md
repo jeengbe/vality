@@ -96,7 +96,7 @@ const User = () =>
   ({
     age: v.number({ min: 18 }), // Will only accept numbers that are at least 18
     username: v.string({ m }), // We even get autocomplete!
-    //                        ^|
+    //                    ^|
   } as const);
 ```
 
@@ -180,7 +180,7 @@ const Car = () => ({
   horsepower: v.number({
     min: 1
   }),
-  fuel: ["petrol", "disel", "electric"],
+  fuel: ["petrol", "diesel", "electric"],
 } as const);
 
 // Hover the types
