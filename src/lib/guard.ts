@@ -1,8 +1,9 @@
 import { _options, _type, _validate } from "./symbols";
-import { identity, Identity, IdentityFn, isValid, MakeRequired, RSA, RSN, trueFn } from "./utils";
+import { identity, IdentityFn, isValid, MakeRequired, RSA, RSN, trueFn } from "./utils";
 import type { Validate, ValidateFn } from "./validate";
 
-export type Guard<Type, Options extends RSA = RSN> = Validate<Type> & ((options: Partial<Options>) => Validate<Type>);
+export type Guard<Type, Options extends RSA = RSN> = Validate<Type> &
+  ((options: Partial<Options & Pick<ExtraOptions<Type>, "transform">>) => Validate<Type>);
 export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Name]> = G extends Guard<infer Type, infer Options>
   ? [Type, Options]
   : G extends (...args: any[]) => Guard<infer Type, infer Options>
@@ -10,27 +11,21 @@ export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Nam
   : never;
 
 type ExtraOptions<T> = {
-  transform?: Identity<T>;
+  transform?: IdentityFn<T>;
   validate?: (val: T) => boolean;
 };
 
 export function guard<
   Name extends keyof vality.guards,
   Type extends GuardOptions<Name>[0],
-  Options extends RSA & Omit<GuardOptions<Name>[1], keyof ExtraOptions<any>>
+  Options extends RSA & GuardOptions<Name>[1]
 >(
   name: Name,
   fn: (val: unknown, options: Partial<Options>) => Type | undefined,
   handleOptions?: {
-    [K in keyof ({
-      [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options?: MakeRequired<Options, K>) => boolean;
-    } & {
-      [K in keyof ExtraOptions<Type>]: ExtraOptions<Type>[K];
-    })]: ({
-      [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options?: MakeRequired<Options, K>) => boolean;
-    } & {
-      [K in keyof ExtraOptions<Type>]: ExtraOptions<Type>[K];
-    })[K];
+    [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options?: MakeRequired<Options, K>) => boolean;
+  } & {
+    [K in keyof ExtraOptions<Type>]?: ExtraOptions<Type>[K];
   },
   defaultOptions: {
     [K in keyof Options]?: Options[K];
@@ -71,7 +66,7 @@ export function guard<
           ],
         };
       }
-      if (handleOptions === undefined) return { valid: true, data: transform(data), errors: [] };
+      if (handleOptions === undefined) return { valid: true, data: (options.transform ?? identity)(transform(data)), errors: [] };
       const keysWithError = Object.keys(options).filter(
         k =>
           k !== "transform" &&
@@ -83,7 +78,7 @@ export function guard<
       if (keysWithError.length === 0) {
         return {
           valid: true,
-          data: transform(data),
+          data: (options.transform ?? identity)(transform(data)),
           errors: [],
         };
       }

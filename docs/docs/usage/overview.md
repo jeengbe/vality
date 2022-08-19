@@ -22,7 +22,7 @@ import { v } from "vality";
 
 const User = () =>
   ({
-    name: v.string,
+    username: v.string,
   } as const);
 ```
 
@@ -33,11 +33,16 @@ You can then use this object to define how your data should look, by specifying 
 ```ts twoslash
 import { v } from "vality";
 // ---cut---
-const Person = () =>
+const User = () =>
   ({
-    address: {
-      street: v.string,
-      houseNumber: v.number,
+    username: v.string,
+    contact: {
+      email: v.string,
+      phone: v.number,
+      discord: {
+        username: v.string,
+        discriminator: v.number,
+      },
     },
   } as const);
 ```
@@ -50,16 +55,21 @@ All you have to do is to pass `typeof Model` to the `Parse` type and it will ret
 
 ```ts twoslash
 import { v, Parse } from "vality";
-// ---cut---
-const Person = () =>
+const User = () =>
   ({
-    address: {
-      street: v.string,
-      houseNumber: v.number,
+    username: v.string,
+    contact: {
+      email: v.string,
+      phone: v.number,
+      discord: {
+        username: v.string,
+        discriminator: v.number,
+      },
     },
   } as const);
+// ---cut---
 
-type PersonModel = Parse<typeof Person>;
+type UserModel = Parse<typeof User>;
 //   ^?
 ```
 
@@ -95,28 +105,31 @@ import { v } from "vality";
 const User = () =>
   ({
     age: v.number({ min: 18 }), // Will only accept numbers that are at least 18
-    username: v.string({ m }), // We even get autocomplete!
+    realName: v.string({ m }), // We even get autocomplete!
     //                    ^|
   } as const);
 ```
 
-Options have no influence on the type of the guard when used with `Parse`.
+Options have no influence on the type of the guard when processed by `Parse`.
 
 ## Valits
 
 More complex data structures, such as objects or arrays, are represented by valits.
 
-Similar to guards, there are a number of built-in valits (see the [full documentation](valits.md)), and they too are [extendable](../extend/valits.md). However, unline guards, valits take arguments that determine their type. For example, `v.array` takes <span title="Actually, this is not completely true. Valits can take any eny as arguments, but as enys have not been introduced yet, this will be explained further down the page." style={{textDecoration: "underline dotted"}}>a single guard</span> and then checks for an array of the passed guard's type.
+Similar to guards, there are a number of built-in valits (see the [full documentation](valits.md) for a complete list), and they too are [extendable](../extend/valits.md). However, unline guards, valits take arguments that determine their type. For example, `v.array` takes <span title="Actually, this is not completely true. Valits can take any eny as arguments, but as enys have not been introduced yet, this will be explained further down the page." style={{textDecoration: "underline dotted"}}>a single guard</span> and then checks for an array of the passed guard's type.
 
 ```ts twoslash
 import { v, Parse } from "vality";
 // ---cut---
-const Person = () =>
+const User = () =>
   ({
-    luckyNumbers: v.array(v.number),
+    username: v.string,
+    // (additional properties omitted for brevity)
+
+    languages: v.array(v.string),
   } as const);
 
-type PersonModel = Parse<typeof Person>;
+type UserModel = Parse<typeof User>;
 //   ^?
 ```
 
@@ -127,30 +140,34 @@ Valits can also be refined with options, which are passed by calling them with a
 ```ts twoslash
 import { v } from "vality";
 // ---cut---
-const Person = () =>
+const User = () =>
   ({
     luckyNumbers: v.array(v.number)({ minLength: 3, maxLength: 5 }),
   } as const);
 ```
 
-Options have no influence on the type of the valit when used with `Parse`.
+Options have no influence on the type of the valit when processed by `Parse`.
 
 ## Shorthands (Shorts)
 
 Another very handy feature of Vality are shorthands for certain valits. For example, an array with only one element is treated the same way as `v.array`. A list of these shorts can be found in the [full documentation](shorthands.md).
 
 ```ts twoslash
-import { v } from "vality";
+import { v, Parse } from "vality";
 // ---cut---
-const Person = () =>
+const User = () =>
   ({
-    luckyNumbers: [v.number], // Same as v.array(v.number)
+    // Same as v.array(v.enum(v.literal("de"), v.literal("en"), v.literal("sv"), v.literal("fr")))
+    languages: [["de", "en", "sv", "fr"]],
   } as const);
+
+type UserModel = Parse<typeof User>;
+//   ^?
 ```
 
 ### Options
 
-It is not possible to provide options to shorts. If you need to provide extra constraints, you have to pass those to the verbose version. For example, `[v.number]( ... )` is not valid, rather will you have to call `v.array(v.number)( ... )`.
+It is not possible to provide options to shorts. If you need to provide extra constraints, you have to pass those to the verbose version. For example, `[v.number]( ... )` is not valid, rather would you have to call `v.array(v.number)( ... )`.
 
 ## Enys
 
@@ -160,28 +177,31 @@ _Eny_ is a general term for everything that Vality can deal with. This includes 
 import { v, Parse } from "vality";
 // ---cut---
 
-const Person = () => ({
-  name: v.string,
-  address: {
-    street: v.optional(v.string),
-    city: v.optional(v.string),
-    country: v.string,
-  },
-} as const);
+const Person = () =>
+  ({
+    name: v.string,
+    address: {
+      street: v.optional(v.string),
+      city: v.optional(v.string),
+      country: v.string,
+    },
+  } as const);
 
-const Manufacturer = () => ({
-  name: v.string,
-  ceo: Person,
-  cars: [Car],
-} as const);
+const Manufacturer = () =>
+  ({
+    name: v.string,
+    ceo: Person,
+    cars: [Car],
+  } as const);
 
-const Car = () => ({
-  manufacturer: Manufacturer,
-  horsepower: v.number({
-    min: 1
-  }),
-  fuel: ["petrol", "diesel", "electric"],
-} as const);
+const Car = () =>
+  ({
+    manufacturer: Manufacturer,
+    horsepower: v.number({
+      min: 1,
+    }),
+    fuel: ["petrol", "diesel", "electric"],
+  } as const);
 
 // Hover the types
 declare type PersonModel = Parse<typeof Person>;

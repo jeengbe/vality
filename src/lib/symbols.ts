@@ -7,5 +7,5 @@ export const _options = Symbol("options");
 
 // This symbol is used to distingush between a guard and a valit
 export const _valit = Symbol("valit");
-// * * virtual valits
-export const _virtual = Symbol("virtual");
+// This marks readonly valits to be correctly handeled by vality.object etc.
+export const _readonly = Symbol("virtual");

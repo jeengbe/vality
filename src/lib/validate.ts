@@ -1,5 +1,5 @@
 import { ParseIn } from "./parse";
-import { _type, _validate, _valit, _virtual } from "./symbols";
+import { _readonly, _type, _validate, _valit } from "./symbols";
 import { Eny, enyToGuardFn, RSE } from "./utils";
 import { vality } from "./vality";
 
@@ -10,7 +10,7 @@ export interface Error {
   value: any;
 }
 
-export type Validate<T> = { [_validate]: ValidateFn<T>; [_type]: T; [_virtual]?: false; [_valit]?: false };
+export type Validate<T> = { [_validate]: ValidateFn<T>; [_type]: T; [_readonly]?: false; [_valit]?: false };
 export type ValidateFn<T> = (val: unknown, path?: Path) => ValidationResult<T>;
 export type ValidationResult<T> = { valid: true; data: T, errors: never[] } | { valid: false; data: undefined, errors: Error[] };
 export type Path = (string | number)[];

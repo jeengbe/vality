@@ -1,7 +1,5 @@
 import { Guard } from "./guard";
-import { ParseIn } from "./parse";
 import { _validate } from "./symbols";
-import { ValidateFn } from "./validate";
 import type { Valit, Valitate } from "./valit";
 import { vality } from "./vality";
 
@@ -70,8 +68,9 @@ export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
   return vality.object(eny as RSA);
 }
 
-export function enyToGuardFn<E extends Eny>(e: E): ValidateFn<ParseIn<E>> {
-  return enyToGuard(e)[_validate] as ValidateFn<ParseIn<E>>;
+// This type is too complicated to represent - should be ValidateFn<ParseIn<E>>
+export function enyToGuardFn<E extends Eny>(e: E): any {
+  return enyToGuard(e)[_validate];
 }
 
 export function flat<T>(arr: T[][]): T[] {
