@@ -1,7 +1,7 @@
-import { _validate, _virtual } from "./symbols";
+import { _readonly, _validate } from "./symbols";
 import { Eny, enyToGuardFn, RSA, RSE } from "./utils";
 import { Error, Path } from "./validate";
-import { valit, Valit, VirtualValit } from "./valit";
+import { ReadonlyValit, valit, Valit } from "./valit";
 import { vality } from "./vality";
 
 declare global {
@@ -51,7 +51,7 @@ declare global {
       /**
        * This valit wraps the passed eny so that it is ignored by ParseIn
        */
-      virtual: <E extends Eny>(e: E) => VirtualValit<E>;
+      readonly: <E extends Eny>(e: E) => ReadonlyValit<E>;
     }
   }
 }
@@ -94,7 +94,7 @@ vality.object = valit(
     // We iterate the passed object (the model) first
     for (const k in e) {
       const ek = e[k] as Eny;
-      if (typeof ek === "object" && ek !== null && _virtual in ek) continue; // We'll deal with these later
+      if (typeof ek === "object" && ek !== null && _readonly in ek) continue; // We'll deal with these later
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
       const res = enyToGuardFn(ek)(value[k as keyof typeof value], [...path, k]);
       if (!res.valid) {
@@ -107,7 +107,7 @@ vality.object = valit(
     // And then check for additional keys
     for (const k in value) {
       const ek = e[k];
-      if (ek === undefined || (typeof ek === "object" && ek !== null && _virtual in ek)) {
+      if (ek === undefined || (typeof ek === "object" && ek !== null && _readonly in ek)) {
         errors.push({
           message: "vality.object.extraProperty",
           path: [...path, k],
@@ -169,13 +169,13 @@ vality.tuple = valit("tuple", (...es) => (value, path, options) => {
   return { valid: false, data: undefined, errors };
 });
 
-// Gotta assert here as this is an exception where we don't just return your average valit, but need to add the _virtual marker
-// This is required as vality.object checks for this symbol to correctly mark virtual proerties as "non-existend", not "required to be of value 'undefined'"
-// Other valits could also mask this error in the future
-// We still attach _validate, though, as, for whatever reason, this valit may still be called, and we really don't want a runtime error in that situation
-vality.virtual = () =>
+// Gotta assert here as this is an exception where we don't just return your average valit, but need to add the _readonly marker
+// This is required as vality.object checks for this symbol to correctly check for readonly properties to be unset, not just of value undefined
+
+// We still attach _validate, though, as (for whatever reason) this valit may still be called, and we really don't want a runtime error in that situation
+vality.readonly = () =>
   ({
-    [_virtual]: true,
+    [_readonly]: true,
     [_validate]: (value: any, path: Path) =>
       value === undefined
         ? { valid: true, data: undefined }
@@ -183,11 +183,11 @@ vality.virtual = () =>
             valid: false,
             errors: [
               {
-                message: "vality.virtual.base",
+                message: "vality.readonly.base",
                 path,
                 options: {},
                 value,
               },
             ],
           },
-  } as unknown as VirtualValit<any>);
+  } as unknown as ReadonlyValit<any>);

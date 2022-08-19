@@ -1,7 +1,9 @@
 import { config } from "./config";
 import { guard, Guard } from "./guard";
-import { _validate } from "./symbols";
+import { RelationType } from "./parse";
 import { Primitive, RSE } from "./utils";
+import { validate } from "./validate";
+import { Valit } from "./valit";
 import { vality } from "./vality";
 
 declare global {
@@ -39,12 +41,19 @@ declare global {
       /**
        * @example vality.literal(7)
        */
-      literal<T extends Primitive>(lit: T): Guard<T>;
-      // type S is solely used to infer and keep the type of the relation
+      literal(lit: Primitive): Guard<typeof lit>;
       /**
        * @example vality.relation(SomeModel)
        */
-      relation<S extends () => RSE>(type: S): Guard<S>;
+      // type S is solely used to infer and keep the type of the relation and not used in runtime
+      relation<S extends () => RSE>(
+        type: S
+      ): Valit<
+        S,
+        {
+          transform: (v: RelationType) => RelationType;
+        }
+      >;
     }
   }
 }
@@ -98,14 +107,17 @@ vality.date = guard(
 
 vality.literal = lit => guard("literal", val => (val === lit ? lit : undefined));
 
-vality.relation = (s) =>
+vality.relation = s =>
   guard("relation", val => {
-    const r = vality
-      .number({
+    const r = validate(
+      vality.number({
         integer: true,
         min: 0,
-      })
-      [_validate](val);
+      }),
+      val
+    );
     // Need to assert here as these returns really don't match, and we just simulate the return type of the relation to be the object
     return r.valid ? (r.data as unknown as typeof s) : undefined;
-  });
+  }) as Valit<typeof s, {
+    transform: (v: RelationType) => RelationType;
+  }>;

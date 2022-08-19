@@ -1,4 +1,4 @@
-import { _type, _validate, _valit, _virtual } from "./symbols";
+import { _readonly, _type, _validate, _valit } from "./symbols";
 import { assert, MakeRequired, RSA, RSN } from "./utils";
 import type { Path, Validate, ValidateFn, ValidationResult } from "./validate";
 
@@ -11,8 +11,8 @@ export type ValitOptions<Name extends keyof vality.valits, Fn = vality.valits[Na
   ? [Args, T, O]
   : never;
 
-// This is a special type used only by vality.virtual
-export type VirtualValit<T> = { [_virtual]?: typeof _virtual } & Valit<T>;
+// This is a special type used only by vality.readonly
+export type ReadonlyValit<T> = { [_readonly]?: typeof _readonly } & Valit<T>;
 
 export function valit<
   Name extends keyof vality.valits,
