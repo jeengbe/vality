@@ -12,14 +12,14 @@ declare global {
       ) => Valit<
         E[],
         {
-          minLength?: number;
-          maxLength?: number;
+          minLength: number;
+          maxLength: number;
           /**
-           * If true, stops validating after the first error.
+           * Whether to stop validating after the first error
            *
            * @default false
            */
-          bail?: boolean;
+          bail: boolean;
         }
       >;
       tuple: <E extends Eny[]>(
@@ -41,7 +41,7 @@ declare global {
         E,
         {
           /**
-           * If true, stops validating after the first error.
+           * Whether to stop validating after the first error
            *
            * @default false
            */
@@ -80,6 +80,9 @@ vality.array = valit(
   {
     minLength: (val, o) => val.length >= o,
     maxLength: (val, o) => val.length <= o,
+  },
+  {
+    bail: false,
   }
 );
 
@@ -141,33 +144,41 @@ vality.enum = valit("enum", (...es) => (value, path, options) => {
   return { valid: false, data: undefined, errors: [{ message: "vality.enum.base", path, options, value }] };
 });
 
-vality.tuple = valit("tuple", (...es) => (value, path, options) => {
-  if (!Array.isArray(value) || value.length !== es.length)
-    return { valid: false, data: undefined, errors: [{ message: "vality.tuple.base", path, options, value }] };
-  const data: any[] = [];
-  const errors: Error[] = [];
-  for (let i = 0; i < es.length; i++) {
-    const res = enyToGuardFn(es[i])(value[i], [...path, i]);
-    if (!res.valid) {
-      errors.push(...res.errors);
-      if (options.bail) break;
-    } else {
-      data[i] = res.data;
-    }
-  }
-  for (let i = es.length; i < value.length; i++) {
-    errors.push({
-      message: "vality.tuple.extraProperty",
-      path: [...path, i],
-      options,
-      value,
-    });
-    if (options.bail) break;
-  }
+vality.tuple = valit(
+  "tuple",
+  (...es) =>
+    (value, path, options) => {
+      if (!Array.isArray(value) || value.length !== es.length)
+        return { valid: false, data: undefined, errors: [{ message: "vality.tuple.base", path, options, value }] };
+      const data: any[] = [];
+      const errors: Error[] = [];
+      for (let i = 0; i < es.length; i++) {
+        const res = enyToGuardFn(es[i])(value[i], [...path, i]);
+        if (!res.valid) {
+          errors.push(...res.errors);
+          if (options.bail) break;
+        } else {
+          data[i] = res.data;
+        }
+      }
+      for (let i = es.length; i < value.length; i++) {
+        errors.push({
+          message: "vality.tuple.extraProperty",
+          path: [...path, i],
+          options,
+          value,
+        });
+        if (options.bail) break;
+      }
 
-  if (errors.length === 0) return { valid: true, data: data as typeof es, errors: [] };
-  return { valid: false, data: undefined, errors };
-});
+      if (errors.length === 0) return { valid: true, data: data as typeof es, errors: [] };
+      return { valid: false, data: undefined, errors };
+    },
+  {},
+  {
+    bail: false,
+  }
+);
 
 // Gotta assert here as this is an exception where we don't just return your average valit, but need to add the _readonly marker
 // This is required as vality.object checks for this symbol to correctly check for readonly properties to be unset, not just of value undefined

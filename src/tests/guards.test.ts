@@ -42,7 +42,7 @@ function testGuard<G extends keyof vality.guards, O extends GuardOptions<G>>(
                 // @ts-ignore
                 validate(
                   // @ts-ignore
-                  (vality[guard])({
+                  vality[guard]({
                     [o]: val.value,
                   }),
                   v
@@ -115,12 +115,7 @@ describe("built-in guards", () => {
           value: true,
           valid: [-1, 0, 1],
           invalid: [-1.1, 1.1],
-        },
-        {
-          value: false,
-          valid: [-1.1, 1.1],
-          invalid: [-1, 0, 1],
-        },
+        }
       ],
     }
   );
@@ -134,10 +129,13 @@ describe("built-in guards", () => {
     {}
   );
 
+  const futureDate = new Date();
+  futureDate.setFullYear(9999);
+
   testGuard(
     "date",
     {
-      valid: [new Date(), -1, -2, "1995-12-17T03:24:00"],
+      valid: [new Date(), -1, -2, new Date().getTime(), "1995-12-17T03:24:00"],
       invalid: [undefined, null, "", "a string"],
     },
     {
@@ -150,6 +148,16 @@ describe("built-in guards", () => {
         value: new Date(1234),
         valid: [new Date(1234), new Date(0)],
         invalid: [new Date(1235), new Date()],
+      },
+      past: {
+        value: true,
+        valid: [new Date(0)],
+        invalid: [futureDate],
+      },
+      future: {
+        value: true,
+        valid: [futureDate],
+        invalid: [new Date(0)],
       },
     }
   );
@@ -188,7 +196,7 @@ describe("built-in guards", () => {
     it("works without options", () => {
       const Person = () => ({
         name: vality.string,
-      })
+      });
 
       expect(validate(vality.relation(Person), { name: "__foo__" })).toBeInvalid();
       expect(validate(vality.relation(Person), true)).toBeInvalid();
@@ -196,5 +204,5 @@ describe("built-in guards", () => {
       expect(validate(vality.relation(Person), 0)).toBeValid();
       expect(validate(vality.relation(Person), -1)).toBeInvalid();
     });
-  })
+  });
 });
