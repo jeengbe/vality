@@ -2,17 +2,17 @@ import { _readonly, _type, _validate, _valit } from "./symbols";
 import { assert, MakeRequired, RSA, RSN } from "./utils";
 import type { Path, Validate, ValidateFn, ValidationResult } from "./validate";
 
-export type Valitate<V> = { [_valit]?: typeof _valit } & Validate<V>;
+export type Valitate<V> = { [_valit]?: true } & Validate<V>;
 export type Valit<V, Options extends RSA = RSN> = Valitate<V> & ((options: Partial<Options>) => Valitate<V>);
 
 export type ValitOptions<Name extends keyof vality.valits, Fn = vality.valits[Name]> = Fn extends (
   ...args: infer Args
-) => Valit<infer T, infer O>
-  ? [Args, T, O]
+) => Valit<infer Type, infer Options>
+  ? [Args, Type, Options]
   : never;
 
 // This is a special type used only by vality.readonly
-export type ReadonlyValit<T> = { [_readonly]?: typeof _readonly } & Valit<T>;
+export type ReadonlyValit<T> = { [_readonly]?: true } & Valit<T>;
 
 export function valit<
   Name extends keyof vality.valits,
@@ -25,9 +25,7 @@ export function valit<
   handleOptions?: {
     [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
   },
-  defaultOptions?: {
-    [K in keyof Options]?: Options[K];
-  }
+  defaultOptions: Partial<Options> = {}
 ): (...args: Arg) => Valit<Type, Options> {
   return (...args): Valit<Type, Options> => {
     const fnWithValit: ValidateFn<Type> = (val, path = []) => {
@@ -39,8 +37,9 @@ export function valit<
         const fnWithValitWithOptions: ValidateFn<Type> = (value, path = []) => {
           const data = fn(...args)(value, path, { ...defaultOptions, ...options });
           if (!data.valid) return data;
-          assert<Type>(value);
           if (handleOptions === undefined) return data;
+
+          assert<Type>(value);
           const keysWithError = Object.keys(options).filter(
             k =>
               handleOptions[k] !== undefined && !handleOptions[k]!(value, options[k]!, options as MakeRequired<Options, typeof k>)
@@ -60,12 +59,12 @@ export function valit<
 
         return {
           [_validate]: fnWithValitWithOptions,
-          [_type]: undefined as any,
+          [_type]: undefined as unknown as Type,
         };
       },
       {
         [_validate]: fnWithValit,
-        [_type]: undefined as any,
+        [_type]: undefined as unknown as Type,
       }
     );
   };

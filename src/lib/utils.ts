@@ -1,5 +1,6 @@
 import { Guard } from "./guard";
 import { _validate } from "./symbols";
+import { Validate } from "./validate";
 import type { Valit, Valitate } from "./valit";
 import { vality } from "./vality";
 
@@ -20,9 +21,10 @@ export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
  * Make all properties in T required whose key is assignable to K
  */
 export type MakeRequired<T extends RSA, K extends keyof T> = {
-  [P in keyof _MakeRequired<T, K>]: _MakeRequired<T, K>[P];
+  [key in K]-?: T[key];
+} & {
+  [key in Exclude<keyof T, K>]: T[key];
 };
-type _MakeRequired<T extends RSA, K extends keyof T> = Required<Pick<T, K>> & Pick<T, Exclude<keyof T, K>>;
 
 export function assert<T>(val: any, condition?: boolean): asserts val is T {
   if (condition === false) {
@@ -40,7 +42,7 @@ export type EnyToGuard<T> = T extends [infer U]
   ? Valit<U, any>
   : T extends Primitive
   ? Guard<T>
-  : T extends Guard<any>
+  : T extends Validate<any>
   ? T
   : T extends () => infer U
   ? Guard<U>
@@ -77,7 +79,6 @@ export function flat<T>(arr: T[][]): T[] {
   return ([] as T[]).concat(...arr);
 }
 
-export type Identity<T> = T;
 export type IdentityFn<T> = (x: T) => T;
 export function identity<T>(x: T): T {
   return x;

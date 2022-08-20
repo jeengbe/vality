@@ -12,30 +12,36 @@ declare global {
       string: Guard<
         string,
         {
-          minLength?: number;
-          maxLength?: number;
-          match?: RegExp;
+          minLength: number;
+          maxLength: number;
+          match: RegExp;
         }
       >;
       number: Guard<
         number,
         {
-          min?: number;
-          max?: number;
+          min: number;
+          max: number;
           /**
-           * @default false
+           * Whether the number has to be an integer
            */
-          integer?: boolean;
+          integer: boolean;
         }
       >;
       boolean: Guard<boolean>;
       date: Guard<
         Date,
         {
-          min?: Date;
-          max?: Date;
-          past?: boolean;
-          future?: boolean;
+          min: Date;
+          max: Date;
+          /**
+           * Whether the date must lie in the past
+           */
+          past: boolean;
+          /**
+           * Whether the date must lie in the future
+           */
+          future: boolean;
         }
       >;
       /**
@@ -74,7 +80,7 @@ vality.number = guard(
   {
     min: (val, o) => val >= o,
     max: (val, o) => val <= o,
-    integer: (val, o) => (val % 1 === 0 ? o : !o),
+    integer: (val, o) => !o || val % 1 === 0,
   }
 );
 
@@ -98,8 +104,8 @@ vality.date = guard(
     return date;
   },
   {
-    min: (val, o) => val.getTime() >= o.getTime(),
-    max: (val, o) => val.getTime() <= o.getTime(),
+    min: (val, o) => val >= o,
+    max: (val, o) => val <= o,
     past: (val, o) => !o || val < new Date(),
     future: (val, o) => !o || val > new Date(),
   }
@@ -118,6 +124,9 @@ vality.relation = s =>
     );
     // Need to assert here as these returns really don't match, and we just simulate the return type of the relation to be the object
     return r.valid ? (r.data as unknown as typeof s) : undefined;
-  }) as Valit<typeof s, {
-    transform: (v: RelationType) => RelationType;
-  }>;
+  }) as Valit<
+    typeof s,
+    {
+      transform: (v: RelationType) => RelationType;
+    }
+  >;
