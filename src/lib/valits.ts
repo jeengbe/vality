@@ -22,6 +22,7 @@ declare global {
           bail: boolean;
         }
       >;
+      // FIXME: Is resolved as enum
       tuple: <E extends Eny[]>(
         ...es: E
       ) => Valit<
@@ -129,11 +130,13 @@ vality.object = valit(
   }
 );
 
-// @ts-ignore
 vality.optional = valit("optional", e => (val, path) => {
-  // Not the slightest idea why undefined doesn't work
-  if (val === undefined) return { valid: true, data: undefined as unknown as typeof e };
-  return enyToGuardFn(e)(val, path);
+  // Here, we must first check whether the eny allows undefined (as is the case with default values)
+  // If it validates, all good. Elsewise, we allow undefined, or else return the original error the eny had returned.
+  const enyVal = enyToGuardFn(e)(val, path);
+  if (enyVal.valid) return enyVal;
+  if (val === undefined) return { valid: true, data: undefined };
+  return enyVal;
 });
 
 vality.enum = valit("enum", (...es) => (value, path, options) => {
