@@ -17,7 +17,7 @@ function testValit<G extends keyof vality.valits, O extends ValitOptions<G>>(
     } & IV
   >,
   options: {
-    [K in keyof O]: MaybeArray<{ eny: any; value: O[K] } & IV>;
+    [K in keyof O]?: MaybeArray<{ eny: any; value: O[K] } & IV>;
   }
 ) {
   describe(valit, () => {

@@ -34,17 +34,5 @@ export type Parse<T, _D = "out"> = T extends readonly [infer U] // Array short
       -readonly [K in keyof T as Parse<T[K], _D> extends never ? never : K]: Parse<T[K], _D>;
     };
 
-type MapObject<T, _D> = {
-  -readonly [K in keyof T as Parse<T[K], _D> extends never ? never : undefined extends Parse<T[K], _D> ? never : K]: Parse<
-    T[K],
-    _D
-  >;
-} & {
-  -readonly [K in keyof T as Parse<T[K], _D> extends never ? never : undefined extends Parse<T[K], _D> ? K : never]?: Parse<
-    T[K],
-    _D
-  >;
-};
-
 export type ParseOut<T> = Parse<T>;
 export type ParseIn<T> = Parse<T, "in-layer-one">;
