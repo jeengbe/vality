@@ -12,6 +12,7 @@ export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Nam
 
 type ExtraOptions<T> = {
   transform: IdentityFn<T>;
+  default: T;
   validate: (val: T) => boolean;
 };
 
@@ -31,10 +32,18 @@ export function guard<
   } & Partial<ExtraOptions<Type>>,
   defaultOptions: Partial<Options> = {}
 ): Guard<Type, Options> {
-  function getFnWithErrors(options: Partial<Options>): ValidateFn<Type> {
+  function getFnWithErrors(options: Partial<Options & ExtraOptions<Type>>): ValidateFn<Type> {
     return (value, path = []) => {
       const data = fn(value, options);
+
+      // If value is not defined (i.e. passed as undefined) and a default value is either provided by definition or the caller, we return that before even considering further handleOptions
+      if (!isValid(data) && value === undefined && (handleOptions?.default !== undefined || options?.default !== undefined)) {
+        // Dunno why ! is necessary here
+        return { valid: true, data: options?.default ?? handleOptions?.default!, errors: [] };
+      }
+
       if (!isValid(data) || !(handleOptions?.validate ?? trueFn)(data)) {
+        // Guard definition fails or provided implementation for validate option fails
         return {
           valid: false,
           data: undefined,
@@ -49,7 +58,8 @@ export function guard<
         };
       }
 
-      if (!(options.validate ?? trueFn)(data)) {
+      // Custom validation implementation failed
+      if (!((options.validate ?? trueFn) as IdentityFn<Type>)(data)) {
         return {
           valid: false,
           data: undefined,
@@ -63,21 +73,25 @@ export function guard<
           ],
         };
       }
-      const transformedData = (handleOptions?.transform ?? identity)(data) as Type;
 
-      if (handleOptions === undefined) return { valid: true, data: (options.transform ?? identity)(transformedData), errors: [] };
+      // Data transformed by 1. transformer in implementation, 2. provided transformer
+      const transformedData = ((options.transform ?? identity) as IdentityFn<Type>)((handleOptions?.transform ?? identity)(data));
+
+      if (handleOptions === undefined) return { valid: true, data: transformedData, errors: [] };
       const keysWithError = Object.keys(options).filter(
         k =>
           k !== "transform" &&
           k !== "validate" &&
+          k !== "default" &&
           handleOptions[k] !== undefined &&
+          // Options, however, are still given the original (untransformed) data
           !handleOptions[k]!(data, options[k]!, options as MakeRequired<Options, typeof k>)
       );
 
       if (keysWithError.length === 0) {
         return {
           valid: true,
-          data: (options.transform ?? identity)(transformedData),
+          data: transformedData,
           errors: [],
         };
       }
@@ -95,7 +109,7 @@ export function guard<
   }
 
   return Object.assign(
-    (options: Partial<Options>) => {
+    (options: Partial<Options & ExtraOptions<Type>>) => {
       return {
         [_validate]: getFnWithErrors({ ...defaultOptions, ...options }),
         [_type]: undefined as unknown as Type,
