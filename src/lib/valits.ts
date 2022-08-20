@@ -67,7 +67,7 @@ vality.array = valit(
     const errors: Error[] = [];
     for (const k in value) {
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want
-      const res = fn(value[k], [...path, k]);
+      const res = fn(value[k], [...path, k], value);
       if (!res.valid) {
         errors.push(...res.errors);
         if (options.bail) break;
@@ -100,7 +100,7 @@ vality.object = valit(
       const ek = e[k] as Eny;
       if (typeof ek === "object" && ek !== null && _readonly in ek) continue; // We'll deal with these later
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
-      const res = enyToGuardFn(ek)(value[k as keyof typeof value], [...path, k]);
+      const res = enyToGuardFn(ek)(value[k as keyof typeof value], [...path, k], value);
       if (!res.valid) {
         errors.push(...res.errors);
         if (options.bail) break;
@@ -156,7 +156,7 @@ vality.tuple = valit(
       const data: any[] = [];
       const errors: Error[] = [];
       for (let i = 0; i < es.length; i++) {
-        const res = enyToGuardFn(es[i])(value[i], [...path, i]);
+        const res = enyToGuardFn(es[i])(value[i], [...path, i], es);
         if (!res.valid) {
           errors.push(...res.errors);
           if (options.bail) break;

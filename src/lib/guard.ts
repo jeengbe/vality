@@ -3,7 +3,10 @@ import { identity, IdentityFn, isValid, MakeRequired, RSA, RSN, trueFn } from ".
 import type { Validate, ValidateFn } from "./validate";
 
 export type Guard<Type, Options extends RSA = RSN> = Validate<Type> &
-  ((options: Partial<Options & ExtraOptions<Type>>) => Validate<Type>);
+// Providing a type-safe signature for this seems impossible to me. It would depend on whether the guard is contained in a model
+// and that would create some sort of circular type reference which is not possible to represent with TypeScript.
+// We have to rely on tests for this one
+  ((options: Partial<Options & ExtraOptions<Type>> | ((obj: any) => Partial<Options & ExtraOptions<Type>>)) => Validate<Type>);
 export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Name]> = G extends Guard<infer Type, infer Options>
   ? [Type, Options]
   : G extends (...args: any[]) => Guard<infer Type, infer Options>
@@ -109,11 +112,14 @@ export function guard<
   }
 
   return Object.assign(
-    (options: Partial<Options & ExtraOptions<Type>>) => {
+    (options: Partial<Options & ExtraOptions<Type>> | ((obj: any) => Partial<Options & ExtraOptions<Type>>)) => {
       return {
-        [_validate]: getFnWithErrors({ ...defaultOptions, ...options }),
+        [_validate]: (val, path, parent) => {
+          if (typeof options === "function") options = options(parent);
+          return getFnWithErrors({ ...defaultOptions, ...options })(val, path)
+        },
         [_type]: undefined as unknown as Type,
-      };
+      } as Validate<Type>;
     },
     {
       [_validate]: getFnWithErrors(defaultOptions),

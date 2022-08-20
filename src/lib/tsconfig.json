@@ -6,7 +6,8 @@
     ],
     "types": [],
     "outDir": "./../dist",
-    "declaration": true
+    "declaration": true,
+    "removeComments": true
   },
   "files": [
     "./index.ts"

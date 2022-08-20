@@ -123,8 +123,8 @@ vality.relation = s =>
       val
     );
     // Need to assert here as these returns really don't match, and we just simulate the return type of the relation to be the object
-    return r.valid ? (r.data as unknown as typeof s) : undefined;
-  }) as Valit<
+    return r.valid ? (r.data as unknown as undefined) : undefined;
+  }) as unknown as Valit<
     typeof s,
     {
       transform: (v: RelationType) => RelationType;
