@@ -11,7 +11,7 @@ export interface Error {
 }
 
 export type Validate<T> = { [_validate]: ValidateFn<T>; [_type]: T; [_readonly]?: false; [_valit]?: false };
-export type ValidateFn<T> = (val: unknown, path?: Path) => ValidationResult<T>;
+export type ValidateFn<T> = (val: unknown, path?: Path, parent?: any) => ValidationResult<T>;
 export type ValidationResult<T> = { valid: true; data: T, errors: never[] } | { valid: false; data: undefined, errors: Error[] };
 export type Path = (string | number)[];
 
