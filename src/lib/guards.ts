@@ -120,10 +120,10 @@ vality.date = guard(
 
 vality.literal = lit =>
   guard("literal", (val, options) => {
-    // @ts-expect-error - Hacky solution
     // If the literal should be used as default, then we don't want to have to specify the literal value twice, so here we check whether we should use it as default
     // In that case, we simply set it to the literal value here (before it is checked) and then leave the rest running as it should
-    options.default = options.default ? val : undefined;
+    // @ts-expect-error - Hacky solution
+    if (options.default === true) options.default = val;
     return val === lit ? lit : undefined;
   });
 
