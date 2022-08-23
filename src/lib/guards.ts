@@ -47,7 +47,14 @@ declare global {
       /**
        * @example vality.literal(7)
        */
-      literal(lit: Primitive): Guard<typeof lit>;
+      literal<P extends Primitive>(
+        lit: P
+      ): Guard<
+        P,
+        {
+          default: boolean;
+        }
+      >;
       /**
        * @example vality.relation(SomeModel)
        */
@@ -111,7 +118,14 @@ vality.date = guard(
   }
 );
 
-vality.literal = lit => guard("literal", val => (val === lit ? lit : undefined));
+vality.literal = lit =>
+  guard("literal", (val, options) => {
+    // @ts-expect-error - Hacky solution
+    // If the literal should be used as default, then we don't want to have to specify the literal value twice, so here we check whether we should use it as default
+    // In that case, we simply set it to the literal value here (before it is checked) and then leave the rest running as it should
+    options.default = options.default ? val : undefined;
+    return val === lit ? lit : undefined;
+  });
 
 vality.relation = s =>
   guard("relation", val => {
