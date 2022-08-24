@@ -1,4 +1,4 @@
-import { _readonly, _validate } from "./symbols";
+import { _readonly, _tuple, _validate } from "./symbols";
 import { Eny, enyToGuardFn, RSA, RSE } from "./utils";
 import { Error, Path } from "./validate";
 import { ReadonlyValit, valit, Valit } from "./valit";
@@ -22,11 +22,12 @@ declare global {
           bail: boolean;
         }
       >;
-      // FIXME: Is resolved as enum
       tuple: <E extends Eny[]>(
         ...es: E
       ) => Valit<
-        E,
+        E & {
+          [_tuple]: true;
+        },
         {
           /**
            * @default false
@@ -174,7 +175,7 @@ vality.tuple = valit(
         if (options.bail) break;
       }
 
-      if (errors.length === 0) return { valid: true, data: data as typeof es, errors: [] };
+      if (errors.length === 0) return { valid: true, data: data as typeof es & { [_tuple]: true }, errors: [] };
       return { valid: false, data: undefined, errors };
     },
   {},

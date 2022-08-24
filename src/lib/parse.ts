@@ -1,3 +1,4 @@
+import { _tuple } from "./symbols";
 import { Validate } from "./validate";
 import type { ReadonlyValit, Valitate } from "./valit";
 
@@ -12,7 +13,9 @@ import type { ReadonlyValit, Valitate } from "./valit";
 // This is how a relation should be passed to the api (in "in"-mode)
 export type RelationType = vality.Config extends { RelationType: infer R } ? R : number;
 
-export type Parse<T, _D = "out"> = T extends readonly [infer U] // Array short
+export type Parse<T, _D = "out"> = T extends infer U & { [_tuple]: true } // Tuple short
+  ? { [K in keyof U]: Parse<U[K], _D> }
+  : T extends readonly [infer U] // Array short
   ? Parse<U, _D>[]
   : T extends readonly (infer U)[] // Enum short
   ? Parse<U, _D>

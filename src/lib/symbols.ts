@@ -9,3 +9,5 @@ export const _options = Symbol("options");
 export const _valit = Symbol("valit");
 // This marks readonly valits to be correctly handeled by vality.object etc.
 export const _readonly = Symbol("readonly");
+// Used to mark tuples to distinguish them from enums
+export const _tuple = Symbol("tuple");
