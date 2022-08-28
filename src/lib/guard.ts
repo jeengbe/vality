@@ -2,23 +2,25 @@ import { _type, _validate } from "./symbols";
 import { identity, IdentityFn, isValid, MakeRequired, RSA, RSN, trueFn } from "./utils";
 import type { Validate, ValidateFn } from "./validate";
 
-type CallOptions<Type, Options> = Options extends RSN ? Partial<ExtraOptions<Type>> : Partial<Options & Omit<ExtraOptions<Type>, keyof Options>>;
+type CallOptions<Type, Options> = Options extends RSN
+  ? Partial<ExtraOptions<Type, Options>>
+  : Partial<Options & Omit<ExtraOptions<Type, Options>, keyof Options>>;
 
 export type Guard<Type, Options extends RSA = RSN> = Validate<Type> &
-// Providing a type-safe signature for (obj: any) seems impossible to me. It would depend on whether the guard is contained in a model
-// and that would create some sort of circular type reference which is not possible to represent with TypeScript.
-// We'll (eventually) have to rely on tests for this one
-  ((options: CallOptions<Type, Options> ) => Validate<Type>);
+  // Providing a type-safe signature for (obj: any) seems impossible to me. It would depend on whether the guard is contained in a model
+  // and that would create some sort of circular type reference which is not possible to represent with TypeScript.
+  // We'll (eventually) have to rely on tests for this one
+  ((options: CallOptions<Type, Options>) => Validate<Type>);
 export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Name]> = G extends Guard<infer Type, infer Options>
   ? [Type, Options]
   : G extends (...args: any[]) => Guard<infer Type, infer Options>
   ? [Type, Options]
   : never;
 
-type ExtraOptions<T> = {
+type ExtraOptions<T, O> = {
   transform: IdentityFn<T>;
   default: T;
-  validate: (val: T) => boolean;
+  validate: (val: T, options: Partial<O>) => boolean;
 };
 
 export function guard<
@@ -34,10 +36,10 @@ export function guard<
   // Also, we purposefully don't initialize it by default to cut some corners further down when checking as we can just check if handleOptions === undefined
   handleOptions?: {
     [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
-  } & Partial<ExtraOptions<Type>>,
+  } & Partial<ExtraOptions<Type, Options>>,
   defaultOptions: Partial<Options> = {}
 ): Guard<Type, Options> {
-  function getFnWithErrors(options: Partial<Options & Omit<ExtraOptions<Type>, keyof Options>>): ValidateFn<Type> {
+  function getFnWithErrors(options: Partial<Options & Omit<ExtraOptions<Type, Options>, keyof Options>>): ValidateFn<Type> {
     return (value, path = []) => {
       const data = fn(value, options);
 
@@ -47,7 +49,7 @@ export function guard<
         return { valid: true, data: options?.default ?? handleOptions?.default!, errors: [] };
       }
 
-      if (!isValid(data) || !(handleOptions?.validate ?? trueFn)(data)) {
+      if (!isValid(data) || !(handleOptions?.validate ?? trueFn)(data, options)) {
         // Guard definition fails or provided implementation for validate option fails
         return {
           valid: false,
@@ -118,7 +120,7 @@ export function guard<
       return {
         [_validate]: (val, path, parent) => {
           if (typeof options === "function") options = options(parent);
-          return getFnWithErrors({ ...defaultOptions, ...options })(val, path)
+          return getFnWithErrors({ ...defaultOptions, ...options })(val, path);
         },
         [_type]: undefined as unknown as Type,
       } as Validate<Type>;

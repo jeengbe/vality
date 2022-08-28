@@ -1,112 +1,250 @@
 import { validate } from "../lib";
-import { guard } from "../lib/guard";
-import { identity } from "../lib/utils";
+import { guard as _guard } from "../lib/guard";
+import { identity, RSA } from "../lib/utils";
 
-const mockValid = jest.fn(identity);
-const mockInvalid = jest.fn(() => undefined);
+function guard(
+  implementation: {
+    name?: string;
+    fn?: (...args: any[]) => any;
+    expect?: any;
+    handleOptions?: RSA;
+    defaultOptions?: RSA;
+  } = {},
+  call: {
+    value?: any;
+    options?: RSA;
+  } = {},
+  result: {
+    valid?: boolean;
+    value?: any;
+    errors?: {
+      message?: string;
+      path?: any;
+      options?: any;
+      value?: any;
+    }[];
+  } = {},
+  fnCall: {
+    value?: any;
+    options?: RSA;
+  } = {}
+) {
+  const {
+    name = "test",
+    fn: _fn = implementation.expect !== undefined ? (s: any) => (s === implementation.expect ? s : undefined) : identity,
+    handleOptions,
+    defaultOptions,
+  } = implementation;
+  const fn = jest.fn(_fn);
+  const { value, options } = call;
+  const { valid, value: resultValue, errors } = result;
+  const { value: fnCallValue, options: fnCallOptions } = fnCall;
 
-describe("guard", () => {
-  it("resolves correctly", () => {
-    expect(validate(guard("__test__" as any, mockValid), "__val__")).toBeValid();
-    expect(mockValid).toHaveBeenCalledTimes(1);
-    expect(mockValid).toHaveBeenCalledWith("__val__", {});
-    mockValid.mockClear();
+  let guard = _guard(name as any, fn, handleOptions, defaultOptions);
+  if (options !== undefined) guard = guard(options) as any;
 
-    expect(validate(guard("__test__" as any, mockInvalid), "__val__")).toBeInvalid("vality.__test__.base");
-    expect(validate(guard("__test__" as any, mockInvalid), "__val__")).toBeInvalid();
-    expect(mockInvalid).toHaveBeenCalledTimes(2);
-    expect(mockInvalid).toHaveBeenCalledWith("__val__", {});
-    mockInvalid.mockClear();
+  const res = validate(guard, value);
+
+  if (fnCallValue !== undefined) {
+    expect(fn.mock.lastCall[0]).toEqual(fnCallValue);
+  }
+  if (fnCallOptions !== undefined) {
+    expect(fn.mock.lastCall[1]).toEqual(fnCallOptions);
+  }
+
+  if (valid !== undefined) {
+    expect(res.valid).toBe(valid);
+  }
+  if (resultValue !== undefined) {
+    expect(res.data).toEqual(resultValue);
+  }
+  if (errors !== undefined) {
+    expect(res.errors).toEqual(errors.map((e, i) => ({ ...e, ...res.errors[i] })));
+  }
+}
+
+describe("guard()", () => {
+  describe("merges options with default options", () => {
+    it("called without options", () => {
+      guard(
+        {},
+        {},
+        {},
+        {
+          options: {},
+        }
+      );
+
+      guard(
+        {
+          defaultOptions: {
+            foo: "bar",
+          },
+        },
+        {},
+        {},
+        {
+          options: { foo: "bar" },
+        }
+      );
+
+      guard(
+        {
+          defaultOptions: {
+            foo: "bar",
+            bar: "baz",
+          },
+        },
+        {},
+        {},
+        {
+          options: { foo: "bar", bar: "baz" },
+        }
+      );
+    });
+
+    it("called with options", () => {
+      guard(
+        {
+          defaultOptions: { foo: "bar" },
+        },
+        {
+          options: { foo: "bar" },
+        },
+        {},
+        {
+          options: { foo: "bar" },
+        }
+      );
+
+      guard(
+        {
+          defaultOptions: { foo: "bar" },
+        },
+        {
+          options: { foo: "baz" },
+        },
+        {},
+        {
+          options: { foo: "baz" },
+        }
+      );
+
+      guard(
+        {
+          defaultOptions: { foo: "bar" },
+        },
+        {
+          options: { bar: "baz" },
+        },
+        {},
+        {
+          options: { bar: "baz", foo: "bar" },
+        }
+      );
+    });
   });
 
-  it("validates with options", () => {
-    const mockOptionValid = jest.fn(() => true);
-    const mockOptionInvalid = jest.fn(() => false);
+  describe("matches valid data", () => {
+    describe("defined without options", () => {
+      it("called without options", () => {
+        guard(
+          {
+            expect: "foo",
+          },
+          {
+            value: "foo",
+          },
+          {
+            value: "foo",
+          },
+          {
+            value: "foo",
+          }
+        );
+      });
 
-    // Does it work with no options
-    expect(
-      validate(
-        guard("__test__" as any, mockValid, {
-          foo: mockOptionValid,
-          bar: mockOptionInvalid,
-        }),
-        "__val__"
-      )
-    ).toBeValid();
-    expect(mockValid).toHaveBeenCalledTimes(1);
-    expect(mockOptionValid).toHaveBeenCalledTimes(0);
-    expect(mockOptionInvalid).toHaveBeenCalledTimes(0);
+      it("called with options", () => {
+        guard(
+          {
+            expect: "foo",
+          },
+          {
+            value: "foo",
+            options: { foo: "bar" },
+          },
+          {
+            value: "foo",
+          },
+          {
+            value: "foo",
+            options: { foo: "bar" },
+          }
+        );
+      });
+    });
 
-    mockValid.mockClear();
-    mockOptionValid.mockClear();
-    mockOptionInvalid.mockClear();
+    describe("defined with options", () => {
+      it("called without options", () => {
+        guard(
+          {
+            expect: "foo",
 
-    // Are valid options respected
-    expect(
-      validate(
-        guard("__test__" as any, mockValid, {
-          foo: mockOptionValid,
-          bar: mockOptionInvalid,
-        })({
-          foo: "__foo__",
-        }),
-        "__val__"
-      )
-    ).toBeValid();
+          }
+        )
+      })
+    })
+  });
 
-    expect(mockValid).toHaveBeenCalledTimes(1);
-    expect(mockOptionValid).toHaveBeenCalledTimes(1);
-    expect(mockOptionValid).toHaveBeenCalledWith("__val__", "__foo__", { foo: "__foo__" });
-    expect(mockOptionInvalid).toHaveBeenCalledTimes(0);
+  describe("transforms data", () => {
+    it("defined with transform", () => {
+      guard(
+        {
+          handleOptions: {
+            transform: (s: string) => s.toUpperCase(),
+          },
+        },
+        {
+          value: "foo",
+        },
+        {
+          value: "FOO",
+        }
+      );
+    });
 
-    mockValid.mockClear();
-    mockOptionValid.mockClear();
-    mockOptionInvalid.mockClear();
+    it("called with transform", () => {
+      guard(
+        {},
+        {
+          value: "foo",
+          options: {
+            transform: (s: string) => s.toUpperCase(),
+          },
+        },
+        {
+          value: "FOO",
+        }
+      );
+    });
 
-    // Are invalid options respected
-    expect(
-      validate(
-        guard("__test__" as any, mockValid, {
-          foo: mockOptionValid,
-          bar: mockOptionInvalid,
-        })({
-          bar: "__bar__",
-        }),
-        "__val__"
-      )
-    ).toBeInvalid("vality.__test__.options.bar");
-
-    expect(mockValid).toHaveBeenCalledTimes(1);
-    expect(mockOptionValid).toHaveBeenCalledTimes(0);
-    expect(mockOptionInvalid).toHaveBeenCalledTimes(1);
-    expect(mockOptionInvalid).toHaveBeenCalledWith("__val__", "__bar__", { bar: "__bar__" });
-
-    mockValid.mockClear();
-    mockOptionValid.mockClear();
-    mockOptionInvalid.mockClear();
-
-    // Do options not bail
-    expect(
-      validate(
-        guard("__test__" as any, mockValid, {
-          foo: mockOptionValid,
-          bar: mockOptionInvalid,
-        })({
-          foo: "__foo__",
-          bar: "__bar__",
-        }),
-        "__val__"
-      )
-    ).toBeInvalid("vality.__test__.options.bar");
-
-    expect(mockValid).toHaveBeenCalledTimes(1);
-    expect(mockOptionValid).toHaveBeenCalledTimes(1);
-    expect(mockOptionValid).toHaveBeenCalledWith("__val__", "__foo__", { foo: "__foo__", bar: "__bar__" });
-    expect(mockOptionInvalid).toHaveBeenCalledTimes(1);
-    expect(mockOptionInvalid).toHaveBeenCalledWith("__val__", "__bar__", { foo: "__foo__", bar: "__bar__" });
-
-    mockValid.mockClear();
-    mockOptionValid.mockClear();
-    mockOptionInvalid.mockClear();
+    it("defined and called with transform", () => {
+      guard(
+        {
+          handleOptions: {
+            transform: (s: string) => `${s}-bar`,
+          },
+        },
+        {
+          value: "foo",
+          options: {
+            transform: (s: string) => s.toUpperCase(),
+          },
+        },
+        {
+          value: "FOO-BAR",
+        }
+      );
+    });
   });
 });

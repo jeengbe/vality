@@ -71,8 +71,8 @@ describe("built-in guards", () => {
   testGuard(
     "string",
     {
-      valid: ["", "a string"],
-      invalid: [undefined, null, 0, 1, true, false, {}, [], () => {}],
+      valid: ["", "a string", 0, 1, true, false],
+      invalid: [undefined, null, {}, [], () => {}],
     },
     {
       minLength: {
@@ -110,13 +110,16 @@ describe("built-in guards", () => {
         valid: [-1, 0, 1],
         invalid: [2],
       },
-      integer: [
-        {
-          value: true,
-          valid: [-1, 0, 1],
-          invalid: [-1.1, 1.1],
-        }
-      ],
+      integer: {
+        value: true,
+        valid: [-1, 0, 1],
+        invalid: [-1.1, 1.1],
+      },
+      unsafe: {
+        value: false,
+        valid: [-1, 0, 1],
+        invalid: [-Infinity, Infinity, 2**53, -(2**53)],
+      },
     }
   );
 

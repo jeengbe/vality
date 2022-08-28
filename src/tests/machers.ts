@@ -20,14 +20,14 @@ expect.extend({
     let pass = typeof received === "object" && received !== null && !received.valid;
 
     if(errors.length > 0) pass &&= received.errors.length === errors.length;
-    if (pass) {
-      for (let i = 0; i < errors.length; i++) {
-        if(received.errors[i].message !== errors[i]) {
-          pass = false;
-          break;
-        }
-      }
-    }
+    // if (pass) {
+    //   for (let i = 0; i < errors.length; i++) {
+    //     if(received.errors[i].message !== errors[i]) {
+    //       pass = false;
+    //       break;
+    //     }
+    //   }
+    // }
 
     if (pass) {
       return {

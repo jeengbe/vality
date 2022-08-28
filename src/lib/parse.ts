@@ -11,20 +11,22 @@ import type { ReadonlyValit, Valitate } from "./valit";
 // For subsequent enys, _D is then set to "in", which means that any relation should be returned as a number
 
 // This is how a relation should be passed to the api (in "in"-mode)
-export type RelationType = vality.Config extends { RelationType: infer R } ? R : number;
+export type RelationType = vality.Config extends { RelationType: infer R } ? R : number | null;
+
+type DecD<D> = "in-layer-one" extends D ? "in" : D;
 
 export type Parse<T, _D = "out"> = T extends infer U & { [_tuple]: true } // Tuple short
-  ? { [K in keyof U]: Parse<U[K], _D> }
+  ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
   : T extends readonly [infer U] // Array short
-  ? Parse<U, _D>[]
+  ? Parse<U, DecD<_D>>[]
   : T extends readonly (infer U)[] // Enum short
-  ? Parse<U, _D>
+  ? Parse<U, DecD<_D>>
   : T extends ReadonlyValit<infer U> // Readonly valit
   ? "writeable" extends _D
     ? never
-    : Parse<U, _D>
+    : Parse<U, DecD<_D>>
   : T extends Valitate<infer U> // Valits needs to be parsed again
-  ? Parse<U, _D>
+  ? Parse<U, DecD<_D>>
   : T extends Validate<infer U> // Whereas guards don't
   ? U
   : T extends () => infer U // A model
@@ -34,7 +36,7 @@ export type Parse<T, _D = "out"> = T extends infer U & { [_tuple]: true } // Tup
     ? RelationType
     : Parse<U, _D>
   : {
-      -readonly [K in keyof T as Parse<T[K], _D> extends never ? never : K]: Parse<T[K], _D>;
+      -readonly [K in keyof T as Parse<T[K], _D> extends never ? never : K]: Parse<T[K], DecD<_D>>;
     };
 
 export type ParseOut<T> = Parse<T>;
