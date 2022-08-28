@@ -26,6 +26,13 @@ declare global {
            * Whether the number has to be an integer
            */
           integer: boolean;
+          /**
+           * Whether to allow numbers outside the safe integer range
+           *
+           * @default false
+           * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+           */
+          unsafe: boolean;
         }
       >;
       boolean: Guard<boolean>;
@@ -52,15 +59,16 @@ declare global {
       ): Guard<
         P,
         {
+          // Overwrite the default dehaviour of 'default'
           default: boolean;
         }
       >;
       /**
        * @example vality.relation(SomeModel)
        */
-      // type S is solely used to infer and keep the type of the relation and not used in runtime
+      // model S is solely used to infer and keep the type of the relation and not used in runtime
       relation<S extends () => RSE>(
-        type: S
+        model: S
       ): Valit<
         S,
         {
@@ -71,23 +79,34 @@ declare global {
   }
 }
 
-vality.string = guard("string", val => (typeof val === "string" ? val : undefined), {
-  minLength: (val, o) => val.length >= o,
-  maxLength: (val, o) => val.length <= o,
-  match: (val, o) => o.test(val),
-});
+vality.string = guard(
+  "string",
+  val => (typeof val === "string" || typeof val === "number" || typeof val === "boolean" ? val.toString() : undefined),
+  {
+    minLength: (val, o) => val.length >= o,
+    maxLength: (val, o) => val.length <= o,
+    match: (val, o) => o.test(val),
+  }
+);
 
 vality.number = guard(
   "number",
   val => {
-    const nr = typeof val === "number" ? val : config.strict ? NaN : typeof val === "string" ? Number.parseFloat(val) : NaN;
-    if (nr > Number.MIN_SAFE_INTEGER && nr < Number.MAX_SAFE_INTEGER) return nr;
-    return undefined;
+    if (typeof val === "number") return val;
+    if (config.strict) return undefined;
+    if (typeof val !== "string") return undefined;
+    const nr = Number.parseFloat(val);
+    if (Number.isNaN(nr)) return undefined;
+    return nr;
   },
   {
     min: (val, o) => val >= o,
     max: (val, o) => val <= o,
     integer: (val, o) => !o || val % 1 === 0,
+    unsafe: (val, o) => o || (val > Number.MIN_SAFE_INTEGER && val < Number.MAX_SAFE_INTEGER),
+  },
+  {
+    unsafe: false,
   }
 );
 
@@ -127,19 +146,21 @@ vality.literal = lit =>
     return val === lit ? lit : undefined;
   });
 
-vality.relation = s =>
+vality.relation = m =>
   guard("relation", val => {
-    const r = validate(
-      vality.number({
-        integer: true,
-        min: 0,
-      }),
+    return validate(
+      [
+        null,
+        vality.number({
+          integer: true,
+          min: 0,
+        }),
+      ],
       val
-    );
-    // Need to assert here as these returns really don't match, and we just simulate the return type of the relation to be the object
-    return r.valid ? (r.data as unknown as undefined) : undefined;
+      // Need to assert here as these returns really don't match, and we just simulate the return type of the relation to be the object
+    ).data as unknown as typeof m | undefined;
   }) as unknown as Valit<
-    typeof s,
+    typeof m,
     {
       transform: (v: RelationType) => RelationType;
     }

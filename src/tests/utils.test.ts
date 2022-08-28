@@ -1,5 +1,5 @@
 import { validate, vality } from "../lib";
-import { assert, enyToGuard, flat, identity } from "../lib/utils";
+import { assert, enyToGuard, falseFn, flat, identity, trueFn } from "../lib/utils";
 
 describe("assert", () => {
   it("throws an error if the condition is false", () => {
@@ -145,4 +145,14 @@ it("identity", () => {
   expect(identity(undefined)).toBe(undefined);
   expect(identity({})).toEqual({});
   expect(identity([])).toEqual([]);
-})
+});
+
+it("trueFn", () => {
+  expect(trueFn(1)).toBe(true);
+  expect(trueFn("a string")).toBe(true);
+});
+
+it("falseFn", () => {
+  expect(falseFn(1)).toBe(false);
+  expect(falseFn("a string")).toBe(false);
+});
