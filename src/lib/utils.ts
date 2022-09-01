@@ -1,6 +1,6 @@
 import { Guard } from "./guard";
 import { _validate } from "./symbols";
-import { Validate } from "./validate";
+import { Validate, ValidateFn } from "./validate";
 import type { Valit, Valitate } from "./valit";
 import { vality } from "./vality";
 
@@ -71,7 +71,7 @@ export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
 }
 
 // This type is too complicated to represent - should be ValidateFn<ParseIn<E>>
-export function enyToGuardFn<E extends Eny>(e: E): any {
+export function enyToGuardFn<E extends Eny>(e: E): ValidateFn<any> {
   return enyToGuard(e)[_validate];
 }
 

@@ -19,8 +19,8 @@ describe("enyToGuard", () => {
       const guard = enyToGuard([vality.string]);
       expect(validate(guard, ["a string", "another string"])).toBeValid();
       expect(validate(guard, ["a string"])).toBeValid();
-      expect(validate(guard, "a string")).toBeInvalid();
-      expect(validate(guard, 5)).toBeInvalid();
+      expect(validate(guard, "a string")).toBeValid(); // In non-strict mode
+      expect(validate(guard, 5)).toBeValid(); // In non-strict mode
     });
 
     it("recursively converts nested enys", () => {
@@ -32,8 +32,8 @@ describe("enyToGuard", () => {
           ["a string", "another string"],
         ])
       ).toBeValid();
-      expect(validate(guard, ["a string", "another string"])).toBeInvalid();
-      expect(validate(guard, "a string")).toBeInvalid();
+      expect(validate(guard, ["a string", "another string"])).toBeValid(); // In non-strict mode
+      expect(validate(guard, "a string")).toBeValid(); // In non-strict mode
     });
   });
 
