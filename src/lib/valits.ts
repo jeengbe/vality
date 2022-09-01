@@ -1,3 +1,4 @@
+import { config } from "./config";
 import { _readonly, _tuple, _validate } from "./symbols";
 import { Eny, enyToGuardFn, RSA, RSE } from "./utils";
 import { Error, Path } from "./validate";
@@ -61,9 +62,16 @@ declare global {
 vality.array = valit(
   "array",
   e => (value, path, options) => {
-    if (!Array.isArray(value))
-      return { valid: false, data: undefined, errors: [{ message: "vality.array.base", path, options, value }] };
     const fn = enyToGuardFn(e);
+    if (!Array.isArray(value)) {
+      if (!config.strict) {
+        const res = fn(value, [...path, 0], value);
+        if (res.valid) {
+          return { valid: true, data: [res.data], errors: [] };
+        }
+      }
+      return { valid: false, data: undefined, errors: [{ message: "vality.array.base", path, options, value }] };
+    }
     const data: any[] = [];
     const errors: Error[] = [];
     for (const k in value) {
@@ -136,7 +144,7 @@ vality.optional = valit("optional", e => (val, path) => {
   // If it validates, all good. Elsewise, we allow undefined, or else return the original error the eny had returned.
   const enyVal = enyToGuardFn(e)(val, path);
   if (enyVal.valid) return enyVal;
-  if (val === undefined) return { valid: true, data: undefined };
+  if (val === undefined) return { valid: true, data: undefined, errors: [] };
   return enyVal;
 });
 

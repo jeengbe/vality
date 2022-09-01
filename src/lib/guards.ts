@@ -6,6 +6,10 @@ import { validate } from "./validate";
 import { Valit } from "./valit";
 import { vality } from "./vality";
 
+// The idea behind default options is to only specify them they further restrict the more generic type that solely checking would give.
+// e.g.integer: false would be a bad default option, as it wouldn't actually impose any further constraints
+// unsafe: false, however, does further narrow down number inputs to safe ones only, which is why a default option is good here
+
 declare global {
   namespace vality {
     interface guards {

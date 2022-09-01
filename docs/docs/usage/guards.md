@@ -13,22 +13,21 @@ import { vality } from "vality";
 validate(vality.string, "Hello There!"); // { valid: true }
 ```
 
-## Strict mode
+## Casting {#casting}
 
-By default, guards can cast certain values to the desired format. For example, `vality.date` not only accepts raw `Date` instances, but any value that [`Date.parse()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/parse) can deal with and returns a fresh `Date`.
-
-This behaviour can be disabled by setting `config.strict` to `true`. Remember that the following snippet needs to be included every time that Vality is used.
+By default, guards can cast certain values to the desired format.
 
 ```ts twoslash
-import { config } from "vality/config";
-
-// Disable guard type casting
-config.strict = true;
+import { vality, validate } from "vality";
+// ---cut---
+validate(vality.boolean, "1"); // { valid: true, data: true }
 ```
 
-## Options
+This behaviour can be disabled by enabling [strict mode](../config.md#strict-mode).
 
-Guards also accept arguments to further constrain the type of the value they match against. These are passed by calling the guard with the options as only argument.
+## Options {#options}
+
+Guards also accept arguments to further constrain the type of the value they match against. These are passed by calling the guard with the options as only argument. You can find a list of supported options in the [list of guards](#list-of-guards).
 
 ```ts twoslash
 import { vality } from "vality";
@@ -40,9 +39,11 @@ vality.number({ m }); // We even get autocomplete here!
 //               ^|
 ```
 
+## Extra Options {#extra-options}
+
 In addition to above described, there are a few more extra options that can be used to fully customise how a guard behaves.
 
-### transform
+### transform {#extra-options-transform}
 
 This option can be used to modify the value that a guard returns after all its checks have passed.
 
@@ -57,7 +58,7 @@ validate(
 ); // { valid: true, data: "HELLO!" }
 ```
 
-### default
+### default {#extra-options-default}
 
 This option can be used to provide a default value to a guard that is used when `undefined` is validated. (`vality.optional` is useless in combination with this object).
 
@@ -74,7 +75,7 @@ validate(
 ); // { valid: true, data: { myNum: -1 } }
 ```
 
-### validate
+### validate {#extra-options-validate}
 
 This option can be used to completely customise the way a guard validates an input. Note that this option does _not replace_, but adds another condition to the original guard definition.
 
@@ -89,11 +90,11 @@ validate(
 ); // { valid: false }
 ```
 
-## List of guards
+## List of guards {#list-of-guards}
 
 Vality comes with 6 guards out of the box:
 
-### vality.string
+### vality.string {#list-of-guards-string}
 
 Returns the value as a string. Accepts and casts `string`, `number`, `boolean`.
 
@@ -103,7 +104,7 @@ Returns the value as a string. Accepts and casts `string`, `number`, `boolean`.
 | `maxLength` | `number` | `undefined` | Maximum length for the resulting string, inclusive (uses [`String.length`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/length)) |
 | `match` | `RegExp` | `undefined` | Regular expression that needs to match the resulting string |
 
-### vality.number
+### vality.number {#list-of-guards-number}
 
 Returns the value as a number. Strings are parsed with [`parseFloat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat). Only accepts numbers in the [safe integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER) range (this can be disabled with options).
 
@@ -114,13 +115,13 @@ Returns the value as a number. Strings are parsed with [`parseFloat`](https://de
 | `integer` | `boolean` | `undefined`   | Whether the resulting number must be an integer         |
 | `unsafe`  | `boolean` | `false`       | Whether to allow numbers outside the safe integer range |
 
-### vality.boolean
+### vality.boolean {#list-of-guards-boolean}
 
 Returns the value as a boolean. Accepts `"1"`, `1`, `"true"` for `true`, and `"0"`, `0`, `"false"` for `false`.
 
 No options.
 
-### vality.date
+### vality.date {#list-of-guards-date}
 
 Returns the value as a `Date`. Accepts `Date`s and anything [`Date.parse()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/parse) can handle.
 
@@ -131,7 +132,7 @@ Returns the value as a `Date`. Accepts `Date`s and anything [`Date.parse()`](htt
 | `past`   | `boolean` | `undefined`   | Whether the date must lie in the past, excluding now   |
 | `future` | `boolean` | `undefined`   | Whether the date must lie in the future, excluding now |
 
-### literal => vality.literal
+### literal => vality.literal {#list-of-guards-literal}
 
 This guard is a little different. Other than the so far listed guards, this one is a guard factory, that creates a guard that returns and accepts only the given value.
 
@@ -157,7 +158,7 @@ No options.
 
 However, the `default` option behaves differently here. As seen above, it accepts boolean values that simply indicate whether to use the literal value as the default value. (This is mainly to remove the need of writing the actual literal twice: once in the facory call, for the option.)
 
-### model => vality.relation
+### model => vality.relation {#list-of-guards-relation}
 
 This is a guard factory as well. It is intended to check for valid relations to insert into a database. The model you pass to it is not actually used for validation, insted it is only used for the TypeScript type. To compensate this, Vality provides two different parse types:
 
@@ -190,7 +191,7 @@ type PersonIn = ParseIn<typeof Person>;
 
 </details>
 
-#### Customisation
+#### Customisation {#customisation}
 
 By default, relations are assumed to be non-negative integers. If, however, this does not fit your database (for example if you use ArangoDB), it is possible to entirely overwrite all related options in Vality. This can be accomplished by simply reassigning `vality.relation`, and specifying a custom relation type to be used for `ParseIn`. This is done by simplicy setting a property in the global configuration interface.
 
