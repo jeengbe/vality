@@ -1,5 +1,5 @@
 import { config } from "./config";
-import { _readonly, _tuple, _validate } from "./symbols";
+import { _readonly, _tuple, _type, _validate } from "./symbols";
 import { Eny, enyToGuardFn, RSA, RSE } from "./utils";
 import { Error, Path } from "./validate";
 import { ReadonlyValit, valit, Valit } from "./valit";
@@ -74,7 +74,7 @@ vality.array = valit(
     }
     const data: any[] = [];
     const errors: Error[] = [];
-    for (const k in value) {
+    for (let k = 0; k < value.length; k++) {
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want
       const res = fn(value[k], [...path, k], value);
       if (!res.valid) {
@@ -125,7 +125,7 @@ vality.object = valit(
           message: "vality.object.extraProperty",
           path: [...path, k],
           options,
-          value,
+          value: value[k as keyof typeof value],
         });
         if (options.bail) break;
       }
@@ -145,6 +145,7 @@ vality.optional = valit("optional", e => (val, path) => {
   const enyVal = enyToGuardFn(e)(val, path);
   if (enyVal.valid) return enyVal;
   if (val === undefined) return { valid: true, data: undefined, errors: [] };
+  if (!config.strict && val === null) return { valid: true, data: undefined, errors: [] };
   return enyVal;
 });
 
@@ -160,8 +161,7 @@ vality.tuple = valit(
   "tuple",
   (...es) =>
     (value, path, options) => {
-      if (!Array.isArray(value) || value.length !== es.length)
-        return { valid: false, data: undefined, errors: [{ message: "vality.tuple.base", path, options, value }] };
+      if (!Array.isArray(value)) return { valid: false, data: undefined, errors: [{ message: "vality.tuple.base", path, options, value }] };
       const data: any[] = [];
       const errors: Error[] = [];
       for (let i = 0; i < es.length; i++) {
@@ -178,12 +178,12 @@ vality.tuple = valit(
           message: "vality.tuple.extraProperty",
           path: [...path, i],
           options,
-          value,
+          value: value[i],
         });
         if (options.bail) break;
       }
 
-      if (errors.length === 0) return { valid: true, data: data as typeof es & { [_tuple]: true }, errors: [] };
+      if (errors.length === 0) return { valid: true, data: data as typeof es & { [_tuple]: true; }, errors: [] };
       return { valid: false, data: undefined, errors };
     },
   {},
@@ -197,20 +197,22 @@ vality.tuple = valit(
 
 // We still attach _validate, though, as (for whatever reason) this valit may still be called, and we really don't want a runtime error in that situation
 vality.readonly = () =>
-  ({
-    [_readonly]: true,
-    [_validate]: (value: any, path: Path) =>
-      value === undefined
-        ? { valid: true, data: undefined }
-        : {
-            valid: false,
-            errors: [
-              {
-                message: "vality.readonly.base",
-                path,
-                options: {},
-                value,
-              },
-            ],
+({
+  [_readonly]: true,
+  [_type]: undefined, // For consistency
+  [_validate]: (value: any, path: Path) =>
+    value === undefined
+      ? { valid: true, data: undefined , errors: []}
+      : {
+        valid: false,
+        data: undefined,
+        errors: [
+          {
+            message: "vality.readonly.base",
+            path,
+            options: {},
+            value,
           },
-  } as unknown as ReadonlyValit<any>);
+        ],
+      },
+} as unknown as ReadonlyValit<any>);

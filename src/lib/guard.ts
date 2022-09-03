@@ -1,10 +1,11 @@
 import { _type, _validate } from "./symbols";
-import { identity, IdentityFn, isValid, MakeRequired, RSA, RSN, trueFn } from "./utils";
+import { IdentityFn, isValid, MakeRequired, RSA, RSN } from "./utils";
 import type { Validate, ValidateFn } from "./validate";
 
-type CallOptions<Type, Options> = Options extends RSN
-  ? Partial<ExtraOptions<Type, Options>>
-  : Partial<Options & Omit<ExtraOptions<Type, Options>, keyof Options>>;
+type CallOptions<Type, Options> = Partial<Options extends RSN
+  ? ExtraOptions<Type, Options>
+  // We Omit keyof Options here to allow Options to override default extra option implementations
+  : Options & Omit<ExtraOptions<Type, Options>, keyof Options>>;
 
 export type Guard<Type, Options extends RSA = RSN> = Validate<Type> &
   // Providing a type-safe signature for (obj: any) seems impossible to me. It would depend on whether the guard is contained in a model
@@ -20,7 +21,7 @@ export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Nam
 type ExtraOptions<T, O> = {
   transform: IdentityFn<T>;
   default: T;
-  validate: (val: T, options: Partial<O>) => boolean;
+  validate: (val: T, options: CallOptions<T, O>) => boolean;
 };
 
 export function guard<
@@ -30,27 +31,25 @@ export function guard<
   Options extends RSA & GuardOptions<Name>[1]
 >(
   name: Name,
-  fn: (val: unknown, options: Partial<Options>) => Type | undefined,
+  fn: (val: unknown, options: CallOptions<Type, Options>) => Type | undefined,
   // The difference between Options and ExtraOptions is that for Options, the guard implementation also provides the implementation of the options
   // Scheams using the guard then only provide a value to the guard whereas for ExtraOptions, both the guard and the caller may implement functions which are then both considered
   // Also, we purposefully don't initialize it by default to cut some corners further down when checking as we can just check if handleOptions === undefined
   handleOptions?: {
-    [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
-  } & Partial<ExtraOptions<Type, Options>>,
-  defaultOptions: Partial<Options> = {}
+    // keyof ExtraOptions are ignored if present in handleOptions
+    [K in Exclude<keyof Options, keyof ExtraOptions<Type, Options>>]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K> & Partial<ExtraOptions<Type, Options>>) => boolean;
+  },
+  defaultOptions?: Partial<Options>
 ): Guard<Type, Options> {
-  function getFnWithErrors(options: Partial<Options & Omit<ExtraOptions<Type, Options>, keyof Options>>): ValidateFn<Type> {
+  function getFnWithErrors(options: CallOptions<Type, Options>): ValidateFn<Type> {
     return (value, path = []) => {
-      const data = fn(value, options);
+      const res = fn(value, options);
 
-      // If value is not defined (i.e. passed as undefined) and a default value is either provided by definition or the caller, we return that before even considering further handleOptions
-      if (!isValid(data) && value === undefined && (handleOptions?.default !== undefined || options?.default !== undefined)) {
-        // Dunno why ! is necessary here
-        return { valid: true, data: options?.default ?? handleOptions?.default!, errors: [] };
-      }
+      if (!isValid(res)) {
+        if (value === undefined && options.default !== undefined) {
+          return { valid: true, data: options.default, errors: [] };
+        }
 
-      if (!isValid(data) || !(handleOptions?.validate ?? trueFn)(data, options)) {
-        // Guard definition fails or provided implementation for validate option fails
         return {
           valid: false,
           data: undefined,
@@ -65,40 +64,45 @@ export function guard<
         };
       }
 
-      // Custom validation implementation failed
-      if (!((options.validate ?? trueFn) as IdentityFn<Type>)(data)) {
-        return {
-          valid: false,
-          data: undefined,
-          errors: [
-            {
-              message: `vality.${name}.custom`,
-              path,
-              options,
-              value,
-            },
-          ],
-        };
+      if (options.validate) {
+        if (!options.validate(res, options)) {
+          return {
+            valid: false,
+            data: undefined,
+            errors: [
+              {
+                message: `vality.${name}.custom`,
+                path,
+                options,
+                value,
+              },
+            ],
+          };
+        }
       }
 
-      // Data transformed by 1. transformer in implementation, 2. provided transformer
-      const transformedData = ((options.transform ?? identity) as IdentityFn<Type>)((handleOptions?.transform ?? identity)(data));
+      let data = res;
+      if (options.transform) {
+        data = options.transform(data);
+      }
 
-      if (handleOptions === undefined) return { valid: true, data: transformedData, errors: [] };
-      const keysWithError = Object.keys(options).filter(
+      if (handleOptions === undefined) return { valid: true, data: data, errors: [] };
+      const optionsWithDefault = { ...defaultOptions, ...options };
+
+      const keysWithError = Object.keys(optionsWithDefault).filter(
         k =>
           k !== "transform" &&
           k !== "validate" &&
           k !== "default" &&
           handleOptions[k] !== undefined &&
-          // Options, however, are still given the original (untransformed) data
-          !handleOptions[k]!(data, options[k]!, options as MakeRequired<Options, typeof k>)
+          // We purposefully pass 'res' to handleOptions. We don't want it to validate already transformed data.
+          !handleOptions[k]!(res, optionsWithDefault[k]!, options as MakeRequired<Options, typeof k> & Partial<ExtraOptions<Type, Options>>)
       );
 
       if (keysWithError.length === 0) {
         return {
           valid: true,
-          data: transformedData,
+          data,
           errors: [],
         };
       }
@@ -106,7 +110,7 @@ export function guard<
         valid: false,
         data: undefined,
         errors: keysWithError.map(k => ({
-          message: `vality.${name}.options.${k}`,
+          message: k in options ? `vality.${name}.options.${k}` : `vality.${name}.base`,
           options,
           path,
           value,
@@ -120,13 +124,13 @@ export function guard<
       return {
         [_validate]: (val, path, parent) => {
           if (typeof options === "function") options = options(parent);
-          return getFnWithErrors({ ...defaultOptions, ...options })(val, path);
+          return getFnWithErrors({ ...options })(val, path);
         },
         [_type]: undefined as unknown as Type,
       } as Validate<Type>;
     },
     {
-      [_validate]: getFnWithErrors(defaultOptions),
+      [_validate]: getFnWithErrors({}),
       [_type]: undefined as unknown as Type,
     }
   );

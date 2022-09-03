@@ -1,0 +1,21 @@
+name: Coverage
+
+on: ["push", "pull_request"]
+
+jobs:
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Node
+        uses: ./.github/actions/setup
+      - name: Run jest
+        working-directory: ./src
+        run: pnpm test
+      - name: Upload the badge
+        uses: coverallsapp/github-action@master
+        with:
+          base-path: ./src
+          path-to-lcov: ./src/coverage/lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}

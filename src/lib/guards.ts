@@ -73,7 +73,7 @@ declare global {
       // model S is solely used to infer and keep the type of the relation and not used in runtime
       relation<S extends () => RSE>(
         model: S
-      ): Valit<
+      ): Valit< // We return a valit because we have to parse its contents in Parse<>, and guards don't do that
         S,
         {
           transform: (v: RelationType) => RelationType;
@@ -85,7 +85,12 @@ declare global {
 
 vality.string = guard(
   "string",
-  val => (typeof val === "string" || typeof val === "number" || typeof val === "boolean" ? val.toString() : undefined),
+  val => {
+    if (typeof val === "string") return val;
+    if (config.strict) return undefined;
+    if (typeof val !== "number") return undefined;
+    return val.toString();
+  },
   {
     minLength: (val, o) => val.length >= o,
     maxLength: (val, o) => val.length <= o,
@@ -143,14 +148,17 @@ vality.date = guard(
 
 vality.literal = lit =>
   guard("literal", (val, options) => {
-    // If the literal should be used as default, then we don't want to have to specify the literal value twice, so here we check whether we should use it as default
-    // In that case, we simply set it to the literal value here (before it is checked) and then leave the rest running as it should
-    // @ts-expect-error - Hacky solution
-    if (options.default === true) options.default = val;
+    if (options.default === true) {
+      if (val === undefined) return lit;
+    } else {
+      // If the literal should not be used as the default, then we unset and other option passed here
+      // We want to keep default: true though
+      delete options.default;
+    }
     return val === lit ? lit : undefined;
   });
 
-vality.relation = m =>
+vality.relation = () =>
   guard("relation", val => {
     return validate(
       [
@@ -162,10 +170,8 @@ vality.relation = m =>
       ],
       val
       // Need to assert here as these returns really don't match, and we just simulate the return type of the relation to be the object
-    ).data as unknown as typeof m | undefined;
-  }) as unknown as Valit<
-    typeof m,
-    {
-      transform: (v: RelationType) => RelationType;
-    }
-  >;
+      // Also, guard() infers its parameter types, and since 'guards["relation"]' doesn't extend 'Guard<>', 'fn' is resolved to '() => never | undefiend' and we cheat by solely asserting it as 'undefined'
+    ).data as unknown as undefined;
+    // We can just assert this as any, as otherwise we'd just repeat ourselves
+    // Asertion is necessary here because a guard is obviously not a valit
+  }) as any;

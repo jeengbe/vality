@@ -3,22 +3,34 @@ import { _validate } from "../lib/symbols";
 
 describe("validate", () => {
   it("works with enys", () => {
-    expect(validate(vality.string, "a string")).toBeValid();
+    expect(validate(vality.string, "foo")).toBeValid();
+    expect(validate([vality.string], ["foo"])).toBeValid();
+    expect(validate([vality.string], [true])).toBeInvalid({
+      message: "vality.string.base",
+      path: [0],
+      value: true,
+      options: {}
+    });
 
     const mockGuard = {
-      [_validate]: jest.fn(() => ({ valid: true })),
+      [_validate]: jest.fn(() => ({ valid: true, data: "foo", errors: [] })),
     };
-    expect(validate(mockGuard, "__mock__")).toBeValid();
+    expect(validate(mockGuard, "foo")).toBeValid();
     expect(mockGuard[_validate]).toHaveBeenCalledTimes(1);
-    expect(mockGuard[_validate]).toHaveBeenCalledWith("__mock__");
+    expect(mockGuard[_validate]).toHaveBeenCalledWith("foo", []);
   });
 
   it("converts a model to an object valit", () => {
     const Model = () => ({
-      a: vality.string,
-      b: vality.number,
+      foo: vality.string,
+      baz: vality.number,
     });
-    expect(validate(Model, { a: "a string", b: 1 })).toBeValid();
-    expect(validate(Model, "a string")).toBeInvalid();
+    expect(validate(Model, { foo: "bar", baz: 1 })).toBeValid();
+    expect(validate(Model, "foo")).toBeInvalid({
+      message: "vality.object.base",
+      path: [],
+      value: "foo",
+      options: {},
+    });
   });
 });
