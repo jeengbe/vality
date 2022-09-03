@@ -1,0 +1,20 @@
+name: generate coverage badge
+
+on: ["push", "pull_request"]
+
+jobs:
+  coverage:
+    name: coverage
+    if: ${{ github.event.pull_request.merged }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Node
+        uses: ./.github/actions/setup
+      - name: Run jest
+        working-directory: ./src
+        run: pnpm test
+      - name: Upload the badge
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

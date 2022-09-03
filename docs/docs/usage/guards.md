@@ -96,7 +96,7 @@ Vality comes with 6 guards out of the box:
 
 ### vality.string {#list-of-guards-string}
 
-Returns the value as a string. Accepts and casts `string`, `number`, `boolean`.
+Returns the value as a string. Accepts and casts `string`, `number`.
 
 | Option | Accepts | Default Value | Effect |
 | --- | --- | --- | --- |

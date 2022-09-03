@@ -1,5 +1,5 @@
-name: Build Vality
-description: Build Vality
+name: Setup
+description: Set up the environment
 
 inputs:
   node-version:
