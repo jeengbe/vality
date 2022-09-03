@@ -16,4 +16,5 @@ jobs:
       - name: Upload the badge
         uses: coverallsapp/github-action@master
         with:
+          base-path: ./src
           github-token: ${{ secrets.GITHUB_TOKEN }}
