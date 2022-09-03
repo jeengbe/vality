@@ -1,6 +1,7 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "lib": [
       "ESNext"
     ],
@@ -8,6 +9,10 @@
       "jest",
       "node"
     ],
+    "paths": {
+      "vality": ["../lib"],
+      "vality/*": ["../lib/*"]
+    }
   },
   "include": [
     "**/*.ts"

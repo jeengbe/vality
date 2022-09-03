@@ -12,5 +12,9 @@ const config: Config = {
       tsconfig: "./tests/tsconfig.json",
     },
   },
+  moduleNameMapper: {
+    "^vality$": "<rootDir>/lib",
+    "^vality/(.*)$": "<rootDir>/lib/$1",
+  },
 };
 export default config;

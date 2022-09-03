@@ -6,7 +6,7 @@ A TypeScript schema descriptor library with zero dependencies.
 [![License](https://img.shields.io/npm/l/vality)](https://github.com/jeengbe/vality)
 [![Version](https://img.shields.io/npm/v/vality)](https://www.npmjs.com/package/vality)
 [![Build Status](https://img.shields.io/github/workflow/status/jeengbe/vality/publish)](https://github.com/jeengbe/vality)
-[![Coverage Status](https://coveralls.io/repos/github/jeengbe/vality/badge.svg?branch=master)](https://coveralls.io/github/jeengbe/vality)
+[![Coverage Status](https://coveralls.io/repos/github/jeengbe/vality/badge.svg?branch=master)](https://coveralls.io/github/jeengbe/vality?branch=master)
 
 </div>
 
