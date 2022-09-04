@@ -1,4 +1,4 @@
-import { CallOptions, ExtraOptions, isValid, MakeRequired, makeValidatee, RSA, RSN } from "./utils";
+import { CallOptions, ExtraOptions, isValid, MakeRequired, makeValit, RSA, RSN } from "./utils";
 import type { Path, Validate } from "./validate";
 
 export type Guard<Type, Options extends RSA = RSN> = Validate<Type, CallOptions<Type, Options>, false>;
@@ -26,7 +26,8 @@ export function guard<
   },
   defaultOptions?: Partial<Options>
 ): Validate<Type, Options, false> {
-  return makeValidatee<
+  // Under the hood, a guard is just
+  return makeValit<
     Name,
     [guardFn: (value: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => Type | undefined],
     Type,
