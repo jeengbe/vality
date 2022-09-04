@@ -139,19 +139,19 @@ vality.object = valit(
   }
 );
 
-vality.optional = valit("optional", e => (val, path) => {
+vality.optional = valit("optional", e => (val, path, _options, parent) => {
   // Here, we must first check whether the eny allows undefined (as is the case with default values)
   // If it validates, all good. Elsewise, we allow undefined, or else return the original error the eny had returned.
-  const enyVal = enyToGuardFn(e)(val, path);
+  const enyVal = enyToGuardFn(e)(val, path, parent);
   if (enyVal.valid) return enyVal;
   if (val === undefined) return { valid: true, data: undefined, errors: [] };
   if (!config.strict && val === null) return { valid: true, data: undefined, errors: [] };
   return enyVal;
 });
 
-vality.enum = valit("enum", (...es) => (value, path, options) => {
+vality.enum = valit("enum", (...es) => (value, path, options, parent) => {
   for (const e of es) {
-    const res = enyToGuardFn(e)(value, path);
+    const res = enyToGuardFn(e)(value, path, parent);
     if (res.valid) return res;
   }
   return { valid: false, data: undefined, errors: [{ message: "vality.enum.base", path, options, value }] };
@@ -165,7 +165,7 @@ vality.tuple = valit(
       const data: any[] = [];
       const errors: Error[] = [];
       for (let i = 0; i < es.length; i++) {
-        const res = enyToGuardFn(es[i])(value[i], [...path, i], es);
+        const res = enyToGuardFn(es[i])(value[i], [...path, i], value);
         if (!res.valid) {
           errors.push(...res.errors);
           if (options.bail) break;
@@ -195,7 +195,7 @@ vality.tuple = valit(
 // Gotta assert here as this is an exception where we don't just return your average valit, but need to add the _readonly marker
 // This is required as vality.object checks for this symbol to correctly check for readonly properties to be unset, not just of value undefined
 
-// We still attach _validate, though, as (for whatever reason) this valit may still be called, and we really don't want a runtime error in that situation
+// We still attach _validate, though, as (for whatever reason) this valit may still be called directly, and we really don't want a runtime error in that situation
 vality.readonly = () =>
 ({
   [_readonly]: true,

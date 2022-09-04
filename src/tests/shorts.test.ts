@@ -29,12 +29,12 @@ describe("enyToGuard", () => {
     let valit: Guard<any> = enyToGuard("foo");
     expect(spy).toHaveBeenCalledWith("foo");
     expect(valit).toBe(spy.mock.results[0].value);
-    spy.mockReset();
+    spy.mockClear();
 
     valit = enyToGuard(5);
     expect(spy).toHaveBeenCalledWith(5);
     expect(valit).toBe(spy.mock.results[0].value);
-    spy.mockReset();
+    spy.mockClear();
 
     valit = enyToGuard(false);
     expect(spy).toHaveBeenCalledWith(false);

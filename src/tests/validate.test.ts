@@ -1,5 +1,5 @@
-import { validate, vality } from "../lib";
-import { _validate } from "../lib/symbols";
+import { validate, vality } from "vality";
+import { _validate } from "vality/symbols";
 
 describe("validate", () => {
   it("works with enys", () => {

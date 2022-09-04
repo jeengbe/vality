@@ -21,21 +21,21 @@ export function valit<
   Options extends RSA & ValitOptions<Name>[2]
 >(
   name: Name,
-  fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>) => ValidationResult<Type>,
+  fn: (...args: Arg) => (val: unknown, path: Path, options: Partial<Options>, parent?: any) => ValidationResult<Type>,
   handleOptions?: {
     [K in keyof Options]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K>) => boolean;
   },
   defaultOptions?: Partial<Options>
 ): (...args: Arg) => Valit<Type, Options> {
   return (...args): Valit<Type, Options> => {
-    const fnWithValit: ValidateFn<Type> = (val, path = []) => {
-      return fn(...args)(val, path, {});
+    const fnWithValit: ValidateFn<Type> = (val, path = [], parent) => {
+      return fn(...args)(val, path, {}, parent);
     };
 
     return Object.assign(
       (options: Partial<Options>): Valitate<Type> => {
-        const fnWithValitWithOptions: ValidateFn<Type> = (value, path = []) => {
-          const data = fn(...args)(value, path, options);
+        const fnWithValitWithOptions: ValidateFn<Type> = (value, path = [], parent) => {
+          const data = fn(...args)(value, path, options, parent);
           if (!data.valid) return data;
 
           if (handleOptions === undefined) return data;

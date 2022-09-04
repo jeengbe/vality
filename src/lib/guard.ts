@@ -8,10 +8,10 @@ type CallOptions<Type, Options> = Partial<Options extends RSN
   : Options & Omit<ExtraOptions<Type, Options>, keyof Options>>;
 
 export type Guard<Type, Options extends RSA = RSN> = Validate<Type> &
-  // Providing a type-safe signature for (obj: any) seems impossible to me. It would depend on whether the guard is contained in a model
+  // Providing a type-safe signature for (parent: any) seems impossible to me. It would depend on whether the guard is contained in a model
   // and that would create some sort of circular type reference which is not possible to represent with TypeScript.
   // We'll (eventually) have to rely on tests for this one
-  ((options: CallOptions<Type, Options>) => Validate<Type>);
+  ((options: CallOptions<Type, Options> | ((parent: any) => CallOptions<Type, Options>)) => Validate<Type>);
 export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Name]> = G extends Guard<infer Type, infer Options>
   ? [Type, Options]
   : G extends (...args: any[]) => Guard<infer Type, infer Options>
@@ -42,7 +42,7 @@ export function guard<
   defaultOptions?: Partial<Options>
 ): Guard<Type, Options> {
   function getFnWithErrors(options: CallOptions<Type, Options>): ValidateFn<Type> {
-    return (value, path = []) => {
+    return (value, path) => {
       const res = fn(value, options);
 
       if (!isValid(res)) {
@@ -64,21 +64,19 @@ export function guard<
         };
       }
 
-      if (options.validate) {
-        if (!options.validate(res, options)) {
-          return {
-            valid: false,
-            data: undefined,
-            errors: [
-              {
-                message: `vality.${name}.custom`,
-                path,
-                options,
-                value,
-              },
-            ],
-          };
-        }
+      if (options.validate && !options.validate(res, options)) {
+        return {
+          valid: false,
+          data: undefined,
+          errors: [
+            {
+              message: `vality.${name}.custom`,
+              path,
+              options,
+              value,
+            },
+          ],
+        };
       }
 
       let data = res;
@@ -124,7 +122,7 @@ export function guard<
       return {
         [_validate]: (val, path, parent) => {
           if (typeof options === "function") options = options(parent);
-          return getFnWithErrors({ ...options })(val, path);
+          return getFnWithErrors(options)(val, path);
         },
         [_type]: undefined as unknown as Type,
       } as Validate<Type>;
