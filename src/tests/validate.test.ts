@@ -17,7 +17,7 @@ describe("validate", () => {
     };
     expect(validate(mockGuard, "foo")).toBeValid();
     expect(mockGuard[_validate]).toHaveBeenCalledTimes(1);
-    expect(mockGuard[_validate]).toHaveBeenCalledWith("foo", []);
+    expect(mockGuard[_validate]).toHaveBeenCalledWith("foo", [], undefined);
   });
 
   it("converts a model to an object valit", () => {

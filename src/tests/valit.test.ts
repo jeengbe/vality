@@ -5,7 +5,7 @@ import { valit } from "vality/valit";
 
 function mockValit(implementation: {
   name?: string;
-  fn?: (...es: Eny[]) => (value: unknown, path: Path, options: unknown) => ValidationResult<any>;
+  fn?: (...es: Eny[]) => (value: unknown, options: unknown, path: Path,) => ValidationResult<any>;
   handleOptions?: RSA;
   defaultOptions?: RSA;
   inner?: Eny[];
@@ -21,7 +21,7 @@ function mockValit(implementation: {
     defaultOptions,
     inner = []
   } = implementation;
-  let ifn: ((value: unknown, path: Path, options: unknown) => ValidationResult<any>) | undefined = undefined;
+  let ifn: ((value: unknown, options: unknown, path: Path) => ValidationResult<any>) | undefined = undefined;
   if (!_fn) {
     ifn = jest.fn((v: unknown) => ({ valid: true, data: v, errors: [] }));
     _fn = () => ifn!;
@@ -185,10 +185,10 @@ describe("valit()", () => {
         }
       });
 
-      expect(ifn).toHaveBeenCalledWith("foo", [], {
+      expect(ifn).toHaveBeenCalledWith("foo", {
         bar: "baz",
         baz: "qux"
-      }, undefined);
+      }, [], undefined);
     });
 
     it("calls all option handlers with value and options", () => {
@@ -260,7 +260,7 @@ describe("valit()", () => {
         value: "foo"
       });
 
-      expect(ifn).toHaveBeenCalledWith("foo", [], {}, undefined);
+      expect(ifn).toHaveBeenCalledWith("foo", {}, [], undefined);
     });
 
     it("calls all option handlers with value but without default options", () => {
@@ -315,9 +315,9 @@ describe("valit()", () => {
         }
       });
 
-      expect(ifn).toHaveBeenCalledWith("foo", [], {
+      expect(ifn).toHaveBeenCalledWith("foo", {
         baz: "qux"
-      }, undefined);
+      }, [], undefined);
     });
 
     it("overrides default options with options", () => {
@@ -332,9 +332,9 @@ describe("valit()", () => {
         }
       });
 
-      expect(ifn).toHaveBeenCalledWith("foo", [], {
+      expect(ifn).toHaveBeenCalledWith("foo", {
         bar: "qux"
-      }, undefined);
+      }, [], undefined);
     });
 
     it("calls all option handlers with value but only options", () => {
@@ -384,6 +384,6 @@ describe("valit()", () => {
       });
       expect(baz).not.toHaveBeenCalled();
       bar.mockClear(); baz.mockClear();
-    })
+    });
   });
 });

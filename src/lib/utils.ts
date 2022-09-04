@@ -1,5 +1,5 @@
 import { _type, _validate } from "./symbols";
-import { Face, Validate, ValidateFn } from "./validate";
+import { Face, Path, Validate, ValidateFn, ValidationResult } from "./validate";
 import { vality } from "./vality";
 
 export type RSA = Record<string, any>;
@@ -89,13 +89,13 @@ export function falseFn(..._args: any[]): false {
   return false;
 }
 
-export function makeValidate<Type, Options, V extends boolean>(callback: (options: Partial<Options>) => ValidateFn<Type>): Validate<Type, Options, V> {
+export function makeValidate<Type, Options, V extends boolean>(callback: (options: Partial<CallOptions<Type, Options>>) => ValidateFn<Type>): Validate<Type, Options, V> {
   return Object.assign(
-    (options: Partial<Options> | ((obj: any) => Partial<Options>)) => {
+    (options: Partial<CallOptions<Type, Options>> | ((obj: any) => Partial<CallOptions<Type, Options>>)) => {
       return {
         [_validate]: (val, path, parent) => {
-          if (typeof options === "function") options = (options as (parent: any) => Options)(parent);
-          return callback(options)(val, path);
+          if (typeof options === "function") options = options(parent);
+          return callback(options)(val, path, parent);
         },
         [_type]: undefined as unknown as Type,
       } as Face<Type, V>;
@@ -117,3 +117,93 @@ export type CallOptions<Type, Options> = Options extends RSN
   ? ExtraOptions<Type, Options>
   // We Omit keyof Options here to allow Options to override default extra option implementations
   : Options & Omit<ExtraOptions<Type, Options>, keyof Options>;
+
+export function dealWithHandleOptions<Type, Options extends RSA>(name: string,
+  options: Partial<CallOptions<Type, Options>>,
+  data: ValidationResult<Type>,
+  path: Path,
+  value: unknown,
+  handleOptions?: {
+    // keyof ExtraOptions are ignored if present in handleOptions
+    [K in Exclude<keyof Options, keyof ExtraOptions<Type, Options>>]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K> & Partial<ExtraOptions<Type, Options>>) => boolean;
+  },
+  defaultOptions?: Partial<Options>,
+): ValidationResult<Type> {
+  if (!data.valid) {
+    if (value === undefined && options.default !== undefined) {
+      return { valid: true, data: options.default, errors: [] };
+    }
+
+    return data;
+  }
+  const origData = data.data;
+
+  if (options.validate && !options.validate(origData, options)) {
+    return {
+      valid: false,
+      data: undefined,
+      errors: [
+        {
+          message: `vality.${name}.custom`,
+          path,
+          options,
+          value,
+        },
+      ],
+    };
+  }
+
+  if (options.transform) {
+    data.data = options.transform(data.data);
+  }
+
+  if (handleOptions === undefined) return data;
+  const optionsWithDefault = { ...defaultOptions, ...options };
+
+  const keysWithError = Object.keys(optionsWithDefault).filter(
+    k =>
+      k !== "transform" &&
+      k !== "validate" &&
+      k !== "default" &&
+      // @ts-ignore
+      handleOptions[k] !== undefined && !handleOptions[k]!(origData, optionsWithDefault[k]!, options as MakeRequired<Options, typeof k>)
+  );
+  if (keysWithError.length === 0) return data;
+  return {
+    valid: false,
+    data: undefined,
+    errors: keysWithError.map(k => ({
+      message: k in options ? `vality.${name}.options.${k}` : `vality.${name}.base`,
+      options,
+      path,
+      value,
+    })),
+  };
+}
+
+export function makeValidatee<
+  Name extends keyof (vality.valits & vality.guards),
+  Arg extends any[],
+  Type,
+  Options extends RSA,
+  V extends boolean
+>(
+  name: Name,
+  fn: (...args: Arg) => (val: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => ValidationResult<Type>,
+  handleOptions?: {
+    [K in Exclude<keyof Options, keyof ExtraOptions<Type, Options>>]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K> & Partial<ExtraOptions<Type, Options>>) => boolean;
+  },
+  defaultOptions?: Partial<Options>,
+): (...args: Arg) => Validate<Type, Options, V> {
+  return (...args) => {
+    function getFnWithValitWithOptions(options: Partial<CallOptions<Type, Options>>): ValidateFn<Type> {
+      return (value, path, parent) => {
+        const data = fn(...args)(value, options, path, parent);
+
+        return dealWithHandleOptions<Type, Options>(name, options, data, path, value, handleOptions, defaultOptions);
+      };
+    }
+
+    return makeValidate<Type, Options, V>(getFnWithValitWithOptions);
+  };
+}

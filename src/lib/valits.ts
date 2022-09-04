@@ -48,7 +48,7 @@ declare global {
            *
            * @default false
            */
-          bail?: boolean;
+          bail: boolean;
         }
       >;
       /**
@@ -61,7 +61,7 @@ declare global {
 
 vality.array = valit(
   "array",
-  e => (value, path, options) => {
+  e => (value, options, path) => {
     const fn = enyToGuardFn(e);
     if (!Array.isArray(value)) {
       if (!config.strict) {
@@ -98,7 +98,7 @@ vality.array = valit(
 
 vality.object = valit(
   "object",
-  e => (value, path, options) => {
+  e => (value, options, path) => {
     if (typeof value !== "object" || value === null)
       return { valid: false, data: undefined, errors: [{ message: "vality.object.base", path, options, value }] };
     // This type would really just be ParseIn<typeof e>, but it's too complicated to represent
@@ -139,7 +139,7 @@ vality.object = valit(
   }
 );
 
-vality.optional = valit("optional", e => (val, path, _options, parent) => {
+vality.optional = valit("optional", e => (val, _options, path, parent) => {
   // Here, we must first check whether the eny allows undefined (as is the case with default values)
   // If it validates, all good. Elsewise, we allow undefined, or else return the original error the eny had returned.
   const enyVal = enyToGuardFn(e)(val, path, parent);
@@ -149,7 +149,7 @@ vality.optional = valit("optional", e => (val, path, _options, parent) => {
   return enyVal;
 });
 
-vality.enum = valit("enum", (...es) => (value, path, options, parent) => {
+vality.enum = valit("enum", (...es) => (value, options, path, parent) => {
   for (const e of es) {
     const res = enyToGuardFn(e)(value, path, parent);
     if (res.valid) return res;
@@ -160,7 +160,7 @@ vality.enum = valit("enum", (...es) => (value, path, options, parent) => {
 vality.tuple = valit(
   "tuple",
   (...es) =>
-    (value, path, options) => {
+    (value, options, path) => {
       if (!Array.isArray(value)) return { valid: false, data: undefined, errors: [{ message: "vality.tuple.base", path, options, value }] };
       const data: any[] = [];
       const errors: Error[] = [];
@@ -202,7 +202,7 @@ vality.readonly = () =>
   [_type]: undefined, // For consistency
   [_validate]: (value: any, path: Path) =>
     value === undefined
-      ? { valid: true, data: undefined , errors: []}
+      ? { valid: true, data: undefined, errors: [] }
       : {
         valid: false,
         data: undefined,
