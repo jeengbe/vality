@@ -2,7 +2,7 @@ import { validate, vality } from "vality";
 import { _validate } from "vality/symbols";
 
 describe("validate", () => {
-  it("works with enys", () => {
+  it("works with any eny", () => {
     expect(validate(vality.string, "foo")).toBeValid();
     expect(validate([vality.string], ["foo"])).toBeValid();
     expect(validate([vality.string], [true])).toBeInvalid({
@@ -30,6 +30,32 @@ describe("validate", () => {
       message: "vality.object.base",
       path: [],
       value: "foo",
+      options: {},
+    });
+  });
+
+  it("respects the bail option (if applicable)", () => {
+    const Model = () => ({
+      foo: vality.string,
+      baz: vality.number,
+    });
+
+    expect(validate(Model, {}, true)).toBeInvalid({
+      message: "vality.string.base",
+      path: ["foo"],
+      value: undefined,
+      options: {},
+    });
+
+    expect(validate(Model, {}, false)).toBeInvalid({
+      message: "vality.string.base",
+      path: ["foo"],
+      value: undefined,
+      options: {},
+    }, {
+      message: "vality.number.base",
+      path: ["baz"],
+      value: undefined,
       options: {},
     });
   });

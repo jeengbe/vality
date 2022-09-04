@@ -499,3 +499,47 @@ describe("vality.readonly", () => {
     expect(v.readonly(v.string)).callback(v => typeof v === "object" && v !== null && _validate in v);
   });
 });
+
+
+// TODO: SPLIT UP
+describe("passes on the parent structure", () => {
+  const options = jest.fn(() => ({}));
+  afterEach(() => options.mockClear());
+
+  test("vality.array", () => {
+    validate([v.string(options)], ["foo", "bar", "baz"]);
+    expect(options).toHaveBeenCalledWith(["foo", "bar", "baz"]);
+    expect(options).toHaveBeenCalledTimes(1);
+  });
+
+  test("vality.object", () => {
+    validate({ foo: v.string(options), bar: v.number(options) }, { foo: "bar", bar: 2 });
+    expect(options).toHaveBeenCalledWith({ foo: "bar", bar: 2 });
+    expect(options).toHaveBeenCalledTimes(2);
+  });
+
+  test("vality.optional", () => {
+    // Passes through
+    validate([v.optional(v.string(options))], ["foo", "bar", "baz"]);
+    expect(options).toHaveBeenCalledWith(["foo", "bar", "baz"]);
+    expect(options).toHaveBeenCalledTimes(1);
+  });
+
+  test("vality.enum", () => {
+    // Passes through
+    validate([[v.string(options), v.number(options)]], ["foo", 2, "baz"]);
+    expect(options).toHaveBeenCalledWith(["foo", 2, "baz"]);
+    expect(options).toHaveBeenCalledTimes(1); // Only 1 call because first check mathec
+    options.mockClear();
+
+    validate([[v.string(options), v.number(options)]], [true, 2, "baz"]);
+    expect(options).toHaveBeenCalledWith([true, 2, "baz"]);
+    expect(options).toHaveBeenCalledTimes(2); // 2 calls because first check failed
+  });
+
+  test("vality.tuple", () => {
+    validate(v.tuple(v.string(options), v.number(options), v.boolean(options)), ["foo", 2, true]);
+    expect(options).toHaveBeenCalledWith(["foo", 2, true]);
+    expect(options).toHaveBeenCalledTimes(3);
+  });
+});
