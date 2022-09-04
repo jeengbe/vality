@@ -51,7 +51,7 @@ export type EnyToGuard<T> = T extends [infer U]
 export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
   // TODO: Fix this type mess -- I have no idea why it does that
   if (Array.isArray(eny)) {
-    if (eny.length === 0) throw new Error("Empty array valit");
+    if (eny.length === 0) throw new Error("Empty array short");
     // @ts-ignore
     if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
     // @ts-ignore
