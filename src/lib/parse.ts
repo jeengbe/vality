@@ -1,6 +1,6 @@
 import { _tuple } from "./symbols";
-import { Validate } from "./validate";
-import type { ReadonlyValit, Valitate } from "./valit";
+import { Face } from "./validate";
+import type { ReadonlyValit } from "./valit";
 
 // Depending on the direction of the required type, we parse relations differently
 // If the type comes from the api ("out"), we type a relation as the corresponding type
@@ -32,9 +32,9 @@ export type Parse<T, _D = "out"> = T extends infer U & { [_tuple]: true; } // Tu
   ? "writeable" extends _D
   ? never
   : Parse<U, DecD<_D>>
-  : T extends Valitate<infer U> // Valits needs to be parsed again
+  : T extends Face<infer U, true> // Valits needs to be parsed again
   ? Parse<U, DecD<_D>>
-  : T extends Validate<infer U> // Whereas guards don't
+  : T extends Face<infer U, false> // Whereas guards don't
   ? U
   : T extends () => infer U // A model
   ? "in-layer-one" extends _D

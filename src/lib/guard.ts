@@ -1,28 +1,13 @@
-import { _type, _validate } from "./symbols";
-import { IdentityFn, isValid, MakeRequired, RSA, RSN } from "./utils";
+import { CallOptions, ExtraOptions, isValid, MakeRequired, makeValidate, RSA, RSN } from "./utils";
 import type { Validate, ValidateFn } from "./validate";
 
-type CallOptions<Type, Options> = Partial<Options extends RSN
-  ? ExtraOptions<Type, Options>
-  // We Omit keyof Options here to allow Options to override default extra option implementations
-  : Options & Omit<ExtraOptions<Type, Options>, keyof Options>>;
+export type Guard<Type, Options extends RSA = RSN> = Validate<Type, CallOptions<Type, Options>, false>;
 
-export type Guard<Type, Options extends RSA = RSN> = Validate<Type> &
-  // Providing a type-safe signature for (parent: any) seems impossible to me. It would depend on whether the guard is contained in a model
-  // and that would create some sort of circular type reference which is not possible to represent with TypeScript.
-  // We'll (eventually) have to rely on tests for this one
-  ((options: CallOptions<Type, Options> | ((parent: any) => CallOptions<Type, Options>)) => Validate<Type>);
 export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Name]> = G extends Guard<infer Type, infer Options>
   ? [Type, Options]
   : G extends (...args: any[]) => Guard<infer Type, infer Options>
   ? [Type, Options]
   : never;
-
-type ExtraOptions<T, O> = {
-  transform: IdentityFn<T>;
-  default: T;
-  validate: (val: T, options: CallOptions<T, O>) => boolean;
-};
 
 export function guard<
   Name extends keyof vality.guards,
@@ -31,7 +16,7 @@ export function guard<
   Options extends RSA & GuardOptions<Name>[1]
 >(
   name: Name,
-  fn: (val: unknown, options: CallOptions<Type, Options>) => Type | undefined,
+  fn: (val: unknown, options: Partial<CallOptions<Type, Options>>) => Type | undefined,
   // The difference between Options and ExtraOptions is that for Options, the guard implementation also provides the implementation of the options
   // Scheams using the guard then only provide a value to the guard whereas for ExtraOptions, both the guard and the caller may implement functions which are then both considered
   // Also, we purposefully don't initialize it by default to cut some corners further down when checking as we can just check if handleOptions === undefined
@@ -40,8 +25,8 @@ export function guard<
     [K in Exclude<keyof Options, keyof ExtraOptions<Type, Options>>]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K> & Partial<ExtraOptions<Type, Options>>) => boolean;
   },
   defaultOptions?: Partial<Options>
-): Guard<Type, Options> {
-  function getFnWithErrors(options: CallOptions<Type, Options>): ValidateFn<Type> {
+): Validate<Type, CallOptions<Type, Options>, false> {
+  function getFnWithErrors(options: Partial<CallOptions<Type, Options>>): ValidateFn<Type> {
     return (value, path) => {
       const res = fn(value, options);
 
@@ -117,19 +102,5 @@ export function guard<
     };
   }
 
-  return Object.assign(
-    (options: CallOptions<Type, Options> | ((obj: any) => CallOptions<Type, Options>)) => {
-      return {
-        [_validate]: (val, path, parent) => {
-          if (typeof options === "function") options = options(parent);
-          return getFnWithErrors(options)(val, path);
-        },
-        [_type]: undefined as unknown as Type,
-      } as Validate<Type>;
-    },
-    {
-      [_validate]: getFnWithErrors({}),
-      [_type]: undefined as unknown as Type,
-    }
-  );
+  return makeValidate<Type, CallOptions<Type, Options>, false>(getFnWithErrors);
 }

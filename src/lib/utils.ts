@@ -1,7 +1,5 @@
-import { Guard } from "./guard";
-import { _validate } from "./symbols";
-import { Validate, ValidateFn } from "./validate";
-import type { Valit, Valitate } from "./valit";
+import { _type, _validate } from "./symbols";
+import { Face, Validate, ValidateFn } from "./validate";
 import { vality } from "./vality";
 
 export type RSA = Record<string, any>;
@@ -14,7 +12,7 @@ export type RSE = {
 export type MaybeArray<T> = T | T[];
 
 export type Primitive = string | number | boolean | null;
-export type _Eny = Primitive | Guard<Primitive, RSA> | Valitate<Primitive> | (() => RSE) | RSE;
+export type _Eny = Primitive | Face<Primitive, any> | (() => RSE) | RSE;
 export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
 
 /**
@@ -23,8 +21,8 @@ export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
 export type MakeRequired<T extends RSA, K extends keyof T> = {
   [key in K]-?: T[key];
 } & {
-  [key in Exclude<keyof T, K>]: T[key];
-};
+    [key in Exclude<keyof T, K>]: T[key];
+  };
 
 export function assert<T>(val: any, condition?: boolean): asserts val is T {
   if (condition === false) {
@@ -36,19 +34,19 @@ export function isValid<Type>(data: Type | undefined): data is Type {
   return data !== undefined;
 }
 
-export type EnyToGuard<T> = T extends [infer U]
-  ? Valit<U[], any>
+export type EnyToFace<T> = T extends [infer U]
+  ? Face<U[], true>
   : T extends [...infer U]
-  ? Valit<U, any>
+  ? Face<U, true>
   : T extends Primitive
-  ? Guard<T>
-  : T extends Validate<any>
+  ? Face<T, false>
+  : T extends Face<any, any>
   ? T
   : T extends () => infer U
-  ? Guard<U>
-  : Valit<T, any>;
+  ? Face<U, true>
+  : Face<T, true>;
 
-export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
+export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
   // TODO: Fix this type mess -- I have no idea why it does that
   if (Array.isArray(eny)) {
     if (eny.length === 0) throw new Error("Empty array short");
@@ -90,3 +88,32 @@ export function trueFn(..._args: any[]): true {
 export function falseFn(..._args: any[]): false {
   return false;
 }
+
+export function makeValidate<Type, Options, V extends boolean>(callback: (options: Partial<Options>) => ValidateFn<Type>): Validate<Type, Options, V> {
+  return Object.assign(
+    (options: Partial<Options> | ((obj: any) => Partial<Options>)) => {
+      return {
+        [_validate]: (val, path, parent) => {
+          if (typeof options === "function") options = (options as (parent: any) => Options)(parent);
+          return callback(options)(val, path);
+        },
+        [_type]: undefined as unknown as Type,
+      } as Face<Type, V>;
+    },
+    {
+      [_validate]: callback({}),
+      [_type]: undefined as unknown as Type,
+    }
+  );
+}
+
+export type ExtraOptions<T, O> = {
+  transform: IdentityFn<T>;
+  default: T;
+  validate: (val: T, options: CallOptions<T, O>) => boolean;
+};
+
+export type CallOptions<Type, Options> = Options extends RSN
+  ? ExtraOptions<Type, Options>
+  // We Omit keyof Options here to allow Options to override default extra option implementations
+  : Options & Omit<ExtraOptions<Type, Options>, keyof Options>;
