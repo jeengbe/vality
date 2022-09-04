@@ -16,6 +16,12 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm --filter vality build
       - run: cp ./README.md ./src/README.md
+      - uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: "on GitHub"
+          replace: "on NPM"
+          regex: false
+          include: "./src/README.md"
       - uses: actions/upload-artifact@v3
         with:
           name: publish-vality
