@@ -213,23 +213,18 @@ declare global {
   }
 }
 
-vality.relation = m =>
+vality.relation = () =>
   guard("relation", val => {
     return validate(
       [
         null,
         vality.string({
-          minLength: 0,
+          minLength: 1,
         }),
       ],
       val
-    ).data as unknown as typeof m | undefined;
-  }) as unknown as Valit<
-    typeof m,
-    {
-      transform: (v: RelationType) => RelationType;
-    }
-  >;
+    ).data as unknown as undefined;
+  }) as any;
 
 const rel = vality.relation(MyModel);
 type rel = ParseIn<typeof rel>;
