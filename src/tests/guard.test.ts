@@ -185,7 +185,7 @@ describe("guard()", () => {
       expect(fn).toHaveBeenCalledWith("foo", {
         bar: "baz",
         baz: "qux"
-      });
+      }, [], undefined);
     });
 
     it("calls all option handlers with value and options", () => {
@@ -254,7 +254,7 @@ describe("guard()", () => {
         value: "foo",
       });
 
-      expect(fn).toHaveBeenCalledWith("foo", {});
+      expect(fn).toHaveBeenCalledWith("foo", {}, [], undefined);
     });
 
     it("calls all option handlers with value but without default options", () => {
@@ -311,7 +311,7 @@ describe("guard()", () => {
 
       expect(fn).toHaveBeenCalledWith("foo", {
         baz: "qux"
-      });
+      }, [], undefined);
     });
 
     it("overrides default options with options", () => {
@@ -328,7 +328,7 @@ describe("guard()", () => {
 
       expect(fn).toHaveBeenCalledWith("foo", {
         bar: "qux"
-      });
+      }, [], undefined);
     });
 
     it("calls all option handlers with value but only options", () => {
@@ -445,7 +445,7 @@ describe("guard()", () => {
 
         expect(fn).toHaveBeenCalledWith("foo", {
           transform
-        });
+        }, [], undefined);
       });
 
       it("doesn't pass the transformed value to option handlers", () => {

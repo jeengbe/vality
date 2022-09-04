@@ -1,10 +1,9 @@
-import { Error, v, validate } from "vality";
+import { Error, Face, v, validate } from "vality";
 import { config } from "vality/config";
 import { _readonly, _validate } from "vality/symbols";
 import { RSA } from "vality/utils";
-import { Valitate } from "vality/valit";
 
-export function testValit(name: keyof vality.valits, valit: Valitate<any>, {
+export function testValit(name: keyof vality.valits, valit: Face<any, any>, {
   option,
   options,
   valid,

@@ -1,7 +1,5 @@
-import { Guard } from "./guard";
-import { _validate } from "./symbols";
-import { Validate, ValidateFn } from "./validate";
-import type { Valit, Valitate } from "./valit";
+import { _type, _validate } from "./symbols";
+import { Face, Path, Validate, ValidateFn, ValidationResult } from "./validate";
 import { vality } from "./vality";
 
 export type RSA = Record<string, any>;
@@ -14,7 +12,7 @@ export type RSE = {
 export type MaybeArray<T> = T | T[];
 
 export type Primitive = string | number | boolean | null;
-export type _Eny = Primitive | Guard<Primitive, RSA> | Valitate<Primitive> | (() => RSE) | RSE;
+export type _Eny = Primitive | Face<Primitive, any> | (() => RSE) | RSE;
 export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
 
 /**
@@ -23,8 +21,8 @@ export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
 export type MakeRequired<T extends RSA, K extends keyof T> = {
   [key in K]-?: T[key];
 } & {
-  [key in Exclude<keyof T, K>]: T[key];
-};
+    [key in Exclude<keyof T, K>]: T[key];
+  };
 
 export function assert<T>(val: any, condition?: boolean): asserts val is T {
   if (condition === false) {
@@ -36,19 +34,19 @@ export function isValid<Type>(data: Type | undefined): data is Type {
   return data !== undefined;
 }
 
-export type EnyToGuard<T> = T extends [infer U]
-  ? Valit<U[], any>
+export type EnyToFace<T> = T extends [infer U]
+  ? Face<U[], true>
   : T extends [...infer U]
-  ? Valit<U, any>
+  ? Face<U, true>
   : T extends Primitive
-  ? Guard<T>
-  : T extends Validate<any>
+  ? Face<T, false>
+  : T extends Face<any, any>
   ? T
   : T extends () => infer U
-  ? Guard<U>
-  : Valit<T, any>;
+  ? Face<U, true>
+  : Face<T, true>;
 
-export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
+export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
   // TODO: Fix this type mess -- I have no idea why it does that
   if (Array.isArray(eny)) {
     if (eny.length === 0) throw new Error("Empty array short");
@@ -89,4 +87,108 @@ export function trueFn(..._args: any[]): true {
 }
 export function falseFn(..._args: any[]): false {
   return false;
+}
+
+export type ExtraOptions<T, O> = {
+  transform: IdentityFn<T>;
+  default: T;
+  validate: (val: T, options: CallOptions<T, O>) => boolean;
+};
+
+export type CallOptions<Type, Options> = Options extends RSN
+  ? ExtraOptions<Type, Options>
+  // We Omit keyof Options here to allow Options to override default extra option implementations
+  : Options & Omit<ExtraOptions<Type, Options>, keyof Options>;
+
+export type ValitParameters<Name, Arg extends any[], Type, Options extends RSA> =
+  [
+    Name,
+    (...args: Arg) => (val: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => ValidationResult<Type>,
+    {
+      [K in Exclude<keyof Options, keyof ExtraOptions<Type, Options>>]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K> & Partial<ExtraOptions<Type, Options>>) => boolean;
+    }?,
+    Partial<Options>?
+  ];
+
+export function makeValit<
+  Name extends keyof (vality.valits & vality.guards),
+  Arg extends any[],
+  Type,
+  Options extends RSA,
+  V extends boolean
+>(
+  ...[name, fn, handleOptions, defaultOptions]: ValitParameters<Name, Arg, Type, Options>
+): (...args: Arg) => Validate<Type, Options, V> {
+  return (...args) => {
+    const getValidateFnFromOptions = (options: Partial<CallOptions<Type, Options>>): ValidateFn<Type> => (value, path, parent) => {
+      const data = fn(...args)(value, options, path, parent);
+
+      if (!data.valid) {
+        if (value === undefined && options.default !== undefined) {
+          return { valid: true, data: options.default, errors: [] };
+        }
+
+        return data;
+      }
+      const origData = data.data;
+
+      if (options.validate && !options.validate(origData, options)) {
+        return {
+          valid: false,
+          data: undefined,
+          errors: [
+            {
+              message: `vality.${name}.custom`,
+              path,
+              options,
+              value,
+            },
+          ],
+        };
+      }
+
+      if (options.transform) {
+        data.data = options.transform(data.data);
+      }
+
+      if (handleOptions === undefined) return data;
+      const optionsWithDefault = { ...defaultOptions, ...options };
+
+      const keysWithError = Object.keys(optionsWithDefault).filter(
+        k =>
+          k !== "transform" &&
+          k !== "validate" &&
+          k !== "default" &&
+          // @ts-ignore
+          handleOptions[k] !== undefined && !handleOptions[k]!(origData, optionsWithDefault[k]!, options as MakeRequired<Options, typeof k>)
+      );
+      if (keysWithError.length === 0) return data;
+      return {
+        valid: false,
+        data: undefined,
+        errors: keysWithError.map(k => ({
+          message: k in options ? `vality.${name}.options.${k}` : `vality.${name}.base`,
+          options,
+          path,
+          value,
+        })),
+      };
+    };
+
+    return Object.assign(
+      (options: Partial<CallOptions<Type, Options>> | ((obj: any) => Partial<CallOptions<Type, Options>>)) => {
+        return {
+          [_validate]: (val, path, parent) => {
+            if (typeof options === "function") options = options(parent);
+            return getValidateFnFromOptions(options)(val, path, parent);
+          },
+          [_type]: undefined as unknown as Type,
+        } as Face<Type, V>;
+      },
+      {
+        [_validate]: getValidateFnFromOptions({}),
+        [_type]: undefined as unknown as Type,
+      }
+    );
+  };
 }
