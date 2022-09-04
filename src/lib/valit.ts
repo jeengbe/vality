@@ -3,7 +3,7 @@ import { assert, MakeRequired, RSA, RSN } from "./utils";
 import type { Path, Validate, ValidateFn, ValidationResult } from "./validate";
 
 export type Valitate<V> = { [_valit]?: true; } & Validate<V>;
-export type Valit<V, Options extends RSA = RSN> = Valitate<V> & ((options: Partial<Options>) => Valitate<V>);
+export type Valit<V, Options extends RSA = RSN> = Valitate<V> & ((options: Partial<Options> | ((parent: any) => Partial<Options>)) => Valitate<V>);
 
 export type ValitOptions<Name extends keyof vality.valits, Fn = vality.valits[Name]> = Fn extends (
   ...args: infer Args
@@ -28,44 +28,43 @@ export function valit<
   defaultOptions?: Partial<Options>
 ): (...args: Arg) => Valit<Type, Options> {
   return (...args): Valit<Type, Options> => {
-    const fnWithValit: ValidateFn<Type> = (val, path = [], parent) => {
-      return fn(...args)(val, path, {}, parent);
+    const getFnWithValitWithOptions: (options: Partial<Options>) => ValidateFn<Type> = (options) => (value, path, parent) => {
+      const data = fn(...args)(value, path, options, parent);
+      if (!data.valid) return data;
+
+      if (handleOptions === undefined) return data;
+      assert<Type>(value);
+      const optionsWithDefault = { ...defaultOptions, ...options };
+
+      const keysWithError = Object.keys(optionsWithDefault).filter(
+        k =>
+          handleOptions[k] !== undefined && !handleOptions[k]!(value, optionsWithDefault[k]!, options as MakeRequired<Options, typeof k>)
+      );
+      if (keysWithError.length === 0) return data;
+      return {
+        valid: false,
+        data: undefined,
+        errors: keysWithError.map(k => ({
+          message: k in options ? `vality.${name}.options.${k}` : `vality.${name}.base`,
+          options,
+          path,
+          value,
+        })),
+      };
     };
 
     return Object.assign(
-      (options: Partial<Options>): Valitate<Type> => {
-        const fnWithValitWithOptions: ValidateFn<Type> = (value, path = [], parent) => {
-          const data = fn(...args)(value, path, options, parent);
-          if (!data.valid) return data;
-
-          if (handleOptions === undefined) return data;
-          assert<Type>(value);
-          const optionsWithDefault = { ...defaultOptions, ...options };
-
-          const keysWithError = Object.keys(optionsWithDefault).filter(
-            k =>
-              handleOptions[k] !== undefined && !handleOptions[k]!(value, optionsWithDefault[k]!, options as MakeRequired<Options, typeof k>)
-          );
-          if (keysWithError.length === 0) return data;
-          return {
-            valid: false,
-            data: undefined,
-            errors: keysWithError.map(k => ({
-              message: k in options ? `vality.${name}.options.${k}` : `vality.${name}.base`,
-              options,
-              path,
-              value,
-            })),
-          };
-        };
-
+      (options: Partial<Options> | ((parent: any) => Partial<Options>)): Valitate<Type> => {
         return {
-          [_validate]: fnWithValitWithOptions,
+          [_validate]: (val, path, parent) => {
+            if (typeof options === "function") options = options(parent);
+            return getFnWithValitWithOptions(options)(val, path);
+          },
           [_type]: undefined as unknown as Type,
         };
       },
       {
-        [_validate]: fnWithValit,
+        [_validate]: getFnWithValitWithOptions({}),
         [_type]: undefined as unknown as Type,
       }
     );

@@ -1,5 +1,6 @@
 import { v, validate } from "vality";
 import { guard } from "vality/guard";
+import { _validate } from "vality/symbols";
 import { RSA } from "vality/utils";
 
 function mockGuard(implementation: {
@@ -188,8 +189,8 @@ describe("guard()", () => {
     });
 
     it("calls all option handlers with value and options", () => {
-      const bar = jest.fn(v => v);
-      const baz = jest.fn(v => v);
+      const bar = jest.fn(v => true);
+      const baz = jest.fn(v => true);
 
       mockGuard({
         handleOptions: {
@@ -229,51 +230,21 @@ describe("guard()", () => {
       bar.mockClear(); baz.mockClear();
     });
 
-    describe("calls the callback with the parent structure", () => {
+    it("calls the options callback with the parent structure", () => {
       const options = jest.fn(() => ({}));
-      afterEach(() => options.mockClear());
 
-      test("vality.array", () => {
-        validate([v.string(options)], ["foo", "bar", "baz"]);
-        expect(options).toHaveBeenCalledWith(["foo", "bar", "baz"]);
-        expect(options).toHaveBeenCalledTimes(1);
+      v.string(options)[_validate]("foo", [], {
+        bar: "baz"
       });
 
-      test("vality.object", () => {
-        validate({ foo: v.string(options), bar: v.number(options) }, { foo: "bar", bar: 2 });
-        expect(options).toHaveBeenCalledWith({ foo: "bar", bar: 2 });
-        expect(options).toHaveBeenCalledTimes(2);
-      });
-
-      test("vality.optional", () => {
-        // Passes through
-        validate([v.optional(v.string(options))], ["foo", "bar", "baz"]);
-        expect(options).toHaveBeenCalledWith(["foo", "bar", "baz"]);
-        expect(options).toHaveBeenCalledTimes(1);
-      });
-
-      test("vality.enum", () => {
-        // Passes through
-        validate([[v.string(options), v.number(options)]], ["foo", 2, "baz"]);
-        expect(options).toHaveBeenCalledWith(["foo", 2, "baz"]);
-        expect(options).toHaveBeenCalledTimes(1); // Only 1 call because first check mathec
-        options.mockClear();
-
-        validate([[v.string(options), v.number(options)]], [true, 2, "baz"]);
-        expect(options).toHaveBeenCalledWith([true, 2, "baz"]);
-        expect(options).toHaveBeenCalledTimes(2); // 2 calls because first check failed
-      });
-
-      test("vality.tuple", () => {
-        validate(v.tuple(v.string(options), v.number(options), v.boolean(options)), ["foo", 2, true]);
-        expect(options).toHaveBeenCalledWith(["foo", 2, true]);
-        expect(options).toHaveBeenCalledTimes(3);
+      expect(options).toHaveBeenCalledWith({
+        bar: "baz"
       });
     });
   });
 
   describe("default options", () => {
-    it("doesn't forward default options", () => {
+    it("doesn't forward default options to fn", () => {
       const { fn } = mockGuard({
         defaultOptions: {
           bar: "baz",
@@ -287,8 +258,8 @@ describe("guard()", () => {
     });
 
     it("calls all option handlers with value but without default options", () => {
-      const bar = jest.fn(v => v);
-      const baz = jest.fn(v => v);
+      const bar = jest.fn(() => true);
+      const baz = jest.fn(() => true);
 
       mockGuard({
         handleOptions: {
