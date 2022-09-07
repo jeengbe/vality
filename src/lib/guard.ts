@@ -26,7 +26,7 @@ export function guard<
   },
   defaultOptions?: Partial<Options>
 ): Validate<Type, Options, false> {
-  // Under the hood, a guard is just
+  // Under the hood, a guard is just a Valit that gets the guard's implementation as inner
   return makeValit<
     Name,
     [guardFn: (value: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => Type | undefined],
