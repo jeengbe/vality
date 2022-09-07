@@ -6,7 +6,7 @@ const config: Config = {
   transform: {
     "^.+\\.ts?$": "ts-jest",
   },
-  setupFilesAfterEnv: ["./tests/_machers.ts"],
+  setupFilesAfterEnv: ["./tests/_matchers.ts"],
   globals: {
     "ts-jest": {
       tsconfig: "./tests/tsconfig.json",
