@@ -4,14 +4,14 @@ const config: Config = {
   coverageReporters: ["lcov", "json-summary", "text-summary"],
   verbose: true,
   transform: {
-    "^.+\\.ts?$": "ts-jest",
+    "^.+\\.ts?$": [
+      "ts-jest",
+      {
+        tsconfig: "./tests/tsconfig.json",
+      }
+    ],
   },
   setupFilesAfterEnv: ["./tests/_matchers.ts"],
-  globals: {
-    "ts-jest": {
-      tsconfig: "./tests/tsconfig.json",
-    },
-  },
   moduleNameMapper: {
     "^vality$": "<rootDir>/lib",
     "^vality/(.*)$": "<rootDir>/lib/$1",

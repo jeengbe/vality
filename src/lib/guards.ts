@@ -6,10 +6,6 @@ import { validate } from "./validate";
 import { Valit } from "./valit";
 import { vality } from "./vality";
 
-// The idea behind default options is to only specify them they further restrict the more generic type that solely checking would give.
-// e.g.integer: false would be a bad default option, as it wouldn't actually impose any further constraints
-// unsafe: false, however, does further narrow down number inputs to safe ones only, which is why a default option is good here
-
 declare global {
   namespace vality {
     interface guards {
@@ -78,7 +74,8 @@ declare global {
         {
           transform: (v: RelationType) => RelationType;
         }
-      >;
+        >;
+      any: Guard<unknown>;
     }
   }
 }
@@ -151,8 +148,6 @@ vality.literal = lit =>
     if (options.default === true) {
       if (val === undefined) return lit;
     } else {
-      // If the literal should not be used as the default, then we unset and other option passed here
-      // We want to keep default: true though
       delete options.default;
     }
     return val === lit ? lit : undefined;
@@ -175,3 +170,5 @@ vality.relation = () =>
     // We can just assert this as any, as otherwise we'd just repeat ourselves
     // Asertion is necessary here because a guard is obviously not a valit
   }) as any;
+
+vality.any = guard("any", val => val);
