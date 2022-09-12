@@ -74,7 +74,8 @@ declare global {
         {
           transform: (v: RelationType) => RelationType;
         }
-      >;
+        >;
+      any: Guard<unknown>;
     }
   }
 }
@@ -147,8 +148,6 @@ vality.literal = lit =>
     if (options.default === true) {
       if (val === undefined) return lit;
     } else {
-      // If the literal should not be used as the default, then we unset and other option passed here
-      // We want to keep default: true though
       delete options.default;
     }
     return val === lit ? lit : undefined;
@@ -171,3 +170,5 @@ vality.relation = () =>
     // We can just assert this as any, as otherwise we'd just repeat ourselves
     // Asertion is necessary here because a guard is obviously not a valit
   }) as any;
+
+vality.any = guard("any", val => val);

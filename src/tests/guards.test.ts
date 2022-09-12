@@ -646,3 +646,27 @@ test("vality.relation", () => {
     ]
   });
 });
+
+test("vality.any", () => {
+  testGuard("any", v.any, {
+    valid: [
+      { value: null },
+      { value: 0 },
+      { value: 1 },
+      { value: "" },
+      { value: "foo" },
+      { value: "bar" },
+      { value: "foo bar" },
+      { value: true },
+      { value: false },
+      { value: {} },
+      { value: { foo: "bar" } },
+      { value: [] },
+      { value: ["foo"] },
+      { value: () => { } }
+    ],
+    invalid: [
+      { value: undefined },
+    ]
+  });
+});
