@@ -230,3 +230,9 @@ const rel = vality.relation(MyModel);
 type rel = ParseIn<typeof rel>;
 //   ^?
 ```
+
+### vality.any {#list-of-guards-any}
+
+Returns the value as a unknown. Accepts any value except for undefined.
+
+No options.
