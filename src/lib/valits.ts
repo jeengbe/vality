@@ -59,7 +59,7 @@ declare global {
       and: <E extends OneOrEnumOfParseable<RSE>[]>(...es: E) => Valit<E & {
         [_specialValit]: "and";
       }>;
-      dict: <K extends OneOrEnumOfParseable<string |number>, V extends Eny>(k: K, v: V) => Valit<[K, V] & {
+      dict: <K extends OneOrEnumOfParseable<string | number>, V extends Eny>(k: K, v: V) => Valit<[K, V] & {
         [_specialValit]: "dict";
       }>;
     }
