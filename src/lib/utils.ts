@@ -120,6 +120,16 @@ type Unfoo<T> = T extends { foo: any; } ? T['foo'] : never;
 // combine three helpers to get an intersection of all the item types
 export type IntersectItems<T extends any[]> = Unfoo<Intersect<Parse<Values<Foo<T>>>>>;
 
+export type OneOrEnumOfParseable<T> =
+  | T
+  | readonly [
+      T | Face<T, true> | Face<T, false>,
+      T | Face<T, true> | Face<T, false>,
+      ...(T | Face<T, true>)[]
+    ]
+  | Face<T, true>
+  | Face<T, false>;
+
 export type ExtraOptions<T, O> = {
   transform: IdentityFn<T>;
   default: T;

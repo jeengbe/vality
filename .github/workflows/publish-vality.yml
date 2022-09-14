@@ -15,20 +15,19 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
       - run: pnpm --filter vality build
-      - run: cp ./README.md ./src/README.md
       - uses: jacobtomlinson/gha-find-replace@v2
         with:
           find: "on GitHub"
           replace: "on NPM"
           regex: false
-          include: "./src/README.md"
+          include: "README.md"
+      - run: cp ./README.md ./src/README.md
       - uses: actions/upload-artifact@v3
         with:
           name: publish-vality
           path: |
             ./src/dist/
             ./src/package.json
-            ./src/yarn.lock
             ./src/LICENSE.md
             ./src/README.md
 
@@ -40,9 +39,6 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: publish-vality
-      - run: |
-          mv ./dist/* ./
-          rm -rf ./dist/
       - uses: actions/setup-node@v3
         with:
           node-version: 18

@@ -1,5 +1,5 @@
 import { _specialValit } from "./symbols";
-import { Eny, IntersectItems } from "./utils";
+import { Eny, IntersectItems, OneOrEnumOfParseable } from "./utils";
 import { Face } from "./validate";
 import type { ReadonlyValit } from "./valit";
 
@@ -27,6 +27,10 @@ export type Parse<T, _D = "out"> = T extends infer U & { [_specialValit]: "tuple
   ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
   : T extends (infer U extends Eny[]) & { [_specialValit]: "and"; }
   ? IntersectItems<U>
+  : T extends [infer K extends OneOrEnumOfParseable<string | number>, infer V] & { [_specialValit]: "dict"; }
+  ? {
+    [KK in Parse<K, DecD<_D>>]: Parse<V, DecD<_D>>;
+  }
   : T extends readonly [infer U] // Array short
   ? Parse<U, DecD<_D>>[]
   : T extends readonly (infer U)[] // Enum short

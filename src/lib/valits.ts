@@ -1,7 +1,7 @@
 import { config } from "./config";
 import { _readonly, _specialValit, _type, _validate } from "./symbols";
-import { Eny, enyToGuardFn, RSE } from "./utils";
-import { Error, Face, Path } from "./validate";
+import { Eny, enyToGuardFn, OneOrEnumOfParseable, RSE } from "./utils";
+import { Error, Path } from "./validate";
 import { ReadonlyValit, valit, Valit } from "./valit";
 import { vality } from "./vality";
 
@@ -56,8 +56,11 @@ declare global {
        */
       readonly: <E extends Eny>(e: E) => ReadonlyValit<E>;
       // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
-      and: <E extends (RSE | [RSE, RSE, ...RSE[]] | Face<RSE, true>)[]>(...es: E) => Valit<E & {
+      and: <E extends OneOrEnumOfParseable<RSE>[]>(...es: E) => Valit<E & {
         [_specialValit]: "and";
+      }>;
+      dict: <K extends OneOrEnumOfParseable<string |number>, V extends Eny>(k: K, v: V) => Valit<[K, V] & {
+        [_specialValit]: "dict";
       }>;
     }
   }
