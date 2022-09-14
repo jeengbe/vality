@@ -1,4 +1,5 @@
-import { _tuple } from "./symbols";
+import { _specialValit } from "./symbols";
+import { Eny, IntersectItems } from "./utils";
 import { Face } from "./validate";
 import type { ReadonlyValit } from "./valit";
 
@@ -22,8 +23,10 @@ export type RelationType = vality.Config extends { RelationType: infer R; } ? R 
 
 type DecD<D> = "in-layer-one" extends D ? "in" : D;
 
-export type Parse<T, _D = "out"> = T extends infer U & { [_tuple]: true; } // Tuple short
+export type Parse<T, _D = "out"> = T extends infer U & { [_specialValit]: "tuple"; }
   ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
+  : T extends (infer U extends Eny[]) & { [_specialValit]: "and"; }
+  ? IntersectItems<U>
   : T extends readonly [infer U] // Array short
   ? Parse<U, DecD<_D>>[]
   : T extends readonly (infer U)[] // Enum short
@@ -32,9 +35,9 @@ export type Parse<T, _D = "out"> = T extends infer U & { [_tuple]: true; } // Tu
   ? "writeable" extends _D
   ? never
   : Parse<U, DecD<_D>>
-  : T extends Face<infer U, true> // Valits needs to be parsed again
+  : T extends Face<infer U, true> // Valits' content needs to be parsed again
   ? Parse<U, DecD<_D>>
-  : T extends Face<infer U, false> // Whereas guards don't
+  : T extends Face<infer U, false> // Whereas guards' doesn't
   ? U
   : T extends () => infer U // A model
   ? "in-layer-one" extends _D

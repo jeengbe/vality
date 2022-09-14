@@ -499,6 +499,30 @@ describe("vality.readonly", () => {
   });
 });
 
+describe("vality.and", () => {
+  test("base type check", () => {
+    testValit("and", v.and({ foo: v.string }, [{ bar: v.string }, { baz: v.number }]), {
+      valid: [
+        { value: { foo: "bar", bar: "baz" } },
+        { value: { foo: "bar", baz: 1 } },
+      ],
+      invalid: [
+        { value: { foo: "bar", bar: "baz", baz: 1 } },
+        { value: -1 },
+        { value: 0 },
+        { value: "" },
+        { value: "foo" },
+        { value: "foo bar" },
+        { value: true },
+        { value: false },
+        { value: undefined },
+        { value: null },
+        { value: () => { } }
+      ]
+    });
+  });
+});
+
 
 // TODO: SPLIT UP
 describe("passes on the parent structure", () => {

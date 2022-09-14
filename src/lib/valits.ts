@@ -1,7 +1,7 @@
 import { config } from "./config";
-import { _readonly, _tuple, _type, _validate } from "./symbols";
-import { Eny, enyToGuardFn, RSA, RSE } from "./utils";
-import { Error, Path } from "./validate";
+import { _readonly, _specialValit, _type, _validate } from "./symbols";
+import { Eny, enyToGuardFn, RSE } from "./utils";
+import { Error, Face, Path } from "./validate";
 import { ReadonlyValit, valit, Valit } from "./valit";
 import { vality } from "./vality";
 
@@ -27,7 +27,7 @@ declare global {
         ...es: E
       ) => Valit<
         E & {
-          [_tuple]: true;
+          [_specialValit]: "tuple";
         },
         {
           /**
@@ -55,6 +55,10 @@ declare global {
        * This valit wraps the passed eny so that it is ignored by ParseIn
        */
       readonly: <E extends Eny>(e: E) => ReadonlyValit<E>;
+      // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
+      and: <E extends (RSE | [RSE, RSE, ...RSE[]] | Face<RSE, true>)[]>(...es: E) => Valit<E & {
+        [_specialValit]: "and";
+      }>;
     }
   }
 }
@@ -101,8 +105,7 @@ vality.object = valit(
   e => (value, options, path) => {
     if (typeof value !== "object" || value === null)
       return { valid: false, data: undefined, errors: [{ message: "vality.object.base", path, options, value }] };
-    // This type would really just be ParseIn<typeof e>, but it's too complicated to represent
-    const data: RSA = {};
+    const data = {} as typeof e;
     const errors: Error[] = [];
     // We iterate the passed object (the model) first
     for (const k in e) {
@@ -162,7 +165,7 @@ vality.tuple = valit(
   (...es) =>
     (value, options, path) => {
       if (!Array.isArray(value)) return { valid: false, data: undefined, errors: [{ message: "vality.tuple.base", path, options, value }] };
-      const data: any[] = [];
+      const data = [] as unknown as typeof es & { [_specialValit]: "tuple"; };
       const errors: Error[] = [];
       for (let i = 0; i < es.length; i++) {
         const res = enyToGuardFn(es[i])(value[i], [...path, i], value);
@@ -183,7 +186,7 @@ vality.tuple = valit(
         if (options.bail) break;
       }
 
-      if (errors.length === 0) return { valid: true, data: data as typeof es & { [_tuple]: true; }, errors: [] };
+      if (errors.length === 0) return { valid: true, data, errors: [] };
       return { valid: false, data: undefined, errors };
     },
   {},

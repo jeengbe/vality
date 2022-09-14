@@ -1,3 +1,4 @@
+import { Parse } from "./parse";
 import { _type, _validate } from "./symbols";
 import { Face, Path, Validate, ValidateFn, ValidationResult } from "./validate";
 import { vality } from "./vality";
@@ -12,7 +13,7 @@ export type RSE = {
 export type MaybeArray<T> = T | T[];
 
 export type Primitive = string | number | boolean | null;
-export type _Eny = Primitive | Face<Primitive, any> | (() => RSE) | RSE;
+export type _Eny = Primitive | Face<Primitive, any> | (() => Eny) | RSE;
 export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
 
 /**
@@ -88,6 +89,36 @@ export function trueFn(..._args: any[]): true {
 export function falseFn(..._args: any[]): false {
   return false;
 }
+
+// Adaped from https://stackoverflow.com/a/59463385/12405307
+// union to intersection converter by @jcalz
+// Intersect<{ a: 1 } | { b: 2 }> = { a: 1 } & { b: 2 }
+type Intersect<T> = (T extends any
+  ? (x: T) => 0
+  : never) extends (x: infer R) => 0
+  ? R
+  : never;
+
+// get keys of tuple
+// TupleKeys<[string, string, string]> = 0 | 1 | 2
+type TupleKeys<T extends any[]> = Exclude<keyof T, keyof []>;
+
+// apply { foo: ... } to every type in tuple
+// Foo<[1, 2]> = { 0: { foo: 1 }, 1: { foo: 2 } }
+type Foo<T extends any[]> = {
+  [K in TupleKeys<T>]: { foo: T[K]; };
+};
+
+// get union of field types of an object (another answer by @jcalz again, I guess)
+// Values<{ a: string, b: number }> = string | number
+type Values<T> = T[keyof T];
+
+// TS won't believe the result will always have a field "foo"
+// so we have to check for it with a conditional first
+type Unfoo<T> = T extends { foo: any; } ? T['foo'] : never;
+
+// combine three helpers to get an intersection of all the item types
+export type IntersectItems<T extends any[]> = Unfoo<Intersect<Parse<Values<Foo<T>>>>>;
 
 export type ExtraOptions<T, O> = {
   transform: IdentityFn<T>;
