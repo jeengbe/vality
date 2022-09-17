@@ -1,4 +1,5 @@
-import { CallOptions, ExtraOptions, isValid, MakeRequired, makeValit, RSA, RSN } from "./utils";
+import { _type } from "./symbols";
+import { CallOptions, ExtraOptions, isValid, MakeRequired, makeValit, RSA, RSN, ValitFn } from "./utils";
 import type { Path, Validate } from "./validate";
 
 export type Guard<Type, Options extends RSA = RSN> = Validate<Type, CallOptions<Type, Options>, false>;
@@ -9,6 +10,8 @@ export type GuardOptions<Name extends keyof vality.guards, G = vality.guards[Nam
   ? [Type, Options]
   : never;
 
+export type GuardFn<Type, Options> = (value: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => Type | undefined
+
 export function guard<
   Name extends keyof vality.guards,
   Type extends GuardOptions<Name>[0],
@@ -16,7 +19,7 @@ export function guard<
   Options extends RSA & GuardOptions<Name>[1]
 >(
   name: Name,
-  guardFn: (value: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => Type | undefined,
+  guardFn: GuardFn<Type, Options>,
   // The difference between Options and ExtraOptions is that for Options, the guard implementation also provides the implementation of the options
   // Scheams using the guard then only provide a value to the guard whereas for ExtraOptions, both the guard and the caller may implement functions which are then both considered
   // Also, we purposefully don't initialize it by default to cut some corners further down when checking as we can just check if handleOptions === undefined
@@ -29,29 +32,35 @@ export function guard<
   // Under the hood, a guard is just a Valit that gets the guard's implementation as inner
   return makeValit<
     Name,
-    [guardFn: (value: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => Type | undefined],
+    [guardFn: GuardFn<Type, Options>],
     Type,
     Options,
     false
-  >(name, fn => (value, options, path, parent) => {
-    const res = fn(value, options, path, parent);
-    if (isValid(res)) return {
-      valid: true,
-      data: res,
-      errors: []
-    };
+    >(name, fn => {
+      const validateFn: ValitFn<Type, Options> = (value, options, path, parent) => {
+        const res = fn(value, options, path, parent);
+        if (isValid(res)) return {
+          valid: true,
+          data: res,
+          errors: []
+        };
 
-    return {
-      valid: false,
-      data: undefined,
-      errors: [
-        {
-          message: `vality.${name}.base`,
-          path,
-          options,
-          value,
-        },
-      ],
-    };
+        return {
+          valid: false,
+          data: undefined,
+          errors: [
+            {
+              message: `vality.${name}.base`,
+              path,
+              options,
+              value,
+            },
+          ],
+        };
+      };
+      if (_type in fn) {
+        Object.assign(validateFn, {[_type]: (fn as typeof fn & {[_type]: any})[_type]});
+      }
+      return validateFn;
   }, handleOptions, defaultOptions)(guardFn);
 }

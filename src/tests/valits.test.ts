@@ -499,7 +499,7 @@ describe("vality.readonly", () => {
   });
 });
 
-describe("vality.and", () => {
+describe.skip("vality.and", () => {
   test("base type check", () => {
     testValit("and", v.and({ foo: v.string }, [{ bar: v.string }, { baz: v.number }]), {
       valid: [
@@ -523,6 +523,113 @@ describe("vality.and", () => {
   });
 });
 
+describe("vality.dict", () => {
+  describe("base type check", () => {
+    describe("single keys", () => {
+      test("types", () => {
+        testValit("dict", v.dict(v.number, v.any), {
+          valid: [
+            { value: {} },
+            { value: { 0: "foo" } },
+            { value: { 0: "foo", 1: "bar" } },
+            { value: { "0": "foo" }, expect: { 0: "foo" } },
+            { value: { "0": "foo", "1": "bar" }, expect: { 0: "foo", 1: "bar" } },
+          ],
+          invalid: [
+            { value: 0 },
+            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: {} }] },
+            { value: { 0: "foo", "foo": "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: {} }] },
+          ]
+        });
+
+        testValit("dict", v.dict(v.string, v.any), {
+          valid: [
+            { value: {} },
+            { value: { "foo": "bar" } },
+            { value: { "foo": "bar", "bar": "baz" } },
+            { value: { 0: "foo" }, expect: { "0": "foo", } },
+            { value: { 0: "foo", "bar": "baz" }, expect: { "0": "foo", "bar": "baz" } },
+          ],
+          invalid: [
+            { value: 0 },
+          ]
+        });
+      });
+
+      test("literals", () => {
+        testValit("dict", v.dict("foo", v.any), {
+          valid: [
+            { value: { "foo": "foo" } },
+          ],
+          invalid: [
+            { value: 0 },
+            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }] },
+            { value: { 0: "foo" }, errors: [{ message: "vality.dict.invalidProperty", path: ["0"], value: "0", options: {} }] },
+            { value: { 0: "foo", "foo": "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["0"], value: "0", options: {} }] },
+          ]
+        });
+
+        testValit("dict", v.dict(4, v.any), {
+          valid: [
+            { value: { 4: "foo" } },
+            { value: { "4": "foo" } },
+          ],
+          invalid: [
+            { value: 0 },
+            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: [4], value: undefined, options: {} }] },
+            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: {} }] },
+            { value: { 0: "foo" }, errors: [{ message: "vality.dict.invalidProperty", path: ["0"], value: "0", options: {} }] },
+          ]
+        });
+      });
+    });
+
+    describe("enum keys", () => {
+      test("types", () => {
+        testValit("dict", v.dict(v.enum(v.number, v.string), v.any), {
+          valid: [
+            { value: {} },
+            { value: { 0: "foo" } },
+            { value: { 0: "foo", 1: "bar" } },
+            { value: { 0: "foo", 1: "bar", foo: "bar", bar: "baz" } },
+            { value: { foo: "foo", bar: "bar" } },
+          ],
+          invalid: [
+            { value: 0 },
+          ]
+        });
+      });
+
+      test("literals", () => {
+        testValit("dict", v.dict(v.enum("foo", "bar"), v.any), {
+          valid: [
+            { value: { foo: "foo", bar: "bar" } },
+          ],
+          invalid: [
+            { value: 0 },
+            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }, { message: "vality.dict.missingProperty", path: ["bar"], value: undefined, options: {} }] },
+            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.missingProperty", path: ["bar"], value: undefined, options: {} }] },
+          ]
+        });
+      });
+
+      test("mixed", () => {
+        testValit("dict", v.dict(v.enum("foo", v.number), v.any), {
+          valid: [
+            { value: { "foo": "bar" } },
+            { value: { foo: "foo", 0: "bar" } },
+            { value: { foo: "foo", 0: "bar", 1: "baz" } },
+          ],
+          invalid: [
+            { value: 0 },
+            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }] },
+            { value: { 0: "foo" }, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }] },
+          ]
+        });
+      })
+    });
+  });
+})
 
 // TODO: SPLIT UP
 describe("passes on the parent structure", () => {

@@ -1,7 +1,7 @@
 import { config } from "./config";
 import { _readonly, _specialValit, _type, _validate } from "./symbols";
-import { Eny, enyToGuardFn, OneOrEnumOfParseable, RSE } from "./utils";
-import { Error, Path } from "./validate";
+import { Eny, enyToGuard, enyToGuardFn, OneOrEnumOfFace, RSE } from "./utils";
+import { Error, Face, Path } from "./validate";
 import { ReadonlyValit, valit, Valit } from "./valit";
 import { vality } from "./vality";
 
@@ -56,11 +56,18 @@ declare global {
        */
       readonly: <E extends Eny>(e: E) => ReadonlyValit<E>;
       // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
-      and: <E extends OneOrEnumOfParseable<RSE>[]>(...es: E) => Valit<E & {
+      and: <E extends OneOrEnumOfFace<RSE>[]>(...es: E) => Valit<E & {
         [_specialValit]: "and";
       }>;
-      dict: <K extends OneOrEnumOfParseable<string | number>, V extends Eny>(k: K, v: V) => Valit<[K, V] & {
+      dict: <K extends OneOrEnumOfFace<string | number>, V extends Eny>(k: K, v: V) => Valit<[K, V] & {
         [_specialValit]: "dict";
+      }, {
+        /**
+         * Whether to stop validating after the first error
+         *
+         * @default false
+         */
+        bail: boolean;
       }>;
     }
   }
@@ -222,3 +229,79 @@ vality.readonly = () =>
         ],
       },
 } as unknown as ReadonlyValit<any>);
+
+vality.dict = valit(
+  "dict",
+  (k, v) => (value, options, path, parent) => {
+    if (typeof value !== "object" || value === null) return { valid: false, data: undefined, errors: [{ message: "vality.dict.base", path, options, value }] };
+
+    const keyGuard = enyToGuard(k);
+    const typeOfKey = keyGuard[_type] as keyof vality; // This assertion is ok because actually [_type] holds the name of the valit/guard, which we need to access now
+
+    // If we only pass a single value, we pretend we've got an enum with only that value to prevent duplicate code
+    if (typeOfKey === "literal" || typeOfKey === "string" || typeOfKey === "number") {
+      // No need to pass options as they're already applied to this instance
+      // (Possibility to optimise here)
+      return vality.dict(vality.enum(k) as Face<string | number, true>, v)[_validate](value, path, parent);
+    }
+
+    if (typeOfKey !== "enum") throw new Error(`Invalid key type for vality.dict: '${typeOfKey}'`);
+    // This is a veery jank solution, but for enum valits, we always set [_validate][_type]
+    const keysGuards = (keyGuard[_validate] as unknown as { [_type]: Eny[]; })[_type].map(enyToGuard);
+
+    // These are the keys that must be set
+    const literalKeys = keysGuards.filter(g => g[_type] === "literal");
+
+    // First we we make sure that all keys are valid
+    const errors: Error[] = [];
+    for (const key in value) {
+      if (!keyGuard[_validate](key, [...path, key], value).valid) {
+        errors.push({ message: "vality.dict.invalidProperty", path: [...path, key], options, value: key });
+        if(options.bail) break;
+      }
+    }
+    if(errors.length) return { valid: false, data: undefined, errors };
+
+    // Then we make sure that all required (literal) keys are set
+    for (const literalKeyGuard of literalKeys) {
+      if (!Object.keys(value).some(k => literalKeyGuard[_validate](k, [...path, k], value).valid)) {
+        if (!literalKeyGuard[_validate](k, path, value).valid) {
+          errors.push({ message: "vality.dict.missingProperty", path: [...path, (literalKeyGuard[_validate] as unknown as {[_type]: {[_type]: string}[]})[_type][0][_type]], options, value: undefined });
+          if (options.bail) break;
+        }
+      }
+    }
+    if(errors.length) return { valid: false, data: undefined, errors };
+
+    // If we only have literal keys, we must also make sure that no other keys are set
+    if (literalKeys.length === keysGuards.length) {
+      for (const key in value) {
+        if (!literalKeys.some(g => g[_validate](key, [...path, key], value).valid)) {
+          errors.push({ message: "vality.dict.extraProperty", path: [...path, key], options, value: key });
+          if(options.bail) break;
+        }
+      }
+    }
+    if(errors.length) return { valid: false, data: undefined, errors };
+
+    // And lastly, we make sure that all values are valid
+    const valueGuardFn = enyToGuardFn(v);
+    // We cheat with the type here, which is why its easiest to just say this is RSA
+    const data = {} as any;
+    for (const key in value) {
+      const res = valueGuardFn(value[key as keyof typeof value], [...path, key], value);
+      if (!res.valid) {
+        errors.push(...res.errors);
+        if (options.bail) break;
+      } else {
+        data[key as keyof typeof value] = res.data;
+      }
+    }
+    if (errors.length) return { valid: false, data: undefined, errors };
+    return { valid: true, data, errors: [] };
+  },
+  {},
+  {
+    bail: false
+  }
+);

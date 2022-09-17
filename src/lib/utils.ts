@@ -120,15 +120,9 @@ type Unfoo<T> = T extends { foo: any; } ? T['foo'] : never;
 // combine three helpers to get an intersection of all the item types
 export type IntersectItems<T extends any[]> = Unfoo<Intersect<Parse<Values<Foo<T>>>>>;
 
-export type OneOrEnumOfParseable<T> =
-  | T
-  | readonly [
-      T | Face<T, true> | Face<T, false>,
-      T | Face<T, true> | Face<T, false>,
-      ...(T | Face<T, true>)[]
-    ]
-  | Face<T, true>
-  | Face<T, false>;
+export type TOrFace<T> = T | Face<T | Face<T, true> | Face<T, false>, true> | Face<T, false>;
+export type OneOrEnumOfFace<T> = OneOrEnumOf<TOrFace<T>>;
+export type OneOrEnumOf<T> = T | readonly [T, T, ...T[]];
 
 export type ExtraOptions<T, O> = {
   transform: IdentityFn<T>;
@@ -141,10 +135,12 @@ export type CallOptions<Type, Options> = Options extends RSN
   // We Omit keyof Options here to allow Options to override default extra option implementations
   : Options & Omit<ExtraOptions<Type, Options>, keyof Options>;
 
+export type ValitFn<Type, Options> = (val: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => ValidationResult<Type>
+
 export type ValitParameters<Name, Arg extends any[], Type, Options extends RSA> =
   [
     Name,
-    (...args: Arg) => (val: unknown, options: Partial<CallOptions<Type, Options>>, path: Path, parent?: any) => ValidationResult<Type>,
+    (...args: Arg) => ValitFn<Type, Options>,
     {
       [K in Exclude<keyof Options, keyof ExtraOptions<Type, Options>>]?: (val: Type, o: NonNullable<Options[K]>, options: MakeRequired<Options, K> & Partial<ExtraOptions<Type, Options>>) => boolean;
     }?,
@@ -216,19 +212,26 @@ export function makeValit<
       };
     };
 
+    function applyFnType<Fn extends (...args: any[]) => any>(f: Fn): Fn {
+      Object.assign(f, {
+        [_type]: args
+      })
+      return f;
+    }
+
     return Object.assign(
       (options: Partial<CallOptions<Type, Options>> | ((obj: any) => Partial<CallOptions<Type, Options>>)) => {
         return {
-          [_validate]: (val, path, parent) => {
+          [_validate]: applyFnType((val, path, parent) => {
             if (typeof options === "function") options = options(parent);
             return getValidateFnFromOptions(options)(val, path, parent);
-          },
-          [_type]: undefined as unknown as Type,
+          }),
+          [_type]: name as unknown as Type,
         } as Face<Type, V>;
       },
       {
-        [_validate]: getValidateFnFromOptions({}),
-        [_type]: undefined as unknown as Type,
+        [_validate]: applyFnType(getValidateFnFromOptions({})),
+        [_type]: name as unknown as Type,
       }
     );
   };

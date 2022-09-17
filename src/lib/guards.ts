@@ -1,6 +1,7 @@
 import { config } from "./config";
-import { guard, Guard } from "./guard";
+import { guard, Guard, GuardFn } from "./guard";
 import { RelationType } from "./parse";
+import { _type } from "./symbols";
 import { Primitive, RSE } from "./utils";
 import { validate } from "./validate";
 import { Valit } from "./valit";
@@ -143,15 +144,27 @@ vality.date = guard(
   }
 );
 
-vality.literal = lit =>
-  guard("literal", (val, options) => {
+vality.literal = lit => {
+  const guardFn: GuardFn<typeof lit, {default: boolean}> = (val, options) => {
     if (options.default === true) {
       if (val === undefined) return lit;
     } else {
       delete options.default;
     }
-    return val === lit ? lit : undefined;
-  });
+    if (val === lit) return lit;
+    if (config.strict) return undefined;
+    if (typeof lit === "string" && typeof val === "number") return val.toString() === lit ? lit : undefined;
+    if (typeof lit === "number" && typeof val === "string") return parseFloat(val) === lit ? lit : undefined;
+    if (typeof lit === "boolean" && (typeof val === "string" || typeof val === "number")) {
+      if(lit === true && y.indexOf(val) !== -1) return lit;
+      if(lit === false && n.indexOf(val) !== -1) return lit;
+    }
+    return undefined;
+  };
+  Object.assign(guardFn, { [_type]: lit });
+
+  return guard("literal", guardFn);
+}
 
 vality.relation = () =>
   guard("relation", val => {
