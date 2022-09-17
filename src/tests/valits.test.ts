@@ -609,6 +609,7 @@ describe("vality.dict", () => {
             { value: 0 },
             { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }, { message: "vality.dict.missingProperty", path: ["bar"], value: undefined, options: {} }] },
             { value: { "foo": "bar" }, errors: [{ message: "vality.dict.missingProperty", path: ["bar"], value: undefined, options: {} }] },
+            { value: { foo: "foo", bar: "bar", "baz": "qux" }, errors: [{ message: "vality.dict.invalidProperty", path: ["baz"], value: "baz", options: {} }] },
           ]
         });
       });
@@ -629,6 +630,74 @@ describe("vality.dict", () => {
       })
     });
   });
+
+  test("member type check", () => {
+    testValit("dict", v.dict(v.string, v.number), {
+      valid: [
+        { value: {} },
+        { value: { foo: 0 } },
+        { value: { foo: 0, bar: 1 } },
+      ],
+      invalid: [
+        { value: 0 },
+        { value: { foo: "bar" }, errors: [{ message: "vality.number.base", path: ["foo"], value: "bar", options: {} }] },
+        { value: { foo: 0, bar: "baz" }, errors: [{ message: "vality.number.base", path: ["bar"], value: "baz", options: {} }] },
+      ]
+    });
+  });
+
+  describe("options", () => {
+    test("bail", () => {
+      testValit("dict", v.dict(v.number, v.any)({ bail: true }), {
+        valid: [
+          { value: {} },
+          { value: { 0: "foo" } },
+        ],
+        invalid: [
+          { value: { foo: "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: { bail: true } }] },
+          { value: { foo: "bar", bar: "baz" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: { bail: true } }] },
+        ]
+      });
+
+      testValit("dict", v.dict(v.enum(v.literal("foo"), v.literal("bar")), v.any)({ bail: false }), {
+        valid: [
+          { value: { foo: "bar", bar: "baz" } },
+        ],
+        invalid: [
+          { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: { bail: false } }, { message: "vality.dict.missingProperty", path: ["bar"], value: undefined, options: { bail: false } }] },
+        ]
+      });
+
+      testValit("dict", v.dict(v.enum(v.literal("foo"), v.literal("bar")), v.any)({ bail: true }), {
+        valid: [
+          { value: { foo: "bar", bar: "baz" } },
+        ],
+        invalid: [
+          { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: { bail: true } }] },
+        ]
+      });
+
+      testValit("dict", v.dict(v.string, v.boolean)({ bail: false }), {
+        valid: [
+          { value: { foo: true } },
+        ],
+        invalid: [
+          { value: { foo: "bar" }, errors: [{ message: "vality.boolean.base", path: ["foo"], value: "bar", options: { } }] },
+          { value: { foo: "bar", bar: "baz" }, errors: [{ message: "vality.boolean.base", path: ["foo"], value: "bar", options: { } }, { message: "vality.boolean.base", path: ["bar"], value: "baz", options: { } }] },
+        ]
+      });
+
+      testValit("dict", v.dict(v.string, v.boolean)({ bail: true }), {
+        valid: [
+          { value: { foo: true } },
+        ],
+        invalid: [
+          { value: { foo: "bar" }, errors: [{ message: "vality.boolean.base", path: ["foo"], value: "bar", options: { } }] },
+          { value: { foo: "bar", bar: "baz" }, errors: [{ message: "vality.boolean.base", path: ["foo"], value: "bar", options: { } }] },
+        ]
+      });
+    });
+  })
 })
 
 // TODO: SPLIT UP

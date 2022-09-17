@@ -242,10 +242,9 @@ vality.dict = valit(
     if (typeOfKey === "literal" || typeOfKey === "string" || typeOfKey === "number") {
       // No need to pass options as they're already applied to this instance
       // (Possibility to optimise here)
-      return vality.dict(vality.enum(k) as Face<string | number, true>, v)[_validate](value, path, parent);
+      return vality.dict(vality.enum(k) as Face<string | number, true>, v)(options as { bail: boolean})[_validate](value, path, parent);
     }
 
-    if (typeOfKey !== "enum") throw new Error(`Invalid key type for vality.dict: '${typeOfKey}'`);
     // This is a veery jank solution, but for enum valits, we always set [_validate][_type]
     const keysGuards = (keyGuard[_validate] as unknown as { [_type]: Eny[]; })[_type].map(enyToGuard);
 
@@ -268,17 +267,6 @@ vality.dict = valit(
         if (!literalKeyGuard[_validate](k, path, value).valid) {
           errors.push({ message: "vality.dict.missingProperty", path: [...path, (literalKeyGuard[_validate] as unknown as {[_type]: {[_type]: string}[]})[_type][0][_type]], options, value: undefined });
           if (options.bail) break;
-        }
-      }
-    }
-    if(errors.length) return { valid: false, data: undefined, errors };
-
-    // If we only have literal keys, we must also make sure that no other keys are set
-    if (literalKeys.length === keysGuards.length) {
-      for (const key in value) {
-        if (!literalKeys.some(g => g[_validate](key, [...path, key], value).valid)) {
-          errors.push({ message: "vality.dict.extraProperty", path: [...path, key], options, value: key });
-          if(options.bail) break;
         }
       }
     }
