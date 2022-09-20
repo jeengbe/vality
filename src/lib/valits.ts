@@ -1,6 +1,6 @@
 import { config } from "./config";
 import { _readonly, _specialValit, _type, _validate } from "./symbols";
-import { Eny, enyToGuard, enyToGuardFn, OneOrEnumOfFace, RSE } from "./utils";
+import { Eny, enyToGuard, enyToGuardFn, flat, OneOrEnumOfFace, RSE } from "./utils";
 import { Error, Face, Path } from "./validate";
 import { ReadonlyValit, valit, Valit } from "./valit";
 import { vality } from "./vality";
@@ -58,6 +58,13 @@ declare global {
       // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
       and: <E extends OneOrEnumOfFace<RSE>[]>(...es: E) => Valit<E & {
         [_specialValit]: "and";
+      }, {
+        /**
+         * Whether to stop validating after the first error
+         *
+         * @default false
+         */
+        bail: boolean;
       }>;
       dict: <K extends OneOrEnumOfFace<string | number>, V extends Eny>(k: K, v: V) => Valit<[K, V] & {
         [_specialValit]: "dict";
@@ -230,13 +237,65 @@ vality.readonly = () =>
       },
 } as unknown as ReadonlyValit<any>);
 
+vality.and = valit(
+  "and",
+  (...es) => (value, options, path, parent) => {
+    if(typeof value !== "object" || value === null) return { valid: false, data: undefined, errors: [{ message: "vality.and.base", path, options, value }] };
+
+    const data = [] as unknown as typeof es & { [_specialValit]: "and"; };
+    const errors: Error[] = [];
+    const checkedKeys = [];
+
+    for (let i = 0; i < es.length; i++) {
+      const eGuard = enyToGuard(es[i]);
+      const typeOfGuard = eGuard[_type] as unknown as string;
+      const keysOfGuard = [];
+      switch (typeOfGuard) {
+        case "object":
+          keysOfGuard.push(...Object.keys((eGuard[_validate] as unknown as { [_type]: object; })[_type]));
+          break;
+        case "enum":
+          // Intersection of all enum members' keys
+          keysOfGuard.push(...new Set(flat(
+            (eGuard[_validate] as unknown as { [_type]: object[]; })[_type].map(obj => Object.keys(obj))
+          )));
+          break;
+        default:
+          throw new Error("vality.and: Unexpected type of guard: " + typeOfGuard);
+      }
+
+
+      const res = eGuard[_validate](value, path, parent);
+
+      if (!res.valid) {
+        errors.push(...res.errors);
+        if (options.bail) break;
+      } else {
+        Object.assign(data, res.data);
+        checkedKeys.push(Object.keys(res.data).length);
+      }
+    }
+
+    if (checkedKeys.length !== Object.keys(value).length) {
+      return { valid: false, data: undefined, errors: [{ message: "vality.and.extraProperties", path, options, value }] };
+    }
+
+    if (errors.length === 0) return { valid: true, data, errors: [] };
+    return { valid: false, data: undefined, errors };
+  },
+  { },
+  {
+    bail: false,
+  }
+)
+
 vality.dict = valit(
   "dict",
   (k, v) => (value, options, path, parent) => {
     if (typeof value !== "object" || value === null) return { valid: false, data: undefined, errors: [{ message: "vality.dict.base", path, options, value }] };
 
     const keyGuard = enyToGuard(k);
-    const typeOfKey = keyGuard[_type] as keyof vality; // This assertion is ok because actually [_type] holds the name of the valit/guard, which we need to access now
+    const typeOfKey = keyGuard[_type] as string; // This assertion is ok because actually [_type] holds the name of the valit/guard, which we need to access now
 
     // If we only pass a single value, we pretend we've got an enum with only that value to prevent duplicate code
     if (typeOfKey === "literal" || typeOfKey === "string" || typeOfKey === "number") {

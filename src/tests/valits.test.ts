@@ -501,10 +501,11 @@ describe("vality.readonly", () => {
 
 describe.skip("vality.and", () => {
   test("base type check", () => {
-    testValit("and", v.and({ foo: v.string }, [{ bar: v.string }, { baz: v.number }]), {
+    testValit("and", v.and({ foo: v.string }, { bar: v.string }), {
       valid: [
+        { value: { foo: "bar"} },
+        { value: { bar: "bat"} },
         { value: { foo: "bar", bar: "baz" } },
-        { value: { foo: "bar", baz: 1 } },
       ],
       invalid: [
         { value: { foo: "bar", bar: "baz", baz: 1 } },
