@@ -1,8 +1,8 @@
 import { config } from "./config";
-import { _readonly, _specialValit, _type, _validate } from "./symbols";
-import { Eny, enyToGuard, enyToGuardFn, flat, OneOrEnumOfFace, RSE } from "./utils";
-import { Error, Face, Path } from "./validate";
-import { ReadonlyValit, valit, Valit } from "./valit";
+import { _specialValit, _type, _validate } from "./symbols";
+import { Eny, enyToGuard, enyToGuardFn, OneOrEnumOfFace, RSE } from "./utils";
+import { Error, Face, ValidationResult } from "./validate";
+import { valit, Valit } from "./valit";
 import { vality } from "./vality";
 
 declare global {
@@ -54,9 +54,11 @@ declare global {
       /**
        * This valit wraps the passed eny so that it is ignored by ParseIn
        */
-      readonly: <E extends Eny>(e: E) => ReadonlyValit<E>;
+      readonly: <E extends Eny>(e: E) => Valit<E> & {
+        [_specialValit]: "readonly";
+      };
       // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
-      and: <E extends OneOrEnumOfFace<RSE>[]>(...es: E) => Valit<E & {
+      and: <E extends (OneOrEnumOfFace<RSE | (RSE[] & {[_specialValit]: "and"})>)[]>(...es: E) => Valit<E & {
         [_specialValit]: "and";
       }, {
         /**
@@ -127,7 +129,7 @@ vality.object = valit(
     // We iterate the passed object (the model) first
     for (const k in e) {
       const ek = e[k] as Eny;
-      if (typeof ek === "object" && ek !== null && _readonly in ek) continue; // We'll deal with these later
+      if (typeof ek === "function" && ek?.[_type as keyof typeof ek] === "readonly") continue; // We'll deal with these later
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
       const res = enyToGuardFn(ek)(value[k as keyof typeof value], [...path, k], value);
       if (!res.valid) {
@@ -140,7 +142,7 @@ vality.object = valit(
     // And then check for additional keys
     for (const k in value) {
       const ek = e[k];
-      if (ek === undefined || (typeof ek === "object" && ek !== null && _readonly in ek)) {
+      if (ek === undefined || (typeof ek === "function" && ek?.[_type as keyof typeof ek] === "readonly")) {
         errors.push({
           message: "vality.object.extraProperty",
           path: [...path, k],
@@ -216,72 +218,90 @@ vality.tuple = valit(
 // This is required as vality.object checks for this symbol to correctly check for readonly properties to be unset, not just of value undefined
 
 // We still attach _validate, though, as (for whatever reason) this valit may still be called directly, and we really don't want a runtime error in that situation
-vality.readonly = () =>
-({
-  [_readonly]: true,
-  [_type]: undefined, // For consistency
-  [_validate]: (value: any, path: Path) =>
-    value === undefined
-      ? { valid: true, data: undefined, errors: [] }
-      : {
-        valid: false,
-        data: undefined,
-        errors: [
-          {
-            message: "vality.readonly.base",
-            path,
-            options: {},
-            value,
-          },
-        ],
+vality.readonly = valit("readonly", e => (val, _options, path) => {
+  if (val === undefined) return { valid: true, data: undefined as unknown as typeof e, errors: [] };
+  return {
+    valid: false,
+    data: undefined,
+    errors: [
+      {
+        message: "vality.readonly.base",
+        path,
+        options: {},
+        value: val,
       },
-} as unknown as ReadonlyValit<any>);
+    ],
+  };
+}) as unknown as () => (Valit<any> & { [_specialValit]: "readonly"});
 
 vality.and = valit(
   "and",
   (...es) => (value, options, path, parent) => {
     if(typeof value !== "object" || value === null) return { valid: false, data: undefined, errors: [{ message: "vality.and.base", path, options, value }] };
 
-    const data = [] as unknown as typeof es & { [_specialValit]: "and"; };
+    const data = {} as typeof es & { [_specialValit]: "and"; };
     const errors: Error[] = [];
-    const checkedKeys = [];
 
-    for (let i = 0; i < es.length; i++) {
-      const eGuard = enyToGuard(es[i]);
-      const typeOfGuard = eGuard[_type] as unknown as string;
-      const keysOfGuard = [];
-      switch (typeOfGuard) {
-        case "object":
-          keysOfGuard.push(...Object.keys((eGuard[_validate] as unknown as { [_type]: object; })[_type]));
-          break;
-        case "enum":
-          // Intersection of all enum members' keys
-          keysOfGuard.push(...new Set(flat(
-            (eGuard[_validate] as unknown as { [_type]: object[]; })[_type].map(obj => Object.keys(obj))
-          )));
-          break;
-        default:
-          throw new Error("vality.and: Unexpected type of guard: " + typeOfGuard);
-      }
+    const handleEs = (ess: typeof es) => {
+      for (let i = 0; i < ess.length; i++) {
+        const eGuard = enyToGuard(ess[i]);
+        const typeOfGuard = eGuard[_type] as unknown as string;
+        let res = undefined as undefined | ValidationResult<any>;
 
+        switch (typeOfGuard) {
+          case "object":{
+            const objectValue = {};
+            for (const k in (eGuard[_validate] as unknown as { [_type]: object[]; })[_type][0]) {
+              Object.assign(objectValue, { [k]: value[k as keyof typeof value] });
+            }
 
-      const res = eGuard[_validate](value, path, parent);
+            res = eGuard[_validate](objectValue, path, parent);
+            break;
+          }
+          case "enum":
+            for (const e of (eGuard[_validate] as unknown as { [_type]: any[]; })[_type]) {
+              const enumMemberGuardFn = enyToGuardFn(e);
 
-      if (!res.valid) {
-        errors.push(...res.errors);
-        if (options.bail) break;
-      } else {
-        Object.assign(data, res.data);
-        checkedKeys.push(Object.keys(res.data).length);
+              const enumMemberValue = {};
+              for (const k in (enumMemberGuardFn as unknown as { [_type]: object[]; })[_type][0]) {
+                Object.assign(enumMemberValue, { [k]: value[k as keyof typeof value] });
+              }
+
+              res = enumMemberGuardFn(enumMemberValue, path, parent);
+              if (res.valid) break;
+            }
+            if(!res) res = { valid: false, data: undefined, errors: [{ message: "vality.enum.base", path, options, value }] };
+            break;
+          case "and":
+            handleEs((eGuard[_validate] as unknown as { [_type]: typeof es; })[_type]);
+            break;
+          default:
+            throw new Error("vality.and: Unexpected type of guard: " + typeOfGuard);
+        }
+
+        if (!res) continue;
+        if (!res.valid) {
+          errors.push(...res.errors);
+          if (options.bail) break;
+        } else {
+          Object.assign(data, res.data);
+        }
       }
     }
 
-    if (checkedKeys.length !== Object.keys(value).length) {
+    handleEs(es);
+
+    if (errors.length !== 0) return { valid: false, data: undefined, errors };
+
+    const gotKeys = Object.keys(data).length;
+    const expectedKeys = Object.keys(value).length;
+    if (gotKeys < expectedKeys) {
       return { valid: false, data: undefined, errors: [{ message: "vality.and.extraProperties", path, options, value }] };
+    } else if (gotKeys > expectedKeys) {
+      throw new Error("This can't happen");
     }
 
-    if (errors.length === 0) return { valid: true, data, errors: [] };
-    return { valid: false, data: undefined, errors };
+    return { valid: true, data, errors: [] };
   },
   { },
   {

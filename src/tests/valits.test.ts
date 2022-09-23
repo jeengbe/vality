@@ -1,6 +1,6 @@
 import { Error, Face, v, validate } from "vality";
 import { config } from "vality/config";
-import { _readonly, _validate } from "vality/symbols";
+import { _type } from "vality/symbols";
 import { RSA } from "vality/utils";
 
 export function testValit(name: keyof vality.valits, valit: Face<any, any>, {
@@ -494,21 +494,23 @@ describe("vality.readonly", () => {
   });
 
   test("symbols", () => {
-    expect(v.readonly(v.string)).callback(v => typeof v === "object" && v !== null && _readonly in v);
-    expect(v.readonly(v.string)).callback(v => typeof v === "object" && v !== null && _validate in v);
+    expect(v.readonly(v.string)).callback(v => typeof v === "function" && v?.[_type as unknown as keyof typeof v] === "readonly");
+    expect(v.readonly(v.string)).callback(v => typeof v === "function" && v?.[_type as unknown as keyof typeof v] === "readonly");
   });
 });
 
-describe.skip("vality.and", () => {
+describe("vality.and", () => {
   test("base type check", () => {
     testValit("and", v.and({ foo: v.string }, { bar: v.string }), {
       valid: [
-        { value: { foo: "bar"} },
-        { value: { bar: "bat"} },
         { value: { foo: "bar", bar: "baz" } },
       ],
       invalid: [
-        { value: { foo: "bar", bar: "baz", baz: 1 } },
+        { value: { }, errors: [{ message: "vality.string.base", options: {}, path: ["foo"], value: undefined}, { message: "vality.string.base", options: {}, path: ["bar"], value: undefined}] },
+        { value: { foo: "bar"}, errors: [{ message: "vality.string.base", options: {}, path: ["bar"], value: undefined}]},
+        { value: { bar: "baz"}, errors: [{ message: "vality.string.base", options: {}, path: ["foo"], value: undefined}]},
+        // error should be extra property
+        { value: { foo: "bar", bar: "baz", baz: 1 }, errors: [{ message: expect.anything(), options: {}, path: expect.anything(), value: expect.anything()}]},
         { value: -1 },
         { value: 0 },
         { value: "" },
@@ -521,6 +523,21 @@ describe.skip("vality.and", () => {
         { value: () => { } }
       ]
     });
+  });
+
+  describe("composed types", () => {
+    test("vality.and", () => {
+      testValit("and", v.and(v.and({ foo: v.string }, { bar: v.string }), {baz: v.string}), {
+        valid: [
+          { value: { foo: "bar", bar: "baz", "baz": "qux" } },
+        ],
+        invalid: [
+          { value: { }, errors: [{ message: "vality.string.base", options: {}, path: ["foo"], value: undefined}, { message: "vality.string.base", options: {}, path: ["bar"], value: undefined}, { message: "vality.string.base", options: {}, path: ["baz"], value: undefined}] },
+          { value: { foo: "bar"}, errors: [{ message: "vality.string.base", options: {}, path: ["bar"], value: undefined}, { message: "vality.string.base", options: {}, path: ["baz"], value: undefined}]},
+          { value: { foo: "bar", bar: "baz", baz: false }, errors: [{ message: "vality.string.base", options: {}, path: ["baz"], value: false}]},
+          ]
+      });
+    })
   });
 });
 

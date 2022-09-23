@@ -1,7 +1,6 @@
 import { _specialValit } from "./symbols";
 import { Eny, IntersectItems, OneOrEnumOfFace } from "./utils";
 import { Face } from "./validate";
-import type { ReadonlyValit } from "./valit";
 
 // Depending on the direction of the required type, we parse relations differently
 // If the type comes from the api ("out"), we type a relation as the corresponding type
@@ -35,7 +34,7 @@ export type Parse<T, _D = "out"> = T extends infer U & { [_specialValit]: "tuple
   ? Parse<U, DecD<_D>>[]
   : T extends readonly (infer U)[] // Enum short
   ? Parse<U, DecD<_D>>
-  : T extends ReadonlyValit<infer U> // Readonly valit
+  : T extends Face<infer U, true> & {[_specialValit]: "readonly"} // Readonly valit
   ? "writeable" extends _D
   ? never
   : Parse<U, DecD<_D>>
