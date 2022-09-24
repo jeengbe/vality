@@ -1,9 +1,9 @@
 import { Error, Face, v, validate } from "vality";
 import { config } from "vality/config";
-import { _type } from "vality/symbols";
+import { _name } from "vality/symbols";
 import { RSA } from "vality/utils";
 
-export function testValit(name: keyof vality.valits, valit: Face<any, any>, {
+export function testValit(name: keyof vality.valits, valit: Face<any, any, any>, {
   option,
   options,
   valid,
@@ -262,11 +262,11 @@ describe("vality.object", () => {
           { value: { foo: 1 } },
         ],
         invalid: [
-          { value: { foo: 1, bar: 2 }, errors: [{ message: "vality.object.extraProperty", path: ["bar"], value: 2, options: {} }] },
+          { value: { foo: 1, bar: 2 }, errors: [{ message: "vality.readonly.base", path: ["bar"], value: 2, options: {} }] },
           {
             value: { foo: 1, bar: 2, baz: "foo" },
             errors: [
-              { message: "vality.object.extraProperty", path: ["bar"], value: 2, options: {} },
+              { message: "vality.readonly.base", path: ["bar"], value: 2, options: {} },
               { message: "vality.object.extraProperty", path: ["baz"], value: "foo", options: {} }
             ]
           },
@@ -494,8 +494,8 @@ describe("vality.readonly", () => {
   });
 
   test("symbols", () => {
-    expect(v.readonly(v.string)).callback(v => typeof v === "function" && v?.[_type as unknown as keyof typeof v] === "readonly");
-    expect(v.readonly(v.string)).callback(v => typeof v === "function" && v?.[_type as unknown as keyof typeof v] === "readonly");
+    expect(v.readonly(v.string)).callback(v => typeof v === "function" && v?.[_name as unknown as keyof typeof v] === "readonly");
+    expect(v.readonly(v.string)).callback(v => typeof v === "function" && v?.[_name as unknown as keyof typeof v] === "readonly");
   });
 });
 
@@ -522,6 +522,17 @@ describe("vality.and", () => {
         { value: null },
         { value: () => { } }
       ]
+    });
+
+    testValit("and", v.and({ foo: v.string}, {bar: v.string}, {baz: v.string}), {
+      valid: [
+        { value: { foo: "bar", bar: "baz", "baz": "qux" } },
+      ],
+      invalid: [
+        { value: { }, errors: [{ message: "vality.string.base", options: {}, path: ["foo"], value: undefined}, { message: "vality.string.base", options: {}, path: ["bar"], value: undefined}, { message: "vality.string.base", options: {}, path: ["baz"], value: undefined}] },
+        { value: { foo: "bar"}, errors: [{ message: "vality.string.base", options: {}, path: ["bar"], value: undefined}, { message: "vality.string.base", options: {}, path: ["baz"], value: undefined}]},
+        { value: { foo: "bar", bar: "baz", baz: false }, errors: [{ message: "vality.string.base", options: {}, path: ["baz"], value: false}]},
+        ]
     });
   });
 

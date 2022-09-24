@@ -3,6 +3,7 @@
 export const _validate = Symbol("validate");
 
 export const _type = Symbol("type");
+export const _name = Symbol("name");
 export const _options = Symbol("options");
 
 // This symbol is used to distingush between a guard and a valit

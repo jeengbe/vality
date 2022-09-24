@@ -1,16 +1,11 @@
-import { _specialValit } from "./symbols";
 import { CallOptions, makeValit, RSA, RSN, SharedParameters } from "./utils";
 import type { Path, Validate, ValidationResult } from "./validate";
 
-export type SpecialValit<Speciality, Type, Options extends RSA = RSN> = {
-  [_specialValit]?: Speciality;
-} & Valit<Type, Options>;
-
-export type Valit<Type, Options extends RSA = RSN> = Validate<
+export type Valit<
+  Name extends string,
   Type,
-  Options,
-  true
->;
+  Options extends RSA = RSN
+> = Validate<Name, Type, Options, true>;
 
 /**
  * Extract options from a given valit from its name
@@ -18,7 +13,7 @@ export type Valit<Type, Options extends RSA = RSN> = Validate<
 export type ValitOptions<
   Name extends keyof vality.valits,
   Fn = vality.valits[Name]
-> = Fn extends (...args: infer Args) => Valit<infer Type, infer Options>
+> = Fn extends (...args: infer Args) => Valit<any, infer Type, infer Options>
   ? [Args, Type, Options]
   : never;
 
@@ -41,6 +36,6 @@ export function valit<
     Options,
     (...args: Arg) => ValitFn<Type, Options>
   >
-): (...args: Arg) => Validate<Type, Options, true> {
+): (...args: Arg) => Validate<Name, Type, Options, true> {
   return makeValit(name, fn, handleOptions, defaultOptions);
 }

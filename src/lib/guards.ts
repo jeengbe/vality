@@ -11,6 +11,7 @@ declare global {
   namespace vality {
     interface guards {
       string: Guard<
+        "string",
         string,
         {
           minLength: number;
@@ -19,6 +20,7 @@ declare global {
         }
       >;
       number: Guard<
+        "number",
         number,
         {
           min: number;
@@ -36,8 +38,9 @@ declare global {
           unsafe: boolean;
         }
       >;
-      boolean: Guard<boolean>;
+      boolean: Guard<"boolean", boolean>;
       date: Guard<
+        "date",
         Date,
         {
           min: Date;
@@ -58,6 +61,7 @@ declare global {
       literal<P extends Primitive>(
         lit: P
       ): Guard<
+        "literal",
         P,
         {
           // Overwrite the default dehaviour of 'default'
@@ -70,20 +74,22 @@ declare global {
       // model S is solely used to infer and keep the type of the relation and not used in runtime
       relation<S extends () => RSE>(
         model: S
-      ): Valit< // We return a valit because we have to parse its contents in Parse<>, and guards don't do that
+      ): Valit<
+        // We return a valit because we have to parse its contents in Parse<>, and guards don't do that
+        "relation",
         S,
         {
           transform: (v: RelationType) => RelationType;
         }
-        >;
-      any: Guard<unknown>;
+      >;
+      any: Guard<"any", unknown>;
     }
   }
 }
 
 vality.string = guard(
   "string",
-  val => {
+  (val) => {
     if (typeof val === "string") return val;
     if (config.strict) return undefined;
     if (typeof val !== "number") return undefined;
@@ -98,7 +104,7 @@ vality.string = guard(
 
 vality.number = guard(
   "number",
-  val => {
+  (val) => {
     if (typeof val === "number") return val;
     if (config.strict) return undefined;
     if (typeof val !== "string") return undefined;
@@ -110,7 +116,8 @@ vality.number = guard(
     min: (val, o) => val >= o,
     max: (val, o) => val <= o,
     integer: (val, o) => !o || val % 1 === 0,
-    unsafe: (val, o) => o || (val > Number.MIN_SAFE_INTEGER && val < Number.MAX_SAFE_INTEGER),
+    unsafe: (val, o) =>
+      o || (val > Number.MIN_SAFE_INTEGER && val < Number.MAX_SAFE_INTEGER),
   },
   {
     unsafe: false,
@@ -119,16 +126,20 @@ vality.number = guard(
 
 const y = ["1", 1, "true"];
 const n = ["0", 0, "false"];
-vality.boolean = guard("boolean", val => {
+vality.boolean = guard("boolean", (val) => {
   if (typeof val === "boolean") return val;
   if (config.strict) return undefined;
   if (typeof val !== "string" && typeof val !== "number") return undefined;
-  return y.indexOf(val) !== -1 ? true : n.indexOf(val) !== -1 ? false : undefined;
+  return y.indexOf(val) !== -1
+    ? true
+    : n.indexOf(val) !== -1
+    ? false
+    : undefined;
 });
 
 vality.date = guard(
   "date",
-  val => {
+  (val) => {
     if (val instanceof Date) return val;
     if (config.strict) return undefined;
     if (typeof val !== "string" && typeof val !== "number") return undefined;
@@ -144,8 +155,8 @@ vality.date = guard(
   }
 );
 
-vality.literal = lit => {
-  const guardFn: GuardFn<typeof lit, {default: boolean}> = (val, options) => {
+vality.literal = (lit) => {
+  const guardFn: GuardFn<typeof lit, { default: boolean }> = (val, options) => {
     if (options.default === true) {
       if (val === undefined) return lit;
     } else {
@@ -153,21 +164,26 @@ vality.literal = lit => {
     }
     if (val === lit) return lit;
     if (config.strict) return undefined;
-    if (typeof lit === "string" && typeof val === "number") return val.toString() === lit ? lit : undefined;
-    if (typeof lit === "number" && typeof val === "string") return parseFloat(val) === lit ? lit : undefined;
-    if (typeof lit === "boolean" && (typeof val === "string" || typeof val === "number")) {
-      if(lit === true && y.indexOf(val) !== -1) return lit;
-      if(lit === false && n.indexOf(val) !== -1) return lit;
+    if (typeof lit === "string" && typeof val === "number")
+      return val.toString() === lit ? lit : undefined;
+    if (typeof lit === "number" && typeof val === "string")
+      return parseFloat(val) === lit ? lit : undefined;
+    if (
+      typeof lit === "boolean" &&
+      (typeof val === "string" || typeof val === "number")
+    ) {
+      if (lit === true && y.indexOf(val) !== -1) return lit;
+      if (lit === false && n.indexOf(val) !== -1) return lit;
     }
     return undefined;
   };
   Object.assign(guardFn, { [_type]: lit });
 
   return guard("literal", guardFn);
-}
+};
 
 vality.relation = () =>
-  guard("relation", val => {
+  guard("relation", (val) => {
     return validate(
       [
         null,
@@ -184,4 +200,4 @@ vality.relation = () =>
     // Asertion is necessary here because a guard is obviously not a valit
   }) as any;
 
-vality.any = guard("any", val => val);
+vality.any = guard("any", (val) => val);

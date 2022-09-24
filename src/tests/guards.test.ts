@@ -2,7 +2,7 @@ import { Error, Face, v, validate } from "vality";
 import { config } from "vality/config";
 import { RSA } from "vality/utils";
 
-export function testGuard(name: keyof vality.guards, guard: Face<any, any>, {
+export function testGuard(name: keyof vality.guards, guard: Face<any, any, any>, {
   option,
   options,
   valid,
