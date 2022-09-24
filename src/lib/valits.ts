@@ -420,7 +420,9 @@ vality.dict = valit(
     const keysGuards = keyGuard[_validate][_type].map(enyToGuard);
 
     // These are the keys that must be set
-    const literalKeys = keysGuards.filter((g: {[_name]: string}) => g[_name] === "literal");
+    const literalKeys = keysGuards.filter(
+      (g: { [_name]: string }) => g[_name] === "literal"
+    );
 
     // First we we make sure that all keys are valid
     const errors: Error[] = [];

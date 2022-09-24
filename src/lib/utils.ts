@@ -46,10 +46,9 @@ export type EnyToFace<T> = T extends [infer U]
   ? T
   : T extends () => infer U
   ? Face<"relation", U, true>
-  : Face<"object", T, true>
+  : Face<"object", T, true>;
 
 type x = EnyToFace<TOrFace<string>>;
-
 
 export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
   // TODO: Fix this type mess -- I have no idea why it does that
@@ -137,7 +136,7 @@ export type TOrFace<T> =
   | T
   | Face<string, T, false>
   // We can't use Face<string, T, true | false> as it is combined to Face<string, T, boolean> which falls through all Parse<> branches
-  | Face<string, T | Face<string, T, true> | Face<string, T, false>, true>
+  | Face<string, T | Face<string, T, true> | Face<string, T, false>, true>;
 
 export type OneOrEnumOfTOrFace<T> = OneOrEnumOf<TOrFace<T>>;
 export type OneOrEnumOf<T> = T | readonly [T, T, ...T[]];
@@ -202,7 +201,10 @@ export function makeValit<
           ...optionsWithoutExtras
         }: Partial<CallOptions<Type, Options>> = { ...options };
 
-        const optionsWithDefault = {...defaultOptions, ...optionsWithoutExtras};
+        const optionsWithDefault = {
+          ...defaultOptions,
+          ...optionsWithoutExtras,
+        };
 
         // Validation follows a simple list of steps:
         // =====

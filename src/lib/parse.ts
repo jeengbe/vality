@@ -26,7 +26,11 @@ export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
   : T extends Face<"and", infer U extends Eny[], true>
   ? IntersectItems<U>
-  : T extends Face<"dict", [infer K extends OneOrEnumOfTOrFace<string | number>, infer V], true>
+  : T extends Face<
+      "dict",
+      [infer K extends OneOrEnumOfTOrFace<string | number>, infer V],
+      true
+    >
   ? {
       [KK in Parse<K, DecD<_D>>]: Parse<V, DecD<_D>>;
     }
