@@ -1,4 +1,4 @@
-import { Eny, IntersectItems } from "./utils";
+import { Eny, IntersectItems, OneOrEnumOfTOrFace } from "./utils";
 import { Face } from "./validate";
 
 // Depending on the direction of the required type, we parse relations differently
