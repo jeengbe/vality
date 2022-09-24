@@ -16,5 +16,6 @@ runs:
       node-version: ${{ inputs.node-version }}
       registry-url: https://registry.npmjs.org/
       cache: "pnpm"
+      cache-dependency-path: '**/pnpm-lock.yaml'
    - shell: bash
      run: pnpm install --no-frozen-lockfile
