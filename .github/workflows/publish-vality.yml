@@ -82,7 +82,7 @@ jobs:
 
   tag:
     name: Tag release
-    needs: publish-vality
+    needs: build-vality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Vality
@@ -108,7 +108,7 @@ jobs:
         with:
           directory: dist
           type: tar
-          filename: vality-${{ steps.version.outputs.current-version }}.tar.gz
+          filename: ../vality-${{ steps.version.outputs.current-version }}.tar.gz
       - name: Release tag
         uses: ncipollo/release-action@v1
         with:
