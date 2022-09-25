@@ -64,7 +64,7 @@ declare global {
         "literal",
         P,
         {
-          // Overwrite the default dehaviour of 'default'
+          // Overwrite the default behaviour of 'default'
           default: boolean;
         }
       >;
