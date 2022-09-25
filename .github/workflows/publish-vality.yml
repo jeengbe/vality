@@ -105,9 +105,15 @@ jobs:
         with:
           path: ./dist
           name: vality
+      - name: Create release artifact
+        uses: thedoctor0/zip-release@v1
+        with:
+          path: ./dist
+          type: tar
+          filename: vality-${{ steps.version.outputs.current-version }}.tar.gz
       - name: Release tag
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.version.outputs.current-version }}
-          artifacts: "./dist"
+          artifacts: vality-${{ steps.version.outputs.current-version }}.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
