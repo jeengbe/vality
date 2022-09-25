@@ -1,4 +1,4 @@
-name: Publish Vality
+name: Publish
 
 on:
   push:
