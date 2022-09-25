@@ -98,10 +98,6 @@ jobs:
         id: version
       - uses: rickstaa/action-create-tag@v1
         with:
-          tag: "latest"
-          message: "Latest release"
-      - uses: rickstaa/action-create-tag@v1
-        with:
           tag: ${{ steps.version.outputs.current-version }}
       - name: Tag release
         uses: ncipollo/release-action@v1
