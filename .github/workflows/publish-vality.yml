@@ -1,6 +1,9 @@
 name: Publish Vality
 
-on: ["push"]
+on:
+  push:
+    branches:
+      - master
 
 concurrency:
   group: publish-vality
@@ -10,7 +13,6 @@ jobs:
   check:
     name: Check for update
     runs-on: ubuntu-latest
-    if: contains(github.ref, 'master')
     outputs:
       should-publish: ${{ steps.check.outputs.changed }}
     steps:
