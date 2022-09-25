@@ -88,11 +88,13 @@ jobs:
 
   tag:
     name: Tag release
-    needs: build-vality
+    needs: publish-vality
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Vality
-        uses: actions/checkout@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: vality
       - name: Get NPM Version
         uses: martinbeentjes/npm-get-version-action@main
         id: version
@@ -103,5 +105,5 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.version.outputs.current-version }}
-          artifacts: "dist/*"
+          artifacts: "*"
           token: ${{ secrets.GITHUB_TOKEN }}
