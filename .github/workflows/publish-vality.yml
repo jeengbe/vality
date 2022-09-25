@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   check:
-    name: Check for update
+    name: Check version
     runs-on: ubuntu-latest
     outputs:
       should-publish: ${{ steps.check.outputs.changed }}
