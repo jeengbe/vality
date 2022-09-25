@@ -91,19 +91,23 @@ jobs:
     needs: publish-vality
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: vality
+      - name: Checkout Vality
+        uses: actions/checkout@v3
       - name: Get NPM Version
         uses: martinbeentjes/npm-get-version-action@main
         id: version
-      - uses: rickstaa/action-create-tag@v1
+      - name: Create tag
+        uses: rickstaa/action-create-tag@v1
         with:
           tag: ${{ steps.version.outputs.current-version }}
-      - name: Tag release
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          path: ./dist
+          name: vality
+      - name: Release tag
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.version.outputs.current-version }}
-          artifacts: "*"
+          artifacts: "./dist"
           token: ${{ secrets.GITHUB_TOKEN }}
