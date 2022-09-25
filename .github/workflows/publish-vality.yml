@@ -107,5 +107,6 @@ jobs:
       - name: Tag release
         uses: ncipollo/release-action@v1
         with:
+          tag: ${{ steps.version.outputs.current-version }}
           artifacts: "dist/*"
           token: ${{ secrets.GITHUB_TOKEN }}
