@@ -90,7 +90,7 @@ validate(
 ); // { valid: false }
 ```
 
-### validate {#extra-options-preprocess}
+### preprocess {#extra-options-preprocess}
 
 This option can be used to do anything with the value before it is validated in any way.
 
@@ -107,7 +107,7 @@ validate(
       }
     }
   }),
-  "['1',2,'3',4,5]"
+  `["1",2,"3",4,5]`
 ); // { valid: true, data: [1,2,3,4,5] }
 ```
 

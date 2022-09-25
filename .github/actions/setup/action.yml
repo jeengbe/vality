@@ -6,16 +6,25 @@ inputs:
     description: The Node version to install
     required: false
     default: "18"
+  install-only:
+    description: Only install the specified packages
+    required: false
+    default: ""
 
 runs:
   using: composite
   steps:
-   - uses: pnpm/action-setup@v2
-   - uses: actions/setup-node@v3
-     with:
-      node-version: ${{ inputs.node-version }}
-      registry-url: https://registry.npmjs.org/
-      cache: "pnpm"
-      cache-dependency-path: '**/pnpm-lock.yaml'
-   - shell: bash
-     run: pnpm install --no-frozen-lockfile
+    - uses: pnpm/action-setup@v2
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: https://registry.npmjs.org/
+        cache: "pnpm"
+        cache-dependency-path: "pnpm-lock.yaml"
+
+    - shell: bash
+      if: "${{ inputs.install-only == '' }}"
+      run: pnpm install --frozen-lockfile
+    - shell: bash
+      if: "${{ inputs.install-only != '' }}"
+      run: pnpm install --frozen-lockfile --filter ${{ inputs.install-only }}

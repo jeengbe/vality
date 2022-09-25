@@ -14,13 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
+        with:
+          install-only: "./src"
       - run: pnpm --filter vality build
       - uses: jacobtomlinson/gha-find-replace@v2
         with:
           find: "on GitHub"
           replace: "on NPM"
           regex: false
-          include: "README.md"
+          include: "./README.md"
       - run: cp ./README.md ./src/README.md
       - uses: actions/upload-artifact@v3
         with:
@@ -39,6 +41,9 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: publish-vality
+      - run: |
+          mv ./dist/* ./
+          rm -rf ./dist/
       - uses: actions/setup-node@v3
         with:
           node-version: 18
