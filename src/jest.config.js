@@ -1,15 +1,11 @@
-import type { Config } from "jest";
-
-const config: Config = {
+/**
+ * @type {import('jest').Config}
+ */
+const config = {
   coverageReporters: ["lcov", "json-summary", "text-summary"],
   verbose: true,
   transform: {
-    "^.+\\.ts?$": [
-      "ts-jest",
-      {
-        tsconfig: "./tests/tsconfig.json",
-      }
-    ],
+    "^.+\\.ts?$": "@swc/jest",
   },
   setupFilesAfterEnv: ["./tests/_matchers.ts"],
   moduleNameMapper: {
@@ -17,4 +13,5 @@ const config: Config = {
     "^vality/(.*)$": "<rootDir>/lib/$1",
   },
 };
-export default config;
+
+module.exports = config;

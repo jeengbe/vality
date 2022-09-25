@@ -25,7 +25,7 @@ describe("enyToGuard", () => {
 
   test("primitive -> vality.literal", () => {
     const spy = jest.spyOn(v, "literal");
-    let valit: Face<any, any> = enyToGuard("foo");
+    let valit: Face<any, any, any> = enyToGuard("foo");
     expect(spy).toHaveBeenCalledWith("foo");
     expect(valit).toBe(spy.mock.results[0].value);
     spy.mockClear();

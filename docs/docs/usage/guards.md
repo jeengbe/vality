@@ -90,6 +90,27 @@ validate(
 ); // { valid: false }
 ```
 
+### validate {#extra-options-preprocess}
+
+This option can be used to do anything with the value before it is validated in any way.
+
+```ts twoslash
+import { vality, validate } from "vality";
+// ---cut---
+validate(
+  vality.array(vality.number)({
+    preprocess: val => {
+      try {
+        return JSON.parse(val as string);
+      } catch (e) {
+        return val;
+      }
+    }
+  }),
+  "['1',2,'3',4,5]"
+); // { valid: true, data: [1,2,3,4,5] }
+```
+
 ## List of guards {#list-of-guards}
 
 Vality comes with 6 guards out of the box:

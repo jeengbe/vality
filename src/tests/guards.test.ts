@@ -2,7 +2,7 @@ import { Error, Face, v, validate } from "vality";
 import { config } from "vality/config";
 import { RSA } from "vality/utils";
 
-export function testGuard(name: keyof vality.guards, guard: Face<any, any>, {
+export function testGuard(name: keyof vality.guards, guard: Face<any, any, any>, {
   option,
   options,
   valid,
@@ -538,30 +538,194 @@ describe("vality.date", () => {
 });
 
 describe("vality.literal", () => {
-  test("base type check", () => {
-    testGuard("literal", v.literal("foo"), {
-      valid: [
-        { value: "foo" },
-      ],
-      invalid: [
-        { value: "" },
-        { value: "bar" },
-        { value: "foo bar" },
-        { value: -1.5 },
-        { value: -1 },
-        { value: 0 },
-        { value: 1 },
-        { value: 1.5 },
-        { value: true },
-        { value: false },
-        { value: undefined },
-        { value: null },
-        { value: {} },
-        { value: { foo: "bar" } },
-        { value: [] },
-        { value: ["foo"] },
-        { value: () => { } }
-      ]
+  describe("base type check", () => {
+    test("in strict mode", () => {
+      config.strict = true;
+
+      testGuard("literal", v.literal("foo"), {
+        valid: [
+          { value: "foo" },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => { } }
+        ]
+      });
+
+      testGuard("literal", v.literal(7), {
+        valid: [
+          { value: 7 },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: "7" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => { } }
+        ]
+      });
+    });
+
+    test("in non-strict mode", () => {
+      config.strict = false;
+
+      testGuard("literal", v.literal("foo"), {
+        valid: [
+          { value: "foo" },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => { } }
+        ]
+      });
+
+      testGuard("literal", v.literal("7"), {
+        valid: [
+          { value: "7" },
+          { value: 7, expect: "7" },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => { } }
+        ]
+      });
+
+      testGuard("literal", v.literal(7), {
+        valid: [
+          { value: 7 },
+          { value: "7", expect: 7 },
+          { value: "7.0", expect: 7 },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => { } }
+        ]
+      });
+
+      testGuard("literal", v.literal(true), {
+        valid: [
+          { value: true },
+          { value: "true", expect: true },
+          { value: "1", expect: true },
+          { value: 1, expect: true },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1.5 },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => { } }
+        ]
+      });
+
+      testGuard("literal", v.literal(false), {
+        valid: [
+          { value: false },
+          { value: "false", expect: false },
+          { value: "0", expect: false },
+          { value: 0, expect: false },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => { } }
+        ]
+      });
     });
   });
 

@@ -1,6 +1,5 @@
-import { _tuple } from "./symbols";
+import { Eny, IntersectItems, OneOrEnumOfTOrFace } from "./utils";
 import { Face } from "./validate";
-import type { ReadonlyValit } from "./valit";
 
 // Depending on the direction of the required type, we parse relations differently
 // If the type comes from the api ("out"), we type a relation as the corresponding type
@@ -12,39 +11,50 @@ import type { ReadonlyValit } from "./valit";
 
 declare global {
   namespace vality {
-    interface Config {
-    }
+    interface Config {}
   }
 }
 
 // This is how a relation should be passed to the api (in "in"-mode)
-export type RelationType = vality.Config extends { RelationType: infer R; } ? R : number | null;
+export type RelationType = vality.Config extends { RelationType: infer R }
+  ? R
+  : number | null;
 
 type DecD<D> = "in-layer-one" extends D ? "in" : D;
 
-export type Parse<T, _D = "out"> = T extends infer U & { [_tuple]: true; } // Tuple short
+export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
+  : T extends Face<"and", infer U extends Eny[], true>
+  ? IntersectItems<U>
+  : T extends Face<
+      "dict",
+      [infer K extends OneOrEnumOfTOrFace<string | number>, infer V],
+      true
+    >
+  ? {
+      [KK in Parse<K, DecD<_D>>]: Parse<V, DecD<_D>>;
+    }
   : T extends readonly [infer U] // Array short
   ? Parse<U, DecD<_D>>[]
   : T extends readonly (infer U)[] // Enum short
   ? Parse<U, DecD<_D>>
-  : T extends ReadonlyValit<infer U> // Readonly valit
-  ? "writeable" extends _D
-  ? never
-  : Parse<U, DecD<_D>>
-  : T extends Face<infer U, true> // Valits needs to be parsed again
+  : T extends Face<"readonly", infer U, true> // Readonly valit
   ? Parse<U, DecD<_D>>
-  : T extends Face<infer U, false> // Whereas guards don't
+  : T extends Face<any, infer U, true> // Valits' content needs to be parsed again
+  ? Parse<U, DecD<_D>>
+  : T extends Face<any, infer U, false> // Whereas guards' doesn't
   ? U
   : T extends () => infer U // A model
   ? "in-layer-one" extends _D
-  ? Parse<U, "in">
-  : "in" extends _D
-  ? RelationType
-  : Parse<U, _D>
+    ? Parse<U, "in">
+    : "in" extends _D
+    ? RelationType
+    : Parse<U, _D>
   : {
-    -readonly [K in keyof T as Parse<T[K], _D> extends never ? never : K]: Parse<T[K], DecD<_D>>;
-  };
+      -readonly [K in keyof T as Parse<T[K], _D> extends never
+        ? never
+        : K]: Parse<T[K], DecD<_D>>;
+    };
 
 export type ParseOut<T> = Parse<T>;
 export type ParseIn<T> = Parse<T, "in-layer-one">;

@@ -1,17 +1,28 @@
-import { _readonly } from "./symbols";
-import { makeValit, RSA, RSN, ValitParameters } from "./utils";
-import type { Validate } from "./validate";
+import { CallOptions, makeValit, RSA, RSN, SharedParameters } from "./utils";
+import type { Path, Validate, ValidationResult } from "./validate";
 
-export type Valit<Type, Options extends RSA = RSN> = Validate<Type, Options, true>;
+export type Valit<
+  Name extends string,
+  Type,
+  Options extends RSA = RSN
+> = Validate<Name, Type, Options, true>;
 
-export type ValitOptions<Name extends keyof vality.valits, Fn = vality.valits[Name]> = Fn extends (
-  ...args: infer Args
-) => Valit<infer Type, infer Options>
+/**
+ * Extract options from a given valit from its name
+ */
+export type ValitOptions<
+  Name extends keyof vality.valits,
+  Fn = vality.valits[Name]
+> = Fn extends (...args: infer Args) => Valit<any, infer Type, infer Options>
   ? [Args, Type, Options]
   : never;
 
-// This is a special type used only by vality.readonly
-export type ReadonlyValit<T> = { [_readonly]?: true; } & Valit<T>;
+export type ValitFn<Type, Options> = (
+  val: unknown,
+  options: Partial<CallOptions<Type, Options>>,
+  path: Path,
+  parent?: any
+) => ValidationResult<Type>;
 
 export function valit<
   Name extends keyof vality.valits,
@@ -19,7 +30,12 @@ export function valit<
   Type extends ValitOptions<Name>[1],
   Options extends RSA & ValitOptions<Name>[2]
 >(
-  ...[name, fn, handleOptions, defaultOptions]: ValitParameters<Name, Arg, Type, Options>
-): (...args: Arg) => Validate<Type, Options, true> {
+  ...[name, fn, handleOptions, defaultOptions]: SharedParameters<
+    Name,
+    Type,
+    Options,
+    (...args: Arg) => ValitFn<Type, Options>
+  >
+): (...args: Arg) => Validate<Name, Type, Options, true> {
   return makeValit(name, fn, handleOptions, defaultOptions);
 }
