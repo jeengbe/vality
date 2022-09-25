@@ -41,6 +41,9 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: publish-vality
+      - run: |
+          mv ./dist/* ./
+          rm -rf ./dist/
       - uses: actions/setup-node@v3
         with:
           node-version: 18
