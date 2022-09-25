@@ -1,4 +1,4 @@
-name: Jest and ESLint
+name: Test and lint
 
 on: ["push"]
 
