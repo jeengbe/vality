@@ -1,33 +1,31 @@
-name: Test and lint
+name: Jest and ESLint
 
-on:
-  push:
+on: ["push"]
 
 jobs:
   jest:
-    name: jest (Node ${{ matrix.node-version}})
+    name: Jest (Node ${{ matrix.node-version}})
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [14, 16, 18]
     steps:
-      - uses: actions/checkout@v3
-      - name: Install Node ${{ matrix.node-version }}
+      - name: Checkout Valtiy
+        uses: actions/checkout@v3
+      - name: Install dependencies (Node ${{ matrix.node-version }})
         uses: ./.github/actions/setup
         with:
           node-version: ${{ matrix.node-version }}
-          install-only: "./src"
-      - name: Run jest
-        working-directory: ./src
+      - name: Run Jest
         run: pnpm test
 
   lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
-        with:
-          install-only: "./src"
-      - name: Run eslint
-        working-directory: ./src
+      - name: Checkout Vality
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+      - name: Run ESLint
         run: pnpm lint
