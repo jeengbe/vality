@@ -16,7 +16,7 @@ jobs:
         uses: ./.github/actions/setup
         with:
           node-version: ${{ matrix.node-version }}
-          install-only: "src"
+          install-only: "./src"
       - name: Run jest
         working-directory: ./src
         run: pnpm test
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
         with:
-          install-only: "src"
+          install-only: "./src"
       - name: Run eslint
         working-directory: ./src
         run: pnpm lint

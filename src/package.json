@@ -33,7 +33,7 @@
 	"main": "./dist/index.js",
 	"scripts": {
 		"build": "tsc -p lib/tsconfig.json",
-		"test": "jest --coverage tests",
+		"test": "jest test --coverage --ci --silent",
 		"lint": "echo \"Error: no linting configured\"",
 		"test-watch": "jest --watchAll --coverage tests"
 	}

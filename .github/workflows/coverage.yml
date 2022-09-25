@@ -11,7 +11,7 @@ jobs:
       - name: Install Node
         uses: ./.github/actions/setup
         with:
-          install-only: "src"
+          install-only: "./src"
       - name: Run jest
         working-directory: ./src
         run: pnpm test

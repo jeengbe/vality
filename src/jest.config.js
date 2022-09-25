@@ -2,7 +2,7 @@
  * @type {import('jest').Config}
  */
 const config = {
-  coverageReporters: ["lcov", "json-summary", "text-summary"],
+  coverageReporters: ["lcov"],
   verbose: true,
   transform: {
     "^.+\\.ts?$": "@swc/jest",

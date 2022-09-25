@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
         with:
-          install-only: "docs"
+          install-only: "./docs"
       - run: pnpm --filter docs build
       - uses: actions/upload-pages-artifact@v1
         with:
