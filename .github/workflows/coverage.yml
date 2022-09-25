@@ -7,17 +7,13 @@ jobs:
     name: coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Install Node
+      - name: Checkout Vality
+        uses: actions/checkout@v3
+      - name: Install dependencies
         uses: ./.github/actions/setup
-        with:
-          install-only: "./src"
-      - name: Run jest
-        working-directory: ./src
+      - name: Run Jest
         run: pnpm test
-      - name: Upload the badge
+      - name: Upload to Coveralls
         uses: coverallsapp/github-action@master
         with:
-          base-path: ./src
-          path-to-lcov: ./src/coverage/lcov.info
           github-token: ${{ secrets.GITHUB_TOKEN }}

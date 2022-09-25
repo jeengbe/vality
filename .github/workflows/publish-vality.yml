@@ -1,54 +1,103 @@
-name: Publish Vality
+name: Publish
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - master
 
 concurrency:
   group: publish-vality
   cancel-in-progress: true
 
 jobs:
-  build-vality:
+  check:
+    name: Check for update
     runs-on: ubuntu-latest
+    outputs:
+      should-publish: ${{ steps.check.outputs.changed }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
-        with:
-          install-only: "./src"
-      - run: pnpm --filter vality build
-      - uses: jacobtomlinson/gha-find-replace@v2
+      - name: Check version changes
+        uses: EndBug/version-check@v1
+        id: check
+
+  build-vality:
+    name: Build Vality
+    runs-on: ubuntu-latest
+    needs: check
+    if: needs.check.outputs.should-publish == 'true'
+    steps:
+      - name: Checkout Vality
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+      - name: Build Vality
+        run: pnpm build
+      - name: Replace GitHub with NPM
+        uses: jacobtomlinson/gha-find-replace@v2
         with:
           find: "on GitHub"
           replace: "on NPM"
           regex: false
           include: "./README.md"
-      - run: cp ./README.md ./src/README.md
-      - uses: actions/upload-artifact@v3
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: publish-vality
+          name: vality
           path: |
-            ./src/dist/
-            ./src/package.json
-            ./src/LICENSE.md
-            ./src/README.md
+            ./dist/
+            ./package.json
+            ./LICENSE.md
+            ./README.md
 
   publish-vality:
     name: Publish to NPM
     needs: build-vality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v2
+      - name: Download artifact
+        uses: actions/download-artifact@v2
         with:
-          name: publish-vality
-      - run: |
+          name: vality
+      - name: Move dist/ to /
+        run: |
           mv ./dist/* ./
           rm -rf ./dist/
-      - uses: actions/setup-node@v3
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: vality
+          path: |
+            ./
+      - name: Install Node
+        uses: actions/setup-node@v3
         with:
           node-version: 18
           registry-url: https://registry.npmjs.org/
-      - name: Publish
+      - name: Publish to NPM
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+  tag:
+    name: Tag release
+    needs: build-vality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Vality
+        uses: actions/checkout@v3
+      - name: Get NPM Version
+        uses: martinbeentjes/npm-get-version-action@main
+        id: version
+      - uses: rickstaa/action-create-tag@v1
+        with:
+          tag: "latest"
+          message: "Latest release"
+      - uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ steps.version.outputs.current-version }}
+          message: ""
+      - name: Tag release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          token: ${{ secrets.GITHUB_TOKEN }}

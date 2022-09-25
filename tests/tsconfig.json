@@ -10,8 +10,8 @@
       "node"
     ],
     "paths": {
-      "vality": ["../lib"],
-      "vality/*": ["../lib/*"]
+      "vality": ["../src"],
+      "vality/*": ["../src/*"]
     }
   },
   "include": [

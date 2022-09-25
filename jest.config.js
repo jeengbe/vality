@@ -9,8 +9,8 @@ const config = {
   },
   setupFilesAfterEnv: ["./tests/_matchers.ts"],
   moduleNameMapper: {
-    "^vality$": "<rootDir>/lib",
-    "^vality/(.*)$": "<rootDir>/lib/$1",
+    "^vality$": "<rootDir>/src",
+    "^vality/(.*)$": "<rootDir>/src/$1",
   },
 };
 
