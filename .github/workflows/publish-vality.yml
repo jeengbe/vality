@@ -21,6 +21,9 @@ jobs:
       - name: Check version changes
         uses: EndBug/version-check@v1
         id: check
+      - name: Set status to skip
+        if: steps.check.outputs.changed == 'false'
+        run: echo "::set-output name=status::skip"
 
   build-vality:
     name: Build Vality
