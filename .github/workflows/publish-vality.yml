@@ -106,7 +106,7 @@ jobs:
       - name: Create release artifact
         uses: thedoctor0/zip-release@main
         with:
-          path: dist
+          directory: dist
           type: tar
           filename: vality-${{ steps.version.outputs.current-version }}.tar.gz
       - name: Release tag
