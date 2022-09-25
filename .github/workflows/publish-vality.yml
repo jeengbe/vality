@@ -106,7 +106,7 @@ jobs:
           path: ./dist
           name: vality
       - name: Create release artifact
-        uses: thedoctor0/zip-release@v1
+        uses: thedoctor0/zip-release@main
         with:
           path: ./dist
           type: tar
