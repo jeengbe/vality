@@ -16,9 +16,14 @@ jobs:
     outputs:
       should-publish: ${{ steps.check.outputs.changed }}
     steps:
+      - name: Checkout Vality
+        uses: actions/checkout@v3
       - name: Check version changes
         uses: EndBug/version-check@v1
         id: check
+      - name: Set status to skip
+        if: steps.check.outputs.changed == 'false'
+        run: echo "::set-output name=status::skip"
 
   build-vality:
     name: Build Vality
