@@ -90,7 +90,7 @@ validate(
 ); // { valid: false }
 ```
 
-### validate {#extra-options-preprocess}
+### preprocess {#extra-options-preprocess}
 
 This option can be used to do anything with the value before it is validated in any way.
 
