@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.ref, 'master')
     outputs:
-      should-publish: ${{ steps.check.outputs.changed == "true" }}
+      should-publish: ${{ steps.check.outputs.changed }}
     steps:
       - name: Check version changes
         uses: EndBug/version-check@v1
