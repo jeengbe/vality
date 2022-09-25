@@ -70,12 +70,6 @@ jobs:
         run: |
           mv ./dist/* ./
           rm -rf ./dist/
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: vality
-          path: |
-            ./
       - name: Install Node
         uses: actions/setup-node@v3
         with:
@@ -105,10 +99,14 @@ jobs:
         with:
           path: ./dist
           name: vality
+      - name: Move dist/ to /
+        run: |
+          mv ./dist/dist/* ./dist/
+          rm -rf ./dist/dist/
       - name: Create release artifact
         uses: thedoctor0/zip-release@main
         with:
-          path: ./dist
+          path: dist
           type: tar
           filename: vality-${{ steps.version.outputs.current-version }}.tar.gz
       - name: Release tag
