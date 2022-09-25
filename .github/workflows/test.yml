@@ -18,6 +18,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           install-only: "src"
       - name: Run jest
+        working-directory: ./src
         run: pnpm test
 
   lint:
@@ -28,4 +29,5 @@ jobs:
         with:
           install-only: "src"
       - name: Run eslint
+        working-directory: ./src
         run: pnpm lint
