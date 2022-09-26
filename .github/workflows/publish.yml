@@ -57,7 +57,7 @@ jobs:
             ./LICENSE.md
             ./README.md
 
-  publish-vality:
+  publish:
     name: Publish to NPM
     needs: build-vality
     runs-on: ubuntu-latest

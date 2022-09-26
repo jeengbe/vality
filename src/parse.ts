@@ -27,14 +27,16 @@ export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   : T extends Face<"and", infer U extends Eny[], true>
   ? IntersectItems<U>
   : T extends Face<
-      "dict",
-      [infer K extends OneOrEnumOfTOrFace<string | number>, infer V],
-      true
-    >
+    "dict",
+    [infer K extends OneOrEnumOfTOrFace<string | number>, infer V],
+    true
+  >
   ? {
-      [KK in Parse<K, DecD<_D>>]: Parse<V, DecD<_D>>;
-    }
+    [KK in Parse<K, DecD<_D>>]: Parse<V, DecD<_D>>;
+  }
   : T extends readonly [infer U] // Array short
+  ? Parse<U, DecD<_D>>[]
+  : T extends Face<"array", (infer U)[], true>
   ? Parse<U, DecD<_D>>[]
   : T extends readonly (infer U)[] // Enum short
   ? Parse<U, DecD<_D>>
