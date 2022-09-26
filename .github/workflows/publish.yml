@@ -57,7 +57,7 @@ jobs:
             ./LICENSE.md
             ./README.md
 
-  publish-vality:
+  publish:
     name: Publish to NPM
     needs: build-vality
     runs-on: ubuntu-latest
@@ -94,24 +94,8 @@ jobs:
         uses: rickstaa/action-create-tag@v1
         with:
           tag: ${{ steps.version.outputs.current-version }}
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          path: ./dist
-          name: vality
-      - name: Move dist/ to /
-        run: |
-          mv ./dist/dist/* ./dist/
-          rm -rf ./dist/dist/
-      - name: Create release artifact
-        uses: thedoctor0/zip-release@main
-        with:
-          directory: dist
-          type: tar
-          filename: ../vality-${{ steps.version.outputs.current-version }}.tar.gz
       - name: Release tag
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.version.outputs.current-version }}
-          artifacts: vality-${{ steps.version.outputs.current-version }}.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
