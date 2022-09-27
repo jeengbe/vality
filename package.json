@@ -1,7 +1,7 @@
 {
 	"name": "vality",
 	"description": "A TypeScript schema descriptor library with zero dependencies.",
-	"version": "5.1.0",
+	"version": "5.1.1",
 	"author": "Jesper Engberg <jeengbe@gmail.com>",
 	"homepage": "https://ts-vality.io",
 	"repository": {
@@ -26,14 +26,12 @@
 		"@types/node": "18.7.20",
 		"jest": "29.0.3",
 		"jest-diff": "29.0.3",
-		"ts-jest": "29.0.2",
-		"ts-node": "10.9.1",
 		"typescript": "4.8.3"
 	},
 	"main": "./index.js",
 	"scripts": {
 		"build": "tsc -p src/tsconfig.json",
-		"test": "jest tests --coverage --ci --verbose=false",
+		"test": "jest tests --coverage --ci",
 		"lint": "echo \"Error: no linting configured\"",
 		"test-watch": "jest --watchAll --coverage tests"
 	}
