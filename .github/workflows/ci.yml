@@ -63,7 +63,7 @@ jobs:
         run: pnpm test
       - name: Test (coverage)
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
-        run: pnpm test --coverage
+        run: pnpm test:coverage
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v2
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
@@ -86,7 +86,7 @@ jobs:
         run: pnpm typecheck
 
   build:
-    name: Build Vality
+    name: Build
     runs-on: ubuntu-latest
     if: needs.versionCheck.outputs.should-publish == 'true'
     needs:

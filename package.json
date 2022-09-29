@@ -31,9 +31,10 @@
 	"main": "./index.js",
 	"scripts": {
 		"build": "tsc -p src/tsconfig.json",
-		"typecheck": "tsc --noEmit -p src/tsconfig.json",
-		"test": "jest tests --ci",
 		"lint": "echo \"Error: no linting configured\"",
-		"test-watch": "jest --watchAll --coverage tests"
+		"test": "jest tests --ci",
+		"typecheck": "tsc --noEmit -p src/tsconfig.json",
+    "test:coverage": "pnpm run test -- --coverage",
+		"test:watch": "jest --watchAll --coverage tests"
 	}
 }
