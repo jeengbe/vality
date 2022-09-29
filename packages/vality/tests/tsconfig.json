@@ -2,9 +2,6 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "lib": [
-      "ESNext"
-    ],
     "types": [
       "jest",
       "node"

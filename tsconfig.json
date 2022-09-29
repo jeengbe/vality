@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "strict": true,
-    "lib": [],
-    "target": "ESNext",
-    "module": "CommonJS",
-    "noErrorTruncation": true
-  }
-}

@@ -8,11 +8,6 @@
     "target": "ES2015",
     "types": [],
     "outDir": "./../dist",
-    "sourceMap": true,
-    "sourceRoot": "https://github.com/jeengbe/vality/tree/master/src",
-    "declaration": true,
-    "declarationMap": true,
-    "removeComments": true
   },
   "files": [
     "./index.ts"

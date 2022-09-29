@@ -2,15 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "lib": [
-      "ESNext"
-    ],
-    "target": "ESNext",
-    "types": [
-      "node"
-    ],
     "outDir": "./../dist",
-    "removeComments": true
   },
   "include": [
     "./index.ts"
