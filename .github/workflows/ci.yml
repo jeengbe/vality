@@ -157,7 +157,6 @@ jobs:
       - name: Upload to Codecov
         uses: codecov/codecov-action@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           files: packages/${{ matrix.package }}/coverage/lcov.info
           flags: ${{ matrix.package }}
 
