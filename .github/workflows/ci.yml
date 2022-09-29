@@ -97,6 +97,7 @@ jobs:
           name: vality
           path: |
             dist
+            mjs
             package.json
             LICENSE.md
             README.md
