@@ -170,6 +170,7 @@ jobs:
     strategy:
       matrix:
         package: ${{ fromJSON(needs.packages.outputs.packages) }}
+      fail-fast: false
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v2
@@ -178,14 +179,11 @@ jobs:
       - name: Check for version changes
         uses: EndBug/version-check@v2
         id: check
-        with:
-          file-name: packages/${{ matrix.package }}/package.json
       - name: Set job status
         if: steps.check.outputs.changed == 'false'
         run: echo "::set-output name=status::skip"
       - name: Move dist/ to /
         if: steps.check.outputs.changed == 'true'
-        working-directory: packages/${{ matrix.package }}
         run: |
           mv ./dist/* ./
           rm -rf ./dist/
@@ -195,7 +193,6 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
       - name: Publish to NPM
-        working-directory: packages/${{ matrix.package }}
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
