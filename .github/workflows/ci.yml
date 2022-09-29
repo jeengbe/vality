@@ -17,10 +17,29 @@ jobs:
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
 
+  packages:
+    name: Get packages
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.packages.outputs.packages }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get packages
+        uses: sergeysova/jq-action@v2
+        id: packages
+        with:
+          cmd: ls -d packages/*/ | cut -f2 -d'/' | jq -R -s -c 'split("\n") | .[0:-1]'
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    needs: install
+    needs:
+      - install
+      - packages
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.packages.outputs.packages) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -29,15 +48,18 @@ jobs:
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Lint
-        run: pnpm lint
+        run: pnpm --filter ${{ matrix.package }} lint
 
   test:
-    name: Test (Node.js ${{ matrix.node-version }})
+    name: Test
     runs-on: ubuntu-latest
-    needs: install
+    needs:
+      - install
+      - packages
     strategy:
       matrix:
         node-version: [14, 16, 18]
+        package: ${{ fromJSON(needs.packages.outputs.packages) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -47,21 +69,26 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Test
         if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
-        run: pnpm test
+        run: pnpm --filter ${{ matrix.package }} test
       - name: Test (coverage)
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
-        run: pnpm test:coverage
+        run: pnpm --filter ${{ matrix.package }} test:coverage
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v2
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
         with:
-          name: coverage
+          name: coverage-${{ matrix.package }}
           path: coverage
 
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
-    needs: install
+    needs:
+      - install
+      - packages
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.packages.outputs.packages) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -70,16 +97,20 @@ jobs:
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Typecheck
-        run: pnpm typecheck
+        run: pnpm --filter ${{ matrix.package }} typecheck
 
   build:
     name: Build
     runs-on: ubuntu-latest
     needs:
       - install
+      - packages
       - lint
       - test
       - typecheck
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.packages.outputs.packages) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -88,67 +119,70 @@ jobs:
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Build
-        run: pnpm build
+        run: pnpm --filter ${{ matrix.package }} build
       - name: Replace GitHub with NPM
-        run: sed -i 's/on GitHub/on NPM/g' README.md
+        run: sed -i 's/on GitHub/on NPM/g' packages/${{ matrix.package }}/README.md
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: vality
+          name: build-${{ matrix.package }}
           path: |
-            dist
-            mjs
-            package.json
-            LICENSE.md
-            README.md
+            packages/${{ matrix.package }}/dist
+            packages/${{ matrix.package }}/mjs
+            packages/${{ matrix.package }}/package.json
+            packages/${{ matrix.package }}/LICENSE.md
+            packages/${{ matrix.package }}/README.md
 
   coverage:
     name: Upload coverage
     runs-on: ubuntu-latest
-    needs: test
+    needs:
+      - packages
+      - test
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.packages.outputs.packages) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Download coverage artifact
         uses: actions/download-artifact@v2
         with:
-          name: coverage
-          path: coverage
-      - name: Upload to Coveralls
-        uses: coverallsapp/github-action@1.1.3
+          name: coverage-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/coverage
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  versionCheck:
-    name: Check version
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-    outputs:
-      should-publish: ${{ steps.check.outputs.changed }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Check for version changes
-        uses: EndBug/version-check@v2
-        id: check
-      - name: Set job status
-        if: steps.check.outputs.changed == 'false'
-        run: echo "::set-output name=status::skip"
-
+          files: packages/${{ matrix.package }}/coverage/lcov.info
+          flags: ${{ matrix.package }}
 
   publish:
     name: Publish to NPM
     runs-on: ubuntu-latest
-    if: needs.versionCheck.outputs.should-publish == 'true'
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     needs:
-      - versionCheck
+      - packages
       - build
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.packages.outputs.packages) }}
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: vality
+          name: build-${{ matrix.package }}
+      - name: Check for version changes
+        uses: EndBug/version-check@v2
+        id: check
+        with:
+          file-name: packages/${{ matrix.package }}/package.json
+      - name: Set job status
+        if: steps.check.outputs.changed == 'false'
+        run: echo "::set-output name=status::skip"
       - name: Move dist/ to /
+        if: steps.check.outputs.changed == 'true'
+        working-directory: packages/${{ matrix.package }}
         run: |
           mv ./dist/* ./
           rm -rf ./dist/
@@ -158,29 +192,7 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
       - name: Publish to NPM
+        working-directory: packages/${{ matrix.package }}
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-
-  tag:
-    name: Tag release
-    runs-on: ubuntu-latest
-    if: needs.versionCheck.outputs.should-publish == 'true'
-    needs:
-      - versionCheck
-      - build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Get NPM Version
-        uses: martinbeentjes/npm-get-version-action@v1.2.3
-        id: version
-      - name: Create tag
-        uses: rickstaa/action-create-tag@v1
-        with:
-          tag: ${{ steps.version.outputs.current-version }}
-      - name: Release tag
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.version.outputs.current-version }}
-          token: ${{ secrets.GITHUB_TOKEN }}

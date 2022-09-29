@@ -1,0 +1,23 @@
+name: Setup
+description: Set up the environment
+
+inputs:
+  node-version:
+    description: The Node version to install
+    required: false
+    default: "18"
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v2
+      with:
+        version: latest
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: https://registry.npmjs.org/
+        cache: "pnpm"
+        cache-dependency-path: "pnpm-lock.yaml"
+    - shell: bash
+      run: pnpm install --frozen-lockfile

@@ -1,5 +1,5 @@
 import { diff } from "jest-diff";
-import type { Error } from "../lib/validate";
+import type { Error } from "../src/validate";
 
 expect.extend({
   callback(received: unknown, callback: (val: unknown) => boolean) {

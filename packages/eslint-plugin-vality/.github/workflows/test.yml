@@ -1,0 +1,31 @@
+name: Test
+
+on: ["push"]
+
+jobs:
+  jest:
+    name: Jest (Node ${{ matrix.node-version}})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]
+    steps:
+      - name: Checkout Vality-ESLint
+        uses: actions/checkout@v3
+      - name: Install dependencies (Node ${{ matrix.node-version }})
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Run Jest
+        run: pnpm test
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Vality-ESLint
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+      - name: Run ESLint
+        run: pnpm lint
