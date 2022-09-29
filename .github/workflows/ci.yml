@@ -131,6 +131,10 @@ jobs:
       - name: Check for version changes
         uses: EndBug/version-check@v2
         id: check
+      - name: Set job status
+        if: steps.check.outputs.changed == 'false'
+        run: echo "::set-output name=status::skip"
+
 
   publish:
     name: Publish to NPM
