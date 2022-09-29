@@ -5,11 +5,11 @@ inputs:
   node-version:
     description: The Node.js version to install
     required: false
-    default: "18"
+    default: '18'
   package:
     description: Only install dependencies for the given package
     required: false
-    default: ""
+    default: ''
 
 runs:
   using: composite
@@ -25,10 +25,10 @@ runs:
         registry-url: https://registry.npmjs.org/
         cache: "pnpm"
     - name: Install depdendencies (all)
-      if: ${{ inputs.package == "" }}
+      if: ${{ inputs.package == '' }}
       shell: bash
       run: pnpm install
     - name: Install depdendencies (${{ inputs.package }})
-      if: ${{ inputs.package != "" }}
+      if: ${{ inputs.package != '' }}
       shell: bash
       run: pnpm --filter ${{ inputs.package }} install
