@@ -1,0 +1,180 @@
+name: CI
+
+on: ["push", "pull_request"]
+
+env:
+  PRIMARY_NODE_VERSION: 18
+
+jobs:
+  install:
+    name: Checkout and install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Lint
+        run: pnpm lint
+
+  test:
+    name: Test (Node.js ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: install
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Test
+        if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
+        run: pnpm test
+      - name: Test (coverage)
+        if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
+        run: pnpm test:coverage
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
+        with:
+          name: coverage
+          path: coverage
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Typecheck
+        run: pnpm typecheck
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs:
+      - install
+      - lint
+      - test
+      - typecheck
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Build
+        run: pnpm build
+      - name: Replace GitHub with NPM
+        run: sed -i 's/on GitHub/on NPM/g' README.md
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: vality
+          path: |
+            dist
+            mjs
+            package.json
+            LICENSE.md
+            README.md
+
+  coverage:
+    name: Upload coverage
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: coverage
+          path: coverage
+      - name: Upload to Coveralls
+        uses: coverallsapp/github-action@1.1.3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  versionCheck:
+    name: Check version
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    outputs:
+      should-publish: ${{ steps.check.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Check for version changes
+        uses: EndBug/version-check@v2
+        id: check
+
+  publish:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    if: needs.versionCheck.outputs.should-publish == 'true'
+    needs:
+      - versionCheck
+      - build
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: vality
+      - name: Move dist/ to /
+        run: |
+          mv ./dist/* ./
+          rm -rf ./dist/
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+  tag:
+    name: Tag release
+    runs-on: ubuntu-latest
+    if: needs.versionCheck.outputs.should-publish == 'true'
+    needs:
+      - versionCheck
+      - build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get NPM Version
+        uses: martinbeentjes/npm-get-version-action@v1.2.3
+        id: version
+      - name: Create tag
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ steps.version.outputs.current-version }}
+      - name: Release tag
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.version.outputs.current-version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
