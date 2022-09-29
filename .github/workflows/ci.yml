@@ -80,7 +80,7 @@ jobs:
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
         with:
           name: coverage-${{ matrix.package }}
-          path: coverage
+          path: packages/${{ matrix.package }}/coverage
 
   typecheck:
     name: Typecheck
