@@ -21,7 +21,7 @@ jobs:
     name: Get packages
     runs-on: ubuntu-latest
     outputs:
-      packages: ${{ steps.packages.outputs.packages }}
+      packages: ${{ steps.packages.outputs.value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
