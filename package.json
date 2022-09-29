@@ -34,7 +34,7 @@
 		"lint": "echo \"Error: no linting configured\"",
 		"test": "jest tests --ci",
 		"typecheck": "tsc --noEmit -p src/tsconfig.json",
-    "test:coverage": "pnpm run test -- --coverage",
+    "test:coverage": "pnpm run test --coverage",
 		"test:watch": "jest --watchAll --coverage tests"
 	}
 }
