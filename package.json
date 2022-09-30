@@ -14,11 +14,9 @@
 	},
 	"devDependencies": {
 		"@types/node": "18.7.23",
-		"husky": "8.0.1",
 		"ts-node": "10.9.1"
 	},
 	"scripts": {
-		"build:workflow": "ts-node ./scripts/workflow.ts",
-		"prepare": "husky install"
+		"build:workflow": "ts-node ./scripts/workflow.ts"
 	}
 }
