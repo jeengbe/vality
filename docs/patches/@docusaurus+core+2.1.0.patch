@@ -18,7 +18,7 @@ index 4fd663b..3678353 100644
          headers: {
              'access-control-allow-origin': '*',
 diff --git a/node_modules/@docusaurus/core/lib/webpack/client.js b/node_modules/@docusaurus/core/lib/webpack/client.js
-index 296223d..c6ce935 100644
+index 296223d..6812256 100644
 --- a/node_modules/@docusaurus/core/lib/webpack/client.js
 +++ b/node_modules/@docusaurus/core/lib/webpack/client.js
 @@ -39,7 +39,8 @@ async function createClientConfig(props, minify = true) {
@@ -27,7 +27,7 @@ index 296223d..c6ce935 100644
              apply: (compiler) => {
 -                compiler.hooks.done.tap('client:done', (stats) => {
 +              compiler.hooks.done.tap('client:done', (stats) => {
-+                console.log(stats);
++                console.dir(stats.compilation.errors, {depth: null});
                      if (stats.hasErrors()) {
                          logger_1.default.error('Client bundle compiled with errors therefore further build is impossible.');
                          process.exit(1);
