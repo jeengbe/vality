@@ -94,7 +94,7 @@ const workflow = {
 for (const pkg of getPackages()) {
   Object.assign(workflow.jobs, {
     [`lint-${pkg}`]: {
-      name: `Lint ${pkg}`,
+      name: `Lint: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: ["install"],
       steps: [
@@ -117,7 +117,7 @@ for (const pkg of getPackages()) {
       ],
     },
     [`test-${pkg}`]: {
-      name: `Test ${pkg}`,
+      name: `Test: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: ["install"],
       strategy: {
@@ -160,7 +160,7 @@ for (const pkg of getPackages()) {
       ],
     },
     [`typecheck-${pkg}`]: {
-      name: `Typecheck ${pkg}`,
+      name: `Typecheck: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: ["install"],
       steps: [
@@ -183,7 +183,7 @@ for (const pkg of getPackages()) {
       ],
     },
     [`check-version-${pkg}`]: {
-      name: `Check version ${pkg}`,
+      name: `Check version: ${pkg}`,
       "runs-on": "ubuntu-latest",
       if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       outputs: {
@@ -198,6 +198,9 @@ for (const pkg of getPackages()) {
           name: "Check for version changes",
           id: "check",
           uses: "EndBug/version-check@v2",
+          with: {
+            "file-name": `./packages/${pkg}/package.json`,
+          }
         },
         {
           name: "Set job status",
@@ -207,7 +210,7 @@ for (const pkg of getPackages()) {
       ],
     },
     [`build-${pkg}`]: {
-      name: `Build ${pkg}`,
+      name: `Build: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: [`lint-${pkg}`, `test-${pkg}`, `typecheck-${pkg}`, `check-version-${pkg}`],
       if: `\${{ needs.check-version-${pkg}.outputs.should-publish == 'true' }}`,
@@ -247,7 +250,7 @@ for (const pkg of getPackages()) {
       ],
     },
     [`coverage-${pkg}`]: {
-      name: `Upload coverage ${pkg}`,
+      name: `Upload coverage: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: [`test-${pkg}`],
       steps: [
@@ -274,7 +277,7 @@ for (const pkg of getPackages()) {
       ],
     },
     [`publish-${pkg}`]: {
-      name: `Publish ${pkg}`,
+      name: `Publish: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: [`build-${pkg}`, `check-version-${pkg}`],
       steps: [
