@@ -37,6 +37,57 @@ const workflow = {
         },
       ],
     },
+    "build-docs": {
+      name: "Build docs",
+      "runs-on": "ubuntu-latest",
+      needs: ["install"],
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v3",
+        },
+        {
+          name: "Install dependencies",
+          uses: "./.github/actions/setup",
+          with: {
+            package: "docs",
+            "node-version": "${{ env.PRIMARY_NODE_VERSION }}",
+          }
+        },
+        {
+          name: "Build docs",
+          run: "pnpm --filter docs run build",
+        },
+        {
+          name: "Upload docs artifact",
+          uses: "actions/upload-pages-artifact@v1",
+          with: {
+            path: "docs/build",
+          },
+        }
+      ]
+    },
+    "deploy-docs": {
+      name: "Deploy docs to GitHub Pages",
+      "runs-on": "ubuntu-latest",
+      if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
+      needs: ["build-docs"],
+      permissions: {
+        pages: "write",
+        "id-token": "write"
+      },
+      environment: {
+        name: "GitHub Pages",
+        url: "${{ steps.deployment.outputs.page_url }}"
+      },
+      steps: [
+        {
+          name: "Deploy",
+          id: "deployment",
+          uses: "actions/deploy-pages@v1"
+        }
+      ]
+    }
   } as Record<string, any>,
 };
 
