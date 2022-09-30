@@ -1,18 +1,3 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "lib": [
-      "ESNext"
-    ],
-    "types": [
-      "node"
-    ],
-    "target": "ESNext",
-    "module": "CommonJS",
-    "noErrorTruncation": true,
-    "removeComments": true,
-    "inlineSourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-  }
+  "extends": "../tsconfig.json"
 }

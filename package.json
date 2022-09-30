@@ -1,6 +1,6 @@
 {
 	"name": "vality",
-  "private": true,
+	"private": true,
 	"description": "Monorepo for all Vality projects.",
 	"author": "Jesper Engberg <jeengbe@gmail.com>",
 	"homepage": "https://ts-vality.io",
@@ -11,5 +11,14 @@
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/jeengbe/vality/issues"
+	},
+	"devDependencies": {
+		"@types/node": "18.7.23",
+		"husky": "8.0.1",
+		"ts-node": "10.9.1"
+	},
+	"scripts": {
+		"build:workflow": "ts-node ./scripts/workflow.ts",
+		"prepare": "husky install"
 	}
 }
