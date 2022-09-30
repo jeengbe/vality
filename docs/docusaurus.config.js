@@ -14,8 +14,6 @@ const config = {
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
   organizationName: "jeengbe",
   projectName: "vality",
 
@@ -35,9 +33,7 @@ const config = {
         docs: {
           routeBasePath: "/",
           sidebarPath: require.resolve("./sidebars.js"),
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/jeengbe/vality-docs/tree/master/",
+          editUrl: "https://github.com/jeengbe/vality/tree/master/docs/",
         },
         blog: false,
         theme: {
@@ -49,7 +45,7 @@ const config = {
       "docusaurus-preset-shiki-twoslash",
       {
         // Hack to load custom theme for shiki
-        themes: ["min-light", "../../../../../../src/themes/atomize"],
+        themes: ["min-light", `../../../../../../docs/src/themes/atomize`],
       },
     ],
   ],
