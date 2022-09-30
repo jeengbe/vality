@@ -40,6 +40,7 @@ const workflow = {
     "build-docs": {
       name: "Build docs",
       "runs-on": "ubuntu-latest",
+      if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       needs: ["install"],
       steps: [
         {
@@ -70,7 +71,6 @@ const workflow = {
     "deploy-docs": {
       name: "Deploy docs to GitHub Pages",
       "runs-on": "ubuntu-latest",
-      if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       needs: ["build-docs"],
       permissions: {
         pages: "write",
@@ -182,10 +182,35 @@ for (const pkg of getPackages()) {
         },
       ],
     },
+    [`check-version-${pkg}`]: {
+      name: `Check version ${pkg}`,
+      "runs-on": "ubuntu-latest",
+      if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
+      outputs: {
+        "should-publish": "${{ steps.check.outputs.changed }}",
+      },
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v3",
+        },
+        {
+          name: "Check for version changes",
+          id: "check",
+          uses: "EndBug/version-check@v2",
+        },
+        {
+          name: "Set job status",
+          if: "${{ steps.check.outputs.changed == 'false' }}",
+          run: `echo "::set-output name=status::skip"`,
+        },
+      ],
+    },
     [`build-${pkg}`]: {
       name: `Build ${pkg}`,
       "runs-on": "ubuntu-latest",
-      needs: [`lint-${pkg}`, `test-${pkg}`, `typecheck-${pkg}`],
+      needs: [`lint-${pkg}`, `test-${pkg}`, `typecheck-${pkg}`, `check-version-${pkg}`],
+      if: `\${{ needs.check-version-${pkg}.outputs.should-publish == 'true' }}`,
       steps: [
         {
           name: "Checkout",
@@ -248,35 +273,10 @@ for (const pkg of getPackages()) {
         },
       ],
     },
-    [`check-version-${pkg}`]: {
-      name: `Check version ${pkg}`,
-      "runs-on": "ubuntu-latest",
-      if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
-      outputs: {
-        "should-publish": "${{ steps.check.outputs.changed }}",
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v3",
-        },
-        {
-          name: "Check for version changes",
-          id: "check",
-          uses: "EndBug/version-check@v2",
-        },
-        {
-          name: "Set job status",
-          if: "${{ steps.check.outputs.changed == 'false' }}",
-          run: `echo "::set-output name=status::skip"`,
-        },
-      ],
-    },
     [`publish-${pkg}`]: {
       name: `Publish ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: [`build-${pkg}`, `check-version-${pkg}`],
-      if: `\${{ needs.check-version-${pkg}.outputs.should-publish == 'true' }}`,
       steps: [
         {
           name: "Download build artifact",

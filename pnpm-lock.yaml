@@ -90,6 +90,15 @@ importers:
       jest-diff: 29.1.0
       typescript: 4.8.4
 
+  scripts:
+    specifiers:
+      '@types/node': 18.7.23
+      yaml: 2.1.1
+    dependencies:
+      yaml: 2.1.1
+    devDependencies:
+      '@types/node': 18.7.23
+
 packages:
 
   /@algolia/autocomplete-core/1.7.1:
@@ -9912,6 +9921,11 @@ packages:
   /yaml/1.10.2:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
+    dev: false
+
+  /yaml/2.1.1:
+    resolution: {integrity: sha512-o96x3OPo8GjWeSLF+wOAbrPfhFOGY0W00GNaxCDv+9hkcDJEnev1yh8S7pgHF0ik6zc8sQLuL8hjHjJULZp8bw==}
+    engines: {node: '>= 14'}
     dev: false
 
   /yargs-parser/21.1.1:
