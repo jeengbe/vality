@@ -45,7 +45,7 @@ const config = {
       "docusaurus-preset-shiki-twoslash",
       {
         // Hack to load custom theme for shiki
-        // themes: ["min-light", `../../../../../../docs/src/themes/atomize`],
+        themes: ["min-light", `../../../../../../docs/src/themes/atomize`],
       },
     ],
   ],
