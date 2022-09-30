@@ -54,7 +54,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v1
   lint-eslint-plugin-vality:
-    name: Lint eslint-plugin-vality
+    name: "Lint: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -69,7 +69,7 @@ jobs:
       - name: Lint
         run: pnpm --filter eslint-plugin-vality run lint
   test-eslint-plugin-vality:
-    name: Test eslint-plugin-vality
+    name: "Test: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -100,7 +100,7 @@ jobs:
           name: coverage-eslint-plugin-vality
           path: ./packages/eslint-plugin-vality/coverage
   typecheck-eslint-plugin-vality:
-    name: Typecheck eslint-plugin-vality
+    name: "Typecheck: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -115,7 +115,7 @@ jobs:
       - name: Typecheck
         run: pnpm --filter eslint-plugin-vality run typecheck
   check-version-eslint-plugin-vality:
-    name: Check version eslint-plugin-vality
+    name: "Check version: eslint-plugin-vality"
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     outputs:
@@ -126,11 +126,13 @@ jobs:
       - name: Check for version changes
         id: check
         uses: EndBug/version-check@v2
+        with:
+          file-name: ./packages/eslint-plugin-vality/package.json
       - name: Set job status
         if: ${{ steps.check.outputs.changed == 'false' }}
         run: echo "::set-output name=status::skip"
   build-eslint-plugin-vality:
-    name: Build eslint-plugin-vality
+    name: "Build: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
       - lint-eslint-plugin-vality
@@ -162,7 +164,7 @@ jobs:
             ./packages/eslint-plugin-vality/README.md
             ./packages/eslint-plugin-vality/LICENSE.json
   coverage-eslint-plugin-vality:
-    name: Upload coverage eslint-plugin-vality
+    name: "Upload coverage: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
       - test-eslint-plugin-vality
@@ -180,7 +182,7 @@ jobs:
           files: ./packages/eslint-plugin-vality/coverage/lcov.info
           flags: eslint-plugin-vality
   publish-eslint-plugin-vality:
-    name: Publish eslint-plugin-vality
+    name: "Publish: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
       - build-eslint-plugin-vality
@@ -206,7 +208,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   lint-vality:
-    name: Lint vality
+    name: "Lint: vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -221,7 +223,7 @@ jobs:
       - name: Lint
         run: pnpm --filter vality run lint
   test-vality:
-    name: Test vality
+    name: "Test: vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -252,7 +254,7 @@ jobs:
           name: coverage-vality
           path: ./packages/vality/coverage
   typecheck-vality:
-    name: Typecheck vality
+    name: "Typecheck: vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -267,7 +269,7 @@ jobs:
       - name: Typecheck
         run: pnpm --filter vality run typecheck
   check-version-vality:
-    name: Check version vality
+    name: "Check version: vality"
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     outputs:
@@ -278,11 +280,13 @@ jobs:
       - name: Check for version changes
         id: check
         uses: EndBug/version-check@v2
+        with:
+          file-name: ./packages/vality/package.json
       - name: Set job status
         if: ${{ steps.check.outputs.changed == 'false' }}
         run: echo "::set-output name=status::skip"
   build-vality:
-    name: Build vality
+    name: "Build: vality"
     runs-on: ubuntu-latest
     needs:
       - lint-vality
@@ -313,7 +317,7 @@ jobs:
             ./packages/vality/README.md
             ./packages/vality/LICENSE.json
   coverage-vality:
-    name: Upload coverage vality
+    name: "Upload coverage: vality"
     runs-on: ubuntu-latest
     needs:
       - test-vality
@@ -331,7 +335,7 @@ jobs:
           files: ./packages/vality/coverage/lcov.info
           flags: vality
   publish-vality:
-    name: Publish vality
+    name: "Publish: vality"
     runs-on: ubuntu-latest
     needs:
       - build-vality
