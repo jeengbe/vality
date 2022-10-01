@@ -236,6 +236,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
       - name: Publish to NPM
         working-directory: ./packages/eslint-plugin-vality
         run: npm publish
@@ -388,6 +389,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
       - name: Publish to NPM
         working-directory: ./packages/vality
         run: npm publish
