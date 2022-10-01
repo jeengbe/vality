@@ -129,6 +129,7 @@ const workflow = {
           with: {
             "publish-dir": ".",
             "fails-without-credentials": true,
+            "production-deploy": true
           },
           env: {
             NETLIFY_AUTH_TOKEN: "${{ secrets.NETLIFY_AUTH_TOKEN }}",
