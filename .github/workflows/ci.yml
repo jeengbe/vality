@@ -164,9 +164,7 @@ jobs:
         with:
           file-name: ./packages/eslint-plugin-vality/package.json
           file-url: https://unpkg.com/eslint-plugin-vality/package.json
-      - name: Set job status
-        if: ${{ steps.check.outputs.changed == 'false' }}
-        run: echo "::set-output name=status::skip"
+          static-checking: localIsNew
   build-eslint-plugin-vality:
     name: "Build: eslint-plugin-vality"
     runs-on: ubuntu-latest
@@ -319,9 +317,7 @@ jobs:
         with:
           file-name: ./packages/vality/package.json
           file-url: https://unpkg.com/vality/package.json
-      - name: Set job status
-        if: ${{ steps.check.outputs.changed == 'false' }}
-        run: echo "::set-output name=status::skip"
+          static-checking: localIsNew
   build-vality:
     name: "Build: vality"
     runs-on: ubuntu-latest
