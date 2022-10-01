@@ -349,6 +349,7 @@ rm -rf ./dist`,
           uses: "actions/setup-node@v3",
           with: {
             "node-version": "${{ env.PRIMARY_NODE_VERSION }}",
+            "registry-url": "https://registry.npmjs.org",
           },
         },
         {
