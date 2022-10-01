@@ -14,10 +14,11 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: pnpm/action-setup@v2
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
       with:
         version: latest
-    - uses: actions/setup-node@v3
+    - name: Install Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v3
     - shell: bash
-      run: pnpm install
-      working-directory: docs
+      run: pnpm --filter docs install
