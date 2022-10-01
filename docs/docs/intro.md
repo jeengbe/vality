@@ -1,47 +1,77 @@
 ---
 sidebar_position: 1
+title: Intro
 ---
 
-# Tutorial Intro
+```twoslash include person
+import { v } from "vality";
 
-Let's discover **Docusaurus in less than 5 minutes**.
-
-## Getting Started
-
-Get started by **creating a new site**.
-
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
-
-### What you'll need
-
-- [Node.js](https://nodejs.org/en/download/) version 16.14 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
+// Models are defined like this:
+const Person = () => ({
+  name: v.string,
+  age: v.number,
+  address: {
+    street: v.string,
+    city: v.string,
+    country: v.string,
+  },
+});
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+Vality offers a simple and intuitive way to describe your schema:
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+<h3 id="model">Describe it</h3>
 
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
+```ts twoslash
+// @include: person
 ```
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
+<h3 id="type">Type it</h3>
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
+```ts twoslash
+// @include: person
+// ---cut---
+import type { Parse } from "vality";
 
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+// And can easily be converted into a type:
+type PersonModel = Parse<typeof Person>;
+//   ^?
+```
+
+<h3 id="validate">Validate it</h3>
+
+```ts twoslash
+// @noErrors
+// @include: person
+let result: GuardResult;
+// ---cut---
+import { validate } from "vality";
+
+// Or used directly in a validation function:
+result = validate(Person, {
+  name: "Max",
+  age: "look ma no number",
+  address: {
+    street: "Main Street",
+    // city: "Dummytown",
+    country: "USA",
+  },
+});
+
+// Which yields the following result:
+result = {
+  valid: false,
+  data: undefined,
+  errors: [{
+    message: "vality.number.base",
+    path: ["age"],
+    value: "look ma no number",
+    meta: { ... }
+  }, {
+    message: "vality.string.base",
+    path: ["address", "city"],
+    value: undefined,
+    meta: { ... }
+  }]
+};
+```
