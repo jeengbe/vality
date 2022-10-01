@@ -74,10 +74,6 @@ const workflow = {
       "runs-on": "ubuntu-latest",
       if: "${{ github.event_name == 'pull_request' }}",
       needs: ["build-docs"],
-      environment: {
-        name: "Docs Next",
-        url: "${{ github.head_ref }}.ts-vality.io",
-      },
       steps: [
         {
           name: "Download docs artifact",
