@@ -100,7 +100,7 @@ export function falseFn(..._args: any[]): false {
   return false;
 }
 
-// Adaped from https://stackoverflow.com/a/59463385/12405307
+// Adapted from https://stackoverflow.com/a/59463385/12405307
 // union to intersection converter by @jcalz
 // Intersect<{ a: 1 } | { b: 2 }> = { a: 1 } & { b: 2 }
 type Intersect<T> = (T extends any ? (x: T) => 0 : never) extends (
@@ -145,7 +145,7 @@ export type SharedParameters<Name, Type, Options extends RSA, Fn> = [
   name: Name,
   fn: Fn,
   // The difference between Options and ExtraOptions is that for Options, the guard implementation also provides the implementation of the options
-  // Scheams using the guard then only provide a value to the guard whereas for ExtraOptions, both the guard and the caller may implement functions which are then both considered
+  // Schemas using the guard then only provide a value to the guard whereas for ExtraOptions, both the guard and the caller may implement functions which are then both considered
   // Also, we purposefully don't initialize it by default to cut some corners further down when checking as we can just check if handleOptions === undefined
   handleOptions?: {
     // keyof ExtraOptions are ignored if present in handleOptions
@@ -213,7 +213,7 @@ export function makeValit<
         // 2.1: If step 2 failed, check if a default value is provided and return it, else error
         // 3: Transform the value (is provided)
         // 4: Validate with options (using the value from before step 3 i.e. the untransformed value)
-        // 5: If options handlers faild, return errors, else a passed validation result
+        // 5: If options handlers fail, return errors, else a passed validation result
 
         if (preprocess) {
           value = preprocess(value, options, path, parent);
