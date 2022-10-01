@@ -248,12 +248,8 @@ for (const pkg of getPackages()) {
           with: {
             "file-name": `./packages/${pkg}/package.json`,
             "file-url": `https://unpkg.com/${pkg}/package.json`,
+            "static-checking": "localIsNew"
           },
-        },
-        {
-          name: "Set job status",
-          if: "${{ steps.check.outputs.changed == 'false' }}",
-          run: `echo "::set-output name=status::skip"`,
         },
       ],
     },
