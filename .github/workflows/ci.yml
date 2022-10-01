@@ -48,7 +48,7 @@ jobs:
       - build-docs
     environment:
       name: Docs Next
-      url: ${{ steps.deployment.outputs.deploy-url }}
+      url: ${{ github.head_ref }}.ts-vality.io
     steps:
       - name: Download docs artifact
         uses: actions/download-artifact@v2
@@ -60,6 +60,7 @@ jobs:
         with:
           publish-dir: .
           fails-without-credentials: true
+          alias: ${{ github.head_ref }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOCS_SITE_ID }}
