@@ -30,7 +30,7 @@ jobs:
         uses: ./.github/actions/setup
         with:
           package: docs
-          node-version: 16
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Build docs
         run: pnpm --filter docs run build
       - name: Upload docs artifact
