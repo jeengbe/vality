@@ -45,7 +45,7 @@ jobs:
       - build-docs
     environment:
       name: Docs Next
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.deploy-url }}
     steps:
       - name: Download docs artifact
         uses: actions/download-artifact@v2
@@ -60,7 +60,7 @@ jobs:
           github-deployment-environment: Docs Next
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOCS_NEXT_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOCS_SITE_ID }}
   deploy-docs:
     name: Deploy docs
     runs-on: ubuntu-latest

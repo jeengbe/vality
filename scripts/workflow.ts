@@ -74,7 +74,7 @@ const workflow = {
       needs: ["build-docs"],
       environment: {
         name: "Docs Next",
-        url: "${{ steps.deployment.outputs.page_url }}",
+        url: "${{ steps.deployment.outputs.deploy-url }}",
       },
       steps: [
         {
@@ -95,7 +95,7 @@ const workflow = {
           },
           env: {
             NETLIFY_AUTH_TOKEN: "${{ secrets.NETLIFY_AUTH_TOKEN }}",
-            NETLIFY_SITE_ID: "${{ secrets.NETLIFY_DOCS_NEXT_SITE_ID }}",
+            NETLIFY_SITE_ID: "${{ secrets.NETLIFY_DOCS_SITE_ID }}",
           },
         },
       ],
