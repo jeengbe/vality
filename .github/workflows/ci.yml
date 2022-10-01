@@ -13,17 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v2
         with:
           version: latest
-      - name: Install Node.js latest
-        uses: actions/setup-node@v3
-        with:
-          registry-url: https://registry.npmjs.org/
-          cache: "pnpm"
       - uses: actions/setup-node@v3
       - shell: bash
-        run: pnpm --filter docs install
+        run: pnpm install
+        working-directory: docs
       - run: pnpm build
         working-directory: docs
