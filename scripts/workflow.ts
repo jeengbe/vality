@@ -76,10 +76,6 @@ const workflow = {
         name: "Docs Next",
         url: "${{ steps.deployment.outputs.deploy-url }}",
       },
-      concurrency: {
-        group: "deploy-docs",
-        "cancel-in-progress": true,
-      },
       steps: [
         {
           name: "Download docs artifact",
