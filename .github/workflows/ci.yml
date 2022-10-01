@@ -32,7 +32,8 @@ jobs:
           package: docs
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Build docs
-        run: pnpm --filter docs run build
+        run: pnpm run build
+        working-directory: docs
       - name: Upload docs artifact
         uses: actions/upload-pages-artifact@v1
         with:
