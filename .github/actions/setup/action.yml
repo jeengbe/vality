@@ -31,4 +31,5 @@ runs:
     - name: Install depdendencies (${{ inputs.package }})
       if: ${{ inputs.package != '' }}
       shell: bash
-      run: pnpm --filter ${{ inputs.package }} install
+      run: pnpm install
+      working-directory: packages/${{ inputs.package }}
