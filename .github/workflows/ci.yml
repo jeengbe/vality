@@ -18,5 +18,5 @@ jobs:
         with:
           package: docs
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
-      - run: pnpm build
+      - run: pnpm run build
         working-directory: docs
