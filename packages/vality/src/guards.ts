@@ -194,10 +194,10 @@ vality.relation = () =>
       ],
       val
       // Need to assert here as these returns really don't match, and we just simulate the return type of the relation to be the object
-      // Also, guard() infers its parameter types, and since 'guards["relation"]' doesn't extend 'Guard<>', 'fn' is resolved to '() => never | undefiend' and we cheat by solely asserting it as 'undefined'
+      // Also, guard() infers its parameter types, and since 'guards["relation"]' doesn't extend 'Guard<>', 'fn' is resolved to '() => never | undefined' and we cheat by solely asserting it as 'undefined'
     ).data as unknown as undefined;
     // We can just assert this as any, as otherwise we'd just repeat ourselves
-    // Asertion is necessary here because a guard is obviously not a valit
+    // Assertion is necessary here because a guard is obviously not a valit
   }) as any;
 
 vality.any = guard("any", (val) => val);
