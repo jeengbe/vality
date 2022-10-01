@@ -90,6 +90,10 @@ const workflow = {
           uses: "nwtgck/actions-netlify@v1.2",
           with: {
             "publish-dir": ".",
+            "fails-without-credentials": true,
+            "github-deployment-environment": "Docs Next",
+          },
+          env: {
             NETLIFY_AUTH_TOKEN: "${{ secrets.NETLIFY_AUTH_TOKEN }}",
             NETLIFY_SITE_ID: "${{ secrets.NETLIFY_DOCS_NEXT_SITE_ID }}",
           },
