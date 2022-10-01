@@ -71,6 +71,7 @@ const workflow = {
     "deploy-docs-next": {
       name: "Deploy next docs",
       "runs-on": "ubuntu-latest",
+      if: "${{ github.event_name == 'pull_request' }}",
       needs: ["build-docs"],
       environment: {
         name: "Docs Next",
