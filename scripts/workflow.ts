@@ -249,6 +249,7 @@ for (const pkg of getPackages()) {
           uses: "EndBug/version-check@v2",
           with: {
             "file-name": `./packages/${pkg}/package.json`,
+            "file-url": `https://unpkg.com/${pkg}/package.json`
           },
         },
         {
