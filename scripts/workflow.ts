@@ -50,9 +50,9 @@ const workflow = {
           name: "Install dependencies",
           uses: "./.github/actions/setup",
           with: {
-            package: "docs",
+            package: "../docs",
             "node-version": "${{ env.PRIMARY_NODE_VERSION }}",
-          }
+          },
         },
         {
           name: "Build docs",
@@ -60,12 +60,13 @@ const workflow = {
         },
         {
           name: "Upload docs artifact",
-          uses: "actions/upload-pages-artifact@v1",
+          uses: "actions/upload-artifact@v2",
           with: {
+            name: "docs",
             path: "docs/build",
           },
-        }
-      ]
+        },
+      ],
     },
     "deploy-docs-next": {
       name: "Deploy next docs",
@@ -73,15 +74,27 @@ const workflow = {
       needs: ["build-docs"],
       environment: {
         name: "Docs Next",
-        url: "${{ steps.deployment.outputs.page_url }}"
+        url: "${{ steps.deployment.outputs.page_url }}",
       },
       steps: [
         {
+          name: "Download docs artifact",
+          uses: "actions/download-artifact@v2",
+          with: {
+            name: "docs",
+          },
+        },
+        {
           name: "Deploy",
           id: "deployment",
-          uses: "actions/deploy-pages@v1"
-        }
-      ]
+          uses: "nwtgck/actions-netlify@v1.2",
+          with: {
+            "publish-dir": ".",
+            NETLIFY_AUTH_TOKEN: "${{ secrets.NETLIFY_AUTH_TOKEN }}",
+            NETLIFY_SITE_ID: "${{ secrets.NETLIFY_DOCS_NEXT_SITE_ID }}",
+          },
+        },
+      ],
     },
     "deploy-docs": {
       name: "Deploy docs",
@@ -90,16 +103,16 @@ const workflow = {
       needs: ["build-docs"],
       environment: {
         name: "Docs",
-        url: "${{ steps.deployment.outputs.page_url }}"
+        url: "${{ steps.deployment.outputs.page_url }}",
       },
       steps: [
         {
           name: "Deploy",
           id: "deployment",
-          uses: "actions/deploy-pages@v1"
-        }
-      ]
-    }
+          uses: "actions/deploy-pages@v1",
+        },
+      ],
+    },
   } as Record<string, any>,
 };
 
@@ -212,7 +225,7 @@ for (const pkg of getPackages()) {
           uses: "EndBug/version-check@v2",
           with: {
             "file-name": `./packages/${pkg}/package.json`,
-          }
+          },
         },
         {
           name: "Set job status",
@@ -224,7 +237,12 @@ for (const pkg of getPackages()) {
     [`build-${pkg}`]: {
       name: `Build: ${pkg}`,
       "runs-on": "ubuntu-latest",
-      needs: [`lint-${pkg}`, `test-${pkg}`, `typecheck-${pkg}`, `check-version-${pkg}`],
+      needs: [
+        `lint-${pkg}`,
+        `test-${pkg}`,
+        `typecheck-${pkg}`,
+        `check-version-${pkg}`,
+      ],
       if: `\${{ needs.check-version-${pkg}.outputs.should-publish == 'true' }}`,
       steps: [
         {
