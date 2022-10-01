@@ -46,6 +46,9 @@ jobs:
     environment:
       name: Docs Next
       url: ${{ steps.deployment.outputs.deploy-url }}
+    concurrency:
+      group: deploy-docs
+      cancel-in-progress: true
     steps:
       - name: Download docs artifact
         uses: actions/download-artifact@v2
@@ -57,7 +60,6 @@ jobs:
         with:
           publish-dir: .
           fails-without-credentials: true
-          github-deployment-environment: Docs Next
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOCS_SITE_ID }}
@@ -69,11 +71,24 @@ jobs:
       - build-docs
     environment:
       name: Docs
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.deploy-url }}
+    concurrency:
+      group: deploy-docs
+      cancel-in-progress: true
     steps:
+      - name: Download docs artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: docs
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: .
+          fails-without-credentials: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOCS_SITE_ID }}
   lint-eslint-plugin-vality:
     name: "Lint: eslint-plugin-vality"
     runs-on: ubuntu-latest
