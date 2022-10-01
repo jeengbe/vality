@@ -86,6 +86,7 @@ jobs:
         with:
           publish-dir: .
           fails-without-credentials: true
+          production-deploy: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DOCS_SITE_ID }}
@@ -164,6 +165,7 @@ jobs:
         uses: EndBug/version-check@v2
         with:
           file-name: ./packages/eslint-plugin-vality/package.json
+          file-url: https://unpkg.com/eslint-plugin-vality/package.json
       - name: Set job status
         if: ${{ steps.check.outputs.changed == 'false' }}
         run: echo "::set-output name=status::skip"
@@ -318,6 +320,7 @@ jobs:
         uses: EndBug/version-check@v2
         with:
           file-name: ./packages/vality/package.json
+          file-url: https://unpkg.com/vality/package.json
       - name: Set job status
         if: ${{ steps.check.outputs.changed == 'false' }}
         run: echo "::set-output name=status::skip"
