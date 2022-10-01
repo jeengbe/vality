@@ -40,7 +40,6 @@ const workflow = {
     "build-docs": {
       name: "Build docs",
       "runs-on": "ubuntu-latest",
-      // if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       needs: ["install"],
       steps: [
         {
@@ -68,16 +67,29 @@ const workflow = {
         }
       ]
     },
-    "deploy-docs": {
-      name: "Deploy docs to GitHub Pages",
+    "deploy-docs-next": {
+      name: "Deploy next docs",
       "runs-on": "ubuntu-latest",
       needs: ["build-docs"],
-      permissions: {
-        pages: "write",
-        "id-token": "write"
-      },
       environment: {
-        name: "GitHub Pages",
+        name: "Docs Next",
+        url: "${{ steps.deployment.outputs.page_url }}"
+      },
+      steps: [
+        {
+          name: "Deploy",
+          id: "deployment",
+          uses: "actions/deploy-pages@v1"
+        }
+      ]
+    },
+    "deploy-docs": {
+      name: "Deploy docs",
+      "runs-on": "ubuntu-latest",
+      if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
+      needs: ["build-docs"],
+      environment: {
+        name: "Docs",
         url: "${{ steps.deployment.outputs.page_url }}"
       },
       steps: [
