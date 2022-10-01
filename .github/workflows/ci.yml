@@ -13,10 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install dependencies
-        uses: ./.github/actions/setup
+      - uses: pnpm/action-setup@v2
         with:
-          package: docs
-          node-version: ${{ env.PRIMARY_NODE_VERSION }}
-      - run: pnpm run build
+          version: latest
+      - uses: actions/setup-node@v3
+      - shell: bash
+        run: pnpm install
+        working-directory: docs
+      - run: pnpm build
         working-directory: docs
