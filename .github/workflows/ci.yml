@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/setup
         with:
-          package: docs
+          package: ../docs
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Build docs
         run: pnpm --filter docs run build

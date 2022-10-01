@@ -32,4 +32,4 @@ runs:
       if: ${{ inputs.package != '' }}
       shell: bash
       run: pnpm install
-      working-directory: ${{ inputs.package }}
+      working-directory: packages/${{ inputs.package }}
