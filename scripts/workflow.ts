@@ -63,7 +63,6 @@ const workflow = {
           name: "Upload docs artifact",
           uses: "actions/upload-pages-artifact@v1",
           with: {
-            name: "docs",
             path: "docs/build",
           },
         },
@@ -82,13 +81,6 @@ const workflow = {
         "cancel-in-progress": true,
       },
       steps: [
-        {
-          name: "Download docs artifact",
-          uses: "actions/download-artifact@v2",
-          with: {
-            name: "docs",
-          },
-        },
         {
           name: "Deploy",
           id: "deployment",

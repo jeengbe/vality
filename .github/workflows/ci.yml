@@ -21,8 +21,7 @@ jobs:
   build-docs:
     name: Build docs
     runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'pull_request') || (github.event_name == 'push' &&
-      github.ref == 'refs/heads/master') }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     needs:
       - install
     steps:
@@ -38,12 +37,10 @@ jobs:
       - name: Upload docs artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          name: docs
           path: docs/build
   deploy-docs:
     name: Deploy docs
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     needs:
       - build-docs
     environment:
@@ -53,10 +50,6 @@ jobs:
       group: deploy-docs
       cancel-in-progress: true
     steps:
-      - name: Download docs artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: docs
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v1
