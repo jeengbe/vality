@@ -62,7 +62,7 @@ type Brand = Parse<typeof Brand>;
 } */
 ```
 
-Can you spot what's wrong with this model? Correct, it's missing the literal types for the keys. This is a common mistake when using Array or Enum Shorts and can be easily fixed by adding `as const`. (Find more information on this mistake [here](https://ts-vality.io/vality/pitfalls/as-const)).
+Can you spot what's wrong with this model? Correct, it's missing the literal types for the keys. This is a common mistake when using Array or Enum Shorts and can be easily fixed by adding `as const`. (Find more information on this mistake [here](https://ts-vality.io/vality/as-const)).
 
 ```ts
 const Brand = {
