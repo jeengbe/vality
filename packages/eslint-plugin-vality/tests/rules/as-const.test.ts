@@ -1,6 +1,6 @@
 import {
   InvalidTestCase,
-  ValidTestCase,
+  ValidTestCase
 } from "@typescript-eslint/utils/dist/ts-eslint";
 import rule from "../../src/rules/as-const";
 import { ruleTester } from "./tester";
@@ -47,7 +47,7 @@ const x = {
     ].map(mapInvalidEntry),
   });
 
-  ruleTester.run("triggers on the outermost possible short", rule, {
+  ruleTester.run("triggers on the outermost possible Short", rule, {
     valid: [
       `
 const x = {
@@ -204,7 +204,7 @@ const x = {
     ].map(mapInvalidEntry),
   });
 
-  ruleTester.run("ignores shorts without triggers", rule, {
+  ruleTester.run("ignores Shorts without triggers", rule, {
     valid: [
       `
 const x = {
@@ -391,20 +391,6 @@ const x = {
     ].map(mapInvalidEntry),
   });
 });
-
-// ruleTester.run("as-const", rule, {
-//   valid: [
-//     `
-// const x = [
-//   {
-//     bar: "foo",
-//     baz: 0,
-//   },
-// ];
-//     `,
-//   ].map(mapEntry),
-//   invalid: [ ].map(mapInvalidEntry),
-// });
 
 function mapEntry(entry: string | { code: string }): ValidTestCase<[]> {
   if (typeof entry === "string") {
