@@ -58,7 +58,7 @@ const workflow = {
           name: "Restore webpack cache",
           uses: "actions/cache@v3",
           with: {
-            "keys": "docs-webpack-cache",
+            key: "docs-webpack-cache",
           }
         },
         {
