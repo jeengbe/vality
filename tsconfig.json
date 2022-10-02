@@ -8,7 +8,7 @@
     "module": "CommonJS",
     "noErrorTruncation": true,
     "removeComments": true,
-    "inlineSourceMap": true,
+    "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
   }

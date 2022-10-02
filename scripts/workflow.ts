@@ -234,6 +234,10 @@ for (const pkg of getPackages()) {
           },
         },
         {
+          name: "Update 'tsconfig.json > sourceRoot'",
+          run: `sed -i 's/SOURCE_ROOT/https:\\/\\/raw.githubusercontent.com\\/jeengbe\\/vality\\/\${{ github.sha }}\\/packages\\/${pkg}\\/src\\//g' ./packages/${pkg}/src/tsconfig.json`,
+        },
+        {
           name: "Build",
           run: `pnpm --filter ${pkg} run build`,
         },
