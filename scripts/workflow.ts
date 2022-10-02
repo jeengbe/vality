@@ -242,10 +242,6 @@ for (const pkg of getPackages()) {
           run: `pnpm --filter ${pkg} run build`,
         },
         {
-          name: "Replace 'on GitHub' with 'on NPM'",
-          run: `sed -i 's/on GitHub/on NPM/g' ./packages/${pkg}/README.md`,
-        },
-        {
           name: "Upload build artifact",
           uses: "actions/upload-artifact@v2",
           with: {

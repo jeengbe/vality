@@ -158,8 +158,6 @@ jobs:
           ./packages/eslint-plugin-vality/src/tsconfig.json
       - name: Build
         run: pnpm --filter eslint-plugin-vality run build
-      - name: Replace 'on GitHub' with 'on NPM'
-        run: sed -i 's/on GitHub/on NPM/g' ./packages/eslint-plugin-vality/README.md
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
@@ -316,8 +314,6 @@ jobs:
           ./packages/vality/src/tsconfig.json
       - name: Build
         run: pnpm --filter vality run build
-      - name: Replace 'on GitHub' with 'on NPM'
-        run: sed -i 's/on GitHub/on NPM/g' ./packages/vality/README.md
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
