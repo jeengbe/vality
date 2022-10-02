@@ -199,7 +199,7 @@ vality.object = valit(
 
 vality.optional = valit("optional", (e) => (val, _options, path, parent) => {
   // Here, we must first check whether the eny allows undefined (as is the case with default values)
-  // If it validates, all good. Elsewise, we allow undefined, or else return the original error the eny had returned.
+  // If it validates, all good. Else, we allow undefined, or else return the original error the eny had returned.
   const enyVal = enyToGuardFn(e)(val, path, parent);
   if (enyVal.valid) return enyVal;
   if (val === undefined) return { valid: true, data: undefined, errors: [] };
@@ -410,7 +410,7 @@ vality.dict = valit(
       // (Possibility to optimise here)
       return vality
         .dict(
-          vality.enum(keyGuard), // This asserion is ok because we've already established that we're dealing with these types or literal versions
+          vality.enum(keyGuard), // This assertion is ok because we've already established that we're dealing with these types or literal versions
           v
         )(options as { bail: boolean })
         [_validate](value, path, parent);

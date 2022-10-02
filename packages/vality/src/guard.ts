@@ -73,7 +73,7 @@ export function guard<
           ],
         };
       }) as ValitFn<Type, Options>;
-      // @ts-expect-error -- This nugget is also unyped
+      // @ts-expect-error -- This nugget is also untyped
       validateFn[_type] = fn[_type];
 
       return validateFn;
