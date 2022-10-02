@@ -151,6 +151,11 @@ jobs:
         with:
           package: eslint-plugin-vality
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Update 'tsconfig.json > sourceRoot'
+        run: sed -i
+          's/SOURCE_ROOT/https:\/\/raw.githubusercontent.com\/jeengbe\/vality\/${{
+          github.sha }}\/packages\/eslint-plugin-vality\/src\//g'
+          ./packages/eslint-plugin-vality/src/tsconfig.json
       - name: Build
         run: pnpm --filter eslint-plugin-vality run build
       - name: Replace 'on GitHub' with 'on NPM'
@@ -304,6 +309,11 @@ jobs:
         with:
           package: vality
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Update 'tsconfig.json > sourceRoot'
+        run: sed -i
+          's/SOURCE_ROOT/https:\/\/raw.githubusercontent.com\/jeengbe\/vality\/${{
+          github.sha }}\/packages\/vality\/src\//g'
+          ./packages/vality/src/tsconfig.json
       - name: Build
         run: pnpm --filter vality run build
       - name: Replace 'on GitHub' with 'on NPM'
