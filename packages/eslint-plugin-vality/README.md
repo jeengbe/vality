@@ -1,4 +1,4 @@
-<h1 align="center">Vality</h1>
+<h1 align="center">ESLint Plugin Vality</h1>
 <div align="center">
 
 A TypeScript schema descriptor library with zero dependencies.

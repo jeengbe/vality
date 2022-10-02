@@ -289,7 +289,7 @@ for (const pkg of getPackages()) {
       needs: [`build-${pkg}`, `check-version-${pkg}`],
       environment: {
         name: `npm: ${pkg}`,
-        url: `https://www.npmjs.com/package/${pkg}/v/\${{ needs.check-version-${pkg}.outputs.current-version }}`,
+        url: `https://www.npmjs.com/package/${pkg}`,
       },
       steps: [
         {
