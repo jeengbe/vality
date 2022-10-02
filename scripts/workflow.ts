@@ -60,7 +60,7 @@ const workflow = {
           with: {
             path: "docs/node_modules/.cache/webpack",
             key: "docs-webpack-cache",
-            "restore-keys": ["docs-webpack-cache"],
+            "restore-keys": "docs-webpack-cache",
           }
         },
         {
