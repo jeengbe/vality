@@ -72,6 +72,10 @@ const workflow = {
       name: "Deploy docs",
       "runs-on": "ubuntu-latest",
       needs: ["build-docs"],
+      permissions: {
+        pages: "write",
+        "id-token": "write",
+      },
       environment: {
         name: "Docs",
         url: "${{ steps.deployment.outputs.page_url }}"
