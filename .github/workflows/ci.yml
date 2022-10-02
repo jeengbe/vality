@@ -123,6 +123,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     outputs:
       should-publish: ${{ steps.check.outputs.changed }}
+      current-version: ${{ steps.check.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -192,6 +193,10 @@ jobs:
     needs:
       - build-eslint-plugin-vality
       - check-version-eslint-plugin-vality
+    environment:
+      name: "npm: eslint-plugin-vality"
+      url: https://www.npmjs.com/package/eslint-plugin-vality/v/${{
+        needs.check-version-eslint-plugin-vality.outputs.current-version }}
     steps:
       - name: Download build artifact
         uses: actions/download-artifact@v2
@@ -280,6 +285,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     outputs:
       should-publish: ${{ steps.check.outputs.changed }}
+      current-version: ${{ steps.check.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -348,6 +354,10 @@ jobs:
     needs:
       - build-vality
       - check-version-vality
+    environment:
+      name: "npm: vality"
+      url: https://www.npmjs.com/package/vality/v/${{
+        needs.check-version-vality.outputs.current-version }}
     steps:
       - name: Download build artifact
         uses: actions/download-artifact@v2

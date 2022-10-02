@@ -192,6 +192,7 @@ for (const pkg of getPackages()) {
       if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       outputs: {
         "should-publish": "${{ steps.check.outputs.changed }}",
+        "current-version": "${{ steps.check.outputs.version }}",
       },
       steps: [
         {
@@ -286,6 +287,10 @@ for (const pkg of getPackages()) {
       name: `Publish: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: [`build-${pkg}`, `check-version-${pkg}`],
+      environment: {
+        name: `npm: ${pkg}`,
+        url: `https://www.npmjs.com/package/${pkg}/v/\${{ needs.check-version-${pkg}.outputs.current-version }}`,
+      },
       steps: [
         {
           name: "Download build artifact",
