@@ -40,7 +40,6 @@ const workflow = {
     "build-docs": {
       name: "Build docs",
       "runs-on": "ubuntu-latest",
-      if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       needs: ["install"],
       steps: [
         {
@@ -76,6 +75,7 @@ const workflow = {
         pages: "write",
         "id-token": "write",
       },
+      if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       environment: {
         name: "Docs",
         url: "${{ steps.deployment.outputs.page_url }}"
