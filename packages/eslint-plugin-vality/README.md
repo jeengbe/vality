@@ -1,8 +1,6 @@
 <h1 align="center">ESLint Plugin Vality</h1>
 <div align="center">
 
-A TypeScript schema descriptor library with zero dependencies.
-
 [![License](https://img.shields.io/npm/l/eslint-plugin-vality)](https://github.com/jeengbe/vality/blob/master/packages/eslint-plugin-vality/LICENSE.md)
 [![Version](https://img.shields.io/npm/v/eslint-plugin-vality)](https://www.npmjs.com/package/eslint-plugin-vality)
 [![Build Status](https://img.shields.io/github/workflow/status/jeengbe/vality/Publish)](https://github.com/jeengbe/vality)

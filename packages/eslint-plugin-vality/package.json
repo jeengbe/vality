@@ -1,7 +1,7 @@
 {
   "name": "eslint-plugin-vality",
   "description": "ESLint plugin for Vality.",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "author": "Jesper Engberg <jeengbe@gmail.com>",
   "homepage": "https://ts-vality.io/eslint",
   "repository": {
