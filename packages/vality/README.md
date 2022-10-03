@@ -18,7 +18,7 @@ See https://ts-vality.io for more information.
 
 Vality is the heart of this repository. It is a declarative **schema description library** with the most **intuitive syntax** and allows for validation and transformation of data. Then extract the types from your schema for **100% type safety**. And all with **0 runtime dependencies**.
 
-Find all of this and much more on [https://ts-vality.io](https://ts-vality.io/vality).
+Find all of this and much more on https://ts-vality.io/vality.
 
 ```ts
 import { v, Parse } from "vality";
