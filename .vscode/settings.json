@@ -1,12 +1,20 @@
 {
   "cSpell.words": [
-    "Vality",
-    "vality",
-    "Guard",
-    "Guards",
-    "Valit",
-    "Valits",
+    "eny",
     "Eny",
-    "Enys"
-  ]
+    "enys",
+    "Enys",
+    "guard",
+    "Guard",
+    "guards",
+    "Guards",
+    "pnpm",
+    "valit",
+    "Valit",
+    "valits",
+    "Valits",
+    "vality",
+    "Vality"
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

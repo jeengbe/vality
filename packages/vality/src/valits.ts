@@ -304,7 +304,6 @@ vality.and = valit(
           switch (typeOfGuard) {
             case "object": {
               const objectValue = {};
-              // @ts-expect-error -- Undocumented type
               for (const k in eGuard[_validate][_type][0]) {
                 Object.assign(objectValue, {
                   [k]: value[k as keyof typeof value],
@@ -315,12 +314,11 @@ vality.and = valit(
               break;
             }
             case "enum":
-              // @ts-expect-error -- Again, undocumented type. We make sure that this access is sound with unit tests
               for (const e of eGuard[_validate][_type]) {
                 const enumMemberGuardFn = enyToGuardFn(e);
 
                 const enumMemberValue = {};
-                // @ts-expect-error -- Again
+                // @ts-expect-error -- Undocumented
                 for (const k in enumMemberGuardFn[_type][0]) {
                   Object.assign(enumMemberValue, {
                     [k]: value[k as keyof typeof value],
@@ -340,7 +338,6 @@ vality.and = valit(
                 };
               break;
             case "and":
-              // @ts-expect-error -- This should look familiar by now
               handleEs(eGuard[_validate][_type]);
               break;
             default:

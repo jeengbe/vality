@@ -1,4 +1,5 @@
-import { CallOptions, makeValit, RSA, RSN, SharedParameters } from "./utils";
+import { CallOptions, makeValit, SharedParameters } from "makeValidate";
+import { RSA, RSN } from "./utils";
 import type { Path, Validate, ValidationResult } from "./validate";
 
 export type Valit<

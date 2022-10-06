@@ -1,11 +1,8 @@
+import { CallOptions, makeValit, SharedParameters } from "makeValidate";
 import { _type } from "./symbols";
 import {
-  CallOptions,
-  isValid,
-  makeValit,
   RSA,
-  RSN,
-  SharedParameters
+  RSN
 } from "./utils";
 import type { Path, Validate } from "./validate";
 import { ValitFn } from "./valit";
@@ -53,12 +50,13 @@ export function guard<
     (fn: GuardFn<Type, Options>) => {
       const validateFn = ((value, options, path, parent) => {
         const res = fn(value, options, path, parent);
-        if (isValid(res))
+        if (res === undefined) {
           return {
             valid: true,
             data: res,
             errors: [],
           };
+        }
 
         return {
           valid: false,
