@@ -2,11 +2,11 @@ import { CallOptions, makeValit, SharedParameters } from "makeValidate";
 import { RSA, RSN } from "./utils";
 import type { Path, Validate, ValidationResult } from "./validate";
 
-export type Valit<
+export interface Valit<
   Name extends string,
   Type,
   Options extends RSA = RSN
-> = Validate<Name, Type, Options, true>;
+> extends Validate<Name, Type, Options, true> { }
 
 /**
  * Extract options from a given valit from its name

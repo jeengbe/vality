@@ -36,7 +36,7 @@ export type Validate<Name extends string, Type, O, IsValit> = Face<
 /**
  * The object that holds the validation function (and other stuff)
  */
-export type Face<Name, Type, IsValit> = {
+export interface Face<Name, Type, IsValit> {
   [_name]: Name;
   [_validate]: ValidateFn<Type>;
   [_type]: Type;
@@ -51,6 +51,7 @@ export type ValidateFn<T> = (
   path: Path,
   parent: any
 ) => ValidationResult<T>;
+
 export type ValidationResult<T> =
   | { valid: true; data: T; errors: never[] }
   | { valid: false; data: undefined; errors: Error[] };

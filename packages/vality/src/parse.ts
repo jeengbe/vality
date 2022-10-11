@@ -42,6 +42,8 @@ export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   ? Parse<U, DecD<_D>>
   : T extends Face<"readonly", infer U, true> // Readonly valit
   ? Parse<U, DecD<_D>>
+  : T extends OneOrEnumOfTOrFace<infer U> // This needs to be written explicitly to prevent infinite type instantiation at the root
+  ? U
   : T extends Face<any, infer U, true> // Valits' content needs to be parsed again
   ? Parse<U, DecD<_D>>
   : T extends Face<any, infer U, false> // Whereas guards' doesn't

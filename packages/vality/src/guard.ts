@@ -7,11 +7,11 @@ import {
 import type { Path, Validate } from "./validate";
 import { ValitFn } from "./valit";
 
-export type Guard<
+export interface Guard<
   Name extends string,
   Type,
   Options extends RSA = RSN
-> = Validate<Name, Type, Options, false>;
+> extends Validate<Name, Type, Options, false> { }
 
 /**
  * Extract options from a given guard from its name

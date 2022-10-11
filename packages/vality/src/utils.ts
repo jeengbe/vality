@@ -1,20 +1,15 @@
 import { Parse } from "./parse";
-import { _name, _type, _validate } from "./symbols";
+import { _validate } from "./symbols";
 import { Face, ValidateFn } from "./validate";
 import { vality } from "./vality";
 
-export type RSA = Record<string, any>;
-export type RSN = Record<string, never>;
-// Can't use Record here because circular types are not valid via type aliases
-export type RSE = {
-  [K: string]: Eny;
-};
-
-export type MaybeArray<T> = T | T[];
+export interface RSA { [K: string]: any; };
+export interface RSN { [K: string]: never; };
+export interface RSE { [K: string]: Eny; };
 
 export type Primitive = string | number | boolean | null;
 export type _Eny = Primitive | Face<any, Primitive, any> | (() => Eny) | RSE;
-export type Eny = MaybeArray<_Eny> | Readonly<MaybeArray<_Eny>>;
+export type Eny = _Eny | readonly _Eny[];
 
 /**
  * Make all properties in `T` required whose key is assignable to `K`
@@ -107,22 +102,10 @@ export type IntersectItems<T extends any[]> = Unfoo<
 /**
  * A type that represents either `T`, a Guard that resolves to `T` or a Valit that recursively resolves to the previously mentioned (i.e. a Valit for a Valit for a Guard for a string)
  */
-export type TOrFace<T, Depth extends null[] = []> =
+export type TOrFace<T> =
   | T
   | Face<string, T, false>
-  // The reason we implement the Face directly here is that only so are we able to recursively use TOrFace<T>
-  // Ideally we'd use something like `Face<string, TOrFace<T>, true>;` but that doesn't work
-  // | Face<string, Face<string, T, true>, true>
-  // Also, to prevent errors from too deep recursion, we have to introduce a limit
-  // https://stackoverflow.com/questions/73978875/hint-outcome-of-infinitely-recursive-type
-  | (Depth["length"] extends 15
-    ? never
-    : {
-      [_name]: string;
-      [_validate]: any;
-      [_type]: TOrFace<T, [...Depth, null]>;
-      isValit?: true;
-    });
+  | Face<string, TOrFace<T>, true>;
 
 /**
  * A type that's either `T` or a Face of `T` or an enum Short for `T` or Face of `T`
