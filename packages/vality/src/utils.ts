@@ -1,5 +1,5 @@
 import { Parse } from "./parse";
-import { _validate } from "./symbols";
+import { _name, _type, _validate } from "./symbols";
 import { Face, ValidateFn } from "./validate";
 import { vality } from "./vality";
 
@@ -100,19 +100,21 @@ export type IntersectItems<T extends any[]> = Unfoo<
 >;
 
 /**
+ * A type that's either `T` or a Face of `T` or an enum Short for `T` or Face of `T`
+ */
+export type OneOrEnumOfTOrFace<T> = TOrFace<T> | readonly [TOrFace<T>, TOrFace<T>, ...TOrFace<T>[]];
+
+/**
  * A type that represents either `T`, a Guard that resolves to `T` or a Valit that recursively resolves to the previously mentioned (i.e. a Valit for a Valit for a Guard for a string)
  */
 export type TOrFace<T> =
   | T
   | Face<string, T, false>
-  | Face<string, TOrFace<T>, true>;
-
-/**
- * A type that's either `T` or a Face of `T` or an enum Short for `T` or Face of `T`
- */
-export type OneOrEnumOfTOrFace<T> = OneOrEnumOf<TOrFace<T>>;
-
-/**
- * A type that's either `T` directly or an enum Short for `T`
- */
-export type OneOrEnumOf<T> = T | readonly [T, T, ...T[]];
+  // I will come back and revisit this one I am a TypeScript Grandmaster, but for now, I can't get this to work
+  // | Face<string, TOrFace<T>, true>;
+  | {
+    [_name]: string;
+    [_validate]: any;
+    [_type]: TOrFace<T>;
+    isValit?: true;
+  };

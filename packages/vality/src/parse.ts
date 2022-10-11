@@ -34,19 +34,17 @@ export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   ? {
     [P in Parse<K, DecD<_D>>]: Parse<V, DecD<_D>>;
   }
-  : T extends readonly [infer U] // Array short
+  : T extends readonly [infer U] // Array Short
   ? Parse<U, DecD<_D>>[]
   : T extends Face<"array", (infer U)[], true>
   ? Parse<U, DecD<_D>>[]
-  : T extends readonly (infer U)[] // Enum short
-  ? Parse<U, DecD<_D>>
-  : T extends Face<"readonly", infer U, true> // Readonly valit
+  : T extends readonly (infer U)[] // Enum Short
   ? Parse<U, DecD<_D>>
   : T extends OneOrEnumOfTOrFace<infer U> // This needs to be written explicitly to prevent infinite type instantiation at the root
   ? U
   : T extends Face<any, infer U, true> // Valits' content needs to be parsed again
   ? Parse<U, DecD<_D>>
-  : T extends Face<any, infer U, false> // Whereas guards' doesn't
+  : T extends Face<any, infer U, false> // Whereas Guards' doesn't
   ? U
   : T extends () => infer U // A model
   ? "in-layer-one" extends _D

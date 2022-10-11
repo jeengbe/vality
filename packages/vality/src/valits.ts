@@ -297,6 +297,7 @@ vality.and = valit(
 
       const handleEs = (ess: typeof es) => {
         for (let i = 0; i < ess.length; i++) {
+          // @ts-expect-error -- Not typed properly
           const eGuard = enyToGuard(ess[i]);
           const typeOfGuard = eGuard[_name] as string;
           let res = undefined as undefined | ValidationResult<any>;
@@ -304,6 +305,7 @@ vality.and = valit(
           switch (typeOfGuard) {
             case "object": {
               const objectValue = {};
+              // @ts-expect-error -- Untyped
               for (const k in eGuard[_validate][_type][0]) {
                 Object.assign(objectValue, {
                   [k]: value[k as keyof typeof value],
@@ -314,6 +316,7 @@ vality.and = valit(
               break;
             }
             case "enum":
+              // @ts-expect-error -- Untyped
               for (const e of eGuard[_validate][_type]) {
                 const enumMemberGuardFn = enyToGuardFn(e);
 
@@ -338,6 +341,7 @@ vality.and = valit(
                 };
               break;
             case "and":
+              // @ts-expect-error -- Untyped
               handleEs(eGuard[_validate][_type]);
               break;
             default:
