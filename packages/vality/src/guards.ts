@@ -2,7 +2,7 @@ import { config } from "./config";
 import { guard, Guard, GuardFn } from "./guard";
 import { RelationType } from "./parse";
 import { _type } from "./symbols";
-import { Eny, Primitive } from "./utils";
+import { Primitive, RSE } from "./utils";
 import { validate } from "./validate";
 import { Valit } from "./valit";
 import { vality } from "./vality";
@@ -72,7 +72,7 @@ declare global {
        * @example vality.relation(SomeModel)
        */
       // model S is solely used to infer and keep the type of the relation and not used in runtime
-      relation<S extends () => Eny>(
+      relation<S extends () => RSE>(
         model: S
       ): Valit<
         // We return a valit because we have to parse its contents in Parse<>, and guards don't do that
