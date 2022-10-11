@@ -1,8 +1,8 @@
+import { vality } from ".";
 import { CallOptions } from "./makeValidate";
-import { ParseIn } from "./parse";
+import { Parse } from "./parse";
 import { _name, _type, _validate } from "./symbols";
 import { Eny, enyToGuardFn, RSE } from "./utils";
-import { vality } from "./vality";
 
 export interface Error {
   message: string;
@@ -58,16 +58,15 @@ export type ValidationResult<T> =
 
 export type Path = (string | number)[];
 
-// NOTE: bail only works for purely passed schemas, not object guards
 export function validate<E extends Eny>(
   schema: E,
   val: unknown,
   bail = false
-): ValidationResult<ParseIn<E>> {
+): ValidationResult<Parse<E>> {
+  // Call top-level functions (So they're not treated as relations)
   if (typeof schema === "function" && !(_validate in schema))
     schema = vality.object((schema as () => RSE)())(
       bail === true ? { bail } : {}
     ) as unknown as E;
-
   return enyToGuardFn(schema)(val, [], undefined);
 }

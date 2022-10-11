@@ -1,4 +1,4 @@
-import { CallOptions, makeValit, SharedParameters } from "makeValidate";
+import { CallOptions, makeValit, SharedParameters } from "./makeValidate";
 import { _type } from "./symbols";
 import {
   RSA,
@@ -50,7 +50,7 @@ export function guard<
     (fn: GuardFn<Type, Options>) => {
       const validateFn = ((value, options, path, parent) => {
         const res = fn(value, options, path, parent);
-        if (res === undefined) {
+        if (res !== undefined) {
           return {
             valid: true,
             data: res,

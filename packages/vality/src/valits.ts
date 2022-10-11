@@ -5,8 +5,7 @@ import {
   Eny,
   enyToGuard,
   enyToGuardFn,
-  OneOrEnumOfTOrFace,
-  RSE
+  OneOrEnumOfTOrFace, RSE
 } from "./utils";
 import { Error, ValidationResult } from "./validate";
 import { valit, Valit } from "./valit";
@@ -297,7 +296,6 @@ vality.and = valit(
 
       const handleEs = (ess: typeof es) => {
         for (let i = 0; i < ess.length; i++) {
-          // @ts-expect-error -- Not typed properly
           const eGuard = enyToGuard(ess[i]);
           const typeOfGuard = eGuard[_name] as string;
           let res = undefined as undefined | ValidationResult<any>;

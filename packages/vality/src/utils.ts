@@ -8,8 +8,8 @@ export interface RSN { [K: string]: never; };
 export interface RSE { [K: string]: Eny; };
 
 export type Primitive = string | number | boolean | null;
-export type _Eny = Primitive | Face<any, Primitive, any> | (() => Eny) | RSE;
-export type Eny = _Eny | readonly _Eny[];
+
+export type Eny = Face<any, any, any> | readonly TOrFace<Eny>[] | Primitive | (() => Eny) | RSE;
 
 /**
  * Make all properties in `T` required whose key is assignable to `K`
@@ -33,13 +33,15 @@ export type EnyToFace<T> = T extends [infer U]
   ? Face<"relation", U, true>
   : Face<"object", T, true>;
 
-export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
-  // TODO: Fix this type mess -- I have no idea why it does that
-  if (Array.isArray(eny)) {
+export function enyToGuard<T extends Face<any, any, any>>(eny: T): T;
+export function enyToGuard<T extends (() => Eny)>(eny: T): Face<"relation", T, true>;
+export function enyToGuard<T extends readonly [TOrFace<Eny>]>(eny: T): Face<"array", T, true>;
+export function enyToGuard<T extends OneOrEnumOfTOrFace<Eny>>(eny: T): Face<"enum", T, true>;
+export function enyToGuard<T extends RSE>(eny: T): Face<"object", T, true>;
+export function enyToGuard(eny: Eny): Face<any, any, any> {
+  if (isArrayOrEnyShort(eny)) {
     if (eny.length === 0) throw new Error("Empty array short");
-    // @ts-ignore
     if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
-    // @ts-ignore
     return vality.enum(...eny.map(enyToGuard));
   }
   if (
@@ -48,21 +50,21 @@ export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
     typeof eny === "boolean" ||
     eny === null
   ) {
-    // @ts-ignore
     return vality.literal(eny);
   }
-  // Not sure why we have to assert here, a symbol should never be a key in RSA
-  // @ts-ignore
-  if (_validate in eny) return eny as Exclude<typeof eny, RSA>;
-  // This should only allow () => RSE at this point...
-  // @ts-ignore
-  if (typeof eny === "function") return vality.relation(eny as () => RSE);
-  // Not sure why we have to assert here, as RSA should be the only type left after narrowing
-  // @ts-ignore
+  if (isFace(eny)) return eny;
+  if (typeof eny === "function") return vality.relation(eny);
   return vality.object(eny as RSA);
 }
 
-// This type is too complicated to represent - should be ValidateFn<ParseIn<E>>
+function isArrayOrEnyShort(val: Eny): val is readonly TOrFace<Eny>[]{
+  return Array.isArray(val);
+}
+
+function isFace(val: Face<any, any, any> | (() => Eny) | RSE): val is Face<any, any, any> {
+  return _validate in val;
+}
+
 export function enyToGuardFn<E extends Eny>(e: E): ValidateFn<any> {
   return enyToGuard(e)[_validate];
 }
@@ -99,22 +101,16 @@ export type IntersectItems<T extends any[]> = Unfoo<
   Intersect<Parse<Values<Foo<T>>>>
 >;
 
-/**
- * A type that's either `T` or a Face of `T` or an enum Short for `T` or Face of `T`
- */
-export type OneOrEnumOfTOrFace<T> = TOrFace<T> | readonly [TOrFace<T>, TOrFace<T>, ...TOrFace<T>[]];
+export type OneOrEnumOfTOrFace<T> = TOrFace<T> | readonly [OneOrEnumOfTOrFace<T>, OneOrEnumOfTOrFace<T>, ...OneOrEnumOfTOrFace<T>[]];
 
-/**
- * A type that represents either `T`, a Guard that resolves to `T` or a Valit that recursively resolves to the previously mentioned (i.e. a Valit for a Valit for a Guard for a string)
- */
 export type TOrFace<T> =
   | T
   | Face<string, T, false>
   // I will come back and revisit this one I am a TypeScript Grandmaster, but for now, I can't get this to work
-  // | Face<string, TOrFace<T>, true>;
+  // | Face<string, OneOrEnumOfTOrFace<T>, true>;
   | {
     [_name]: string;
     [_validate]: any;
-    [_type]: TOrFace<T>;
+    [_type]: OneOrEnumOfTOrFace<T>;
     isValit?: true;
   };

@@ -1,7 +1,7 @@
-import { ValitFn } from "valit";
-import { _name, _validate } from "./symbols";
+import { _name, _type, _validate } from "./symbols";
 import { MakeRequired, RSA, RSN } from "./utils";
 import { Path, Validate, ValidateFn } from "./validate";
+import { ValitFn } from "./valit";
 
 export type SharedParameters<Name, Type, Options extends RSA, Fn> = [
   name: Name,
