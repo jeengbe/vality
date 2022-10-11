@@ -9,7 +9,7 @@ export interface RSE { [K: string]: Eny; };
 
 export type Primitive = string | number | boolean | null;
 
-export type Eny = Face<any, any, any> | readonly TOrFace<Eny>[] | Primitive | (() => Eny) | RSE;
+export type Eny = Face<any, any, any> | readonly TOrFace<Eny>[] | Primitive | (() => RSE) | RSE;
 
 /**
  * Make all properties in `T` required whose key is assignable to `K`
