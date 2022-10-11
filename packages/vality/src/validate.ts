@@ -1,8 +1,8 @@
-import { vality } from ".";
 import { CallOptions } from "./makeValidate";
 import { Parse } from "./parse";
 import { _name, _type, _validate } from "./symbols";
 import { Eny, enyToGuardFn, RSE } from "./utils";
+import { vality } from "./vality";
 
 export interface Error {
   message: string;
