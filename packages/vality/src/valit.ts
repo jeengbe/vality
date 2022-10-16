@@ -1,12 +1,17 @@
 import { CallOptions, makeValit, SharedParameters } from "./makeValidate";
 import { RSA, RSN } from "./utils";
-import type { Path, Validate, ValidationResult } from "./validate";
+import type { Path, SpecialValidate, Validate, ValidationResult } from "./validate";
 
-export interface Valit<
+export interface SpecialValit<
   Name extends keyof vality.valits,
   Type,
   Options extends RSA = RSN
-> extends Validate<Name, Type, Options, true> { }
+> extends SpecialValidate<Name, Type, Options, true> {}
+
+export interface Valit<
+  Type,
+  Options extends RSA = RSN
+> extends Validate<Type, Options, true> { }
 
 /**
  * Extract options from a given valit from its name
@@ -14,7 +19,7 @@ export interface Valit<
 export type ValitOptions<
   Name extends keyof vality.valits,
   Fn = vality.valits[Name]
-> = Fn extends (...args: infer Args) => Valit<any, infer Type, infer Options>
+> = Fn extends (...args: infer Args) => Valit<infer Type, infer Options>
   ? [Args, Type, Options]
   : never;
 
@@ -37,6 +42,6 @@ export function valit<
     Options,
     (...args: Arg) => ValitFn<Type, Options>
   >
-): (...args: Arg) => Validate<Name, Type, Options, true> {
+): (...args: Arg) => SpecialValidate<Name, Type, Options, true> {
   return makeValit(name, fn, handleOptions, defaultOptions);
 }

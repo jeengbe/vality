@@ -8,10 +8,9 @@ import type { Path, Validate } from "./validate";
 import { ValitFn } from "./valit";
 
 export interface Guard<
-  Name extends keyof vality.guards,
   Type,
   Options extends RSA = RSN
-> extends Validate<Name, Type, Options, false> { }
+> extends Validate<Type, Options, false> { }
 
 /**
  * Extract options from a given guard from its name
@@ -20,8 +19,8 @@ export type GuardOptions<
   Name extends keyof vality.guards,
   G = vality.guards[Name]
 > = G extends
-  | Guard<any, infer Type, infer Options>
-  | ((...args: any[]) => Guard<any, infer Type, infer Options>)
+  | Guard<infer Type, infer Options>
+  | ((...args: any[]) => Guard<infer Type, infer Options>)
   ? [Type, Options]
   : never;
 
@@ -43,12 +42,12 @@ export function guard<
     Options,
     GuardFn<Type, Options>
   >
-): Validate<Name, Type, Options, false> {
+): Validate<Type, Options, false> {
   // Under the hood, a guard is just a Valit that gets the guard's implementation as inner
   return makeValit<Name, [GuardFn<Type, Options>], Type, Options, false>(
     name,
-    (fn: GuardFn<Type, Options>) => {
-      const validateFn = ((value, options, path, parent) => {
+    (fn: GuardFn<Type, Options>): ValitFn<Type, Options> => {
+      const validateFn: ValitFn<Type, Options> = ((value, options, path, parent) => {
         const res = fn(value, options, path, parent);
         if (res !== undefined) {
           return {
@@ -70,7 +69,7 @@ export function guard<
             },
           ],
         };
-      }) as ValitFn<Type, Options>;
+      });
       // @ts-expect-error -- This nugget is also untyped
       validateFn[_type] = fn[_type];
 

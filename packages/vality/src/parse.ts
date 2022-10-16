@@ -1,5 +1,5 @@
 import { Eny, IntersectItems, OneOrEnumOfTOrFace } from "./utils";
-import { Face } from "./validate";
+import { Face, SpecialFace } from "./validate";
 
 // Depending on the direction of the required type, we parse relations differently
 // If the type comes from the api ("out"), we type a relation as the corresponding type
@@ -22,11 +22,11 @@ export type RelationType = vality.Config extends { RelationType: infer R; }
 
 type DecD<D> = "in-layer-one" extends D ? "in" : D;
 
-export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
+export type Parse<T, _D = "out"> = T extends SpecialFace<"tuple", infer U, any>
   ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
-  : T extends Face<"and", infer U extends Eny[], true>
+  : T extends SpecialFace<"and", infer U extends Eny[], true>
   ? IntersectItems<U>
-  : T extends Face<
+  : T extends SpecialFace<
     "dict",
     [OneOrEnumOfTOrFace<infer L extends string | number>, infer V],
     true
@@ -36,13 +36,13 @@ export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   }
   : T extends readonly [infer U] // Array Short
   ? Parse<U, DecD<_D>>[]
-  : T extends Face<"array", (infer U)[], true>
+  : T extends Face<(infer U)[], true> // Array Valit
   ? Parse<U, DecD<_D>>[]
   : T extends readonly (infer U)[] // Enum Short
   ? Parse<U, DecD<_D>>
-  : T extends Face<any, infer U, true> // Valits' content needs to be parsed again
+  : T extends Face<infer U, true> // Valits' content needs to be parsed again
   ? Parse<U, DecD<_D>>
-  : T extends Face<any, infer U, false> // Whereas Guards' doesn't
+  : T extends Face<infer U, false> // Whereas Guards' doesn't
   ? U
   : T extends () => infer U // A model
   ? "in-layer-one" extends _D

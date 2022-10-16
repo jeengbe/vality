@@ -1,6 +1,6 @@
 import { CallOptions } from "./makeValidate";
 import { Parse } from "./parse";
-import { _name, _type, _validate } from "./symbols";
+import { _special, _type, _validate } from "./symbols";
 import { Eny, enyToGuardFn, RSE } from "./utils";
 import { vality } from "./vality";
 
@@ -21,23 +21,36 @@ export interface Error {
 /**
  * A Face with a call signature that takes options and gives another Face back
  */
-export type Validate<Name extends keyof vality.guards | keyof vality.valits, Type, O, IsValit> = Face<
+export type Validate<Type, Options, IsValit> = Face<
+  Type,
+  IsValit
+> &
+  ((
+    options:
+      | Partial<CallOptions<Type, Options>>
+      | ((parent: any) => Partial<CallOptions<Type, Options>>)
+  ) => Face<Type, IsValit>);
+
+export type SpecialValidate<Name, Type, Options, IsValit> = SpecialFace<
   Name,
   Type,
   IsValit
 > &
   ((
     options:
-      | Partial<CallOptions<Type, O>>
-      | ((parent: any) => Partial<CallOptions<Type, O>>)
-  ) => Face<Name, Type, IsValit>);
+      | Partial<CallOptions<Type, Options>>
+      | ((parent: any) => Partial<CallOptions<Type, Options>>)
+  ) => SpecialFace<Name, Type, IsValit>);
+
+export interface SpecialFace<Name, Type, IsValit> extends Face<Type, IsValit> {
+  [_special]: Name;
+}
 
 // `isValit` isn't there at runtime so no worries about it not being a symbol :)
 /**
  * The object that holds the validation function (and other stuff)
  */
-export interface Face<Name extends keyof vality.guards | keyof vality.valits, Type, IsValit> {
-  [_name]: Name;
+export interface Face<Type, IsValit> {
   [_validate]: ValidateFn<Type>;
   [_type]: Type;
   isValit?: IsValit;

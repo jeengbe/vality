@@ -11,7 +11,6 @@ declare global {
   namespace vality {
     interface guards {
       string: Guard<
-        "string",
         string,
         {
           minLength: number;
@@ -20,7 +19,6 @@ declare global {
         }
       >;
       number: Guard<
-        "number",
         number,
         {
           min: number;
@@ -38,9 +36,8 @@ declare global {
           unsafe: boolean;
         }
       >;
-      boolean: Guard<"boolean", boolean>;
+      boolean: Guard<boolean>;
       date: Guard<
-        "date",
         Date,
         {
           min: Date;
@@ -61,7 +58,6 @@ declare global {
       literal<P extends Primitive>(
         lit: P
       ): Guard<
-        "literal",
         P,
         {
           // Overwrite the default behaviour of 'default'
@@ -76,13 +72,12 @@ declare global {
         model: S
       ): Valit<
         // We return a valit because we have to parse its contents in Parse<>, and guards don't do that
-        "relation",
         S,
         {
           transform: (v: RelationType) => RelationType;
         }
       >;
-      any: Guard<"any", unknown>;
+      any: Guard<unknown>;
     }
   }
 }

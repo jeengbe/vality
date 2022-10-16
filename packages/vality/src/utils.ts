@@ -1,5 +1,5 @@
 import { Parse } from "./parse";
-import { _name, _type, _validate } from "./symbols";
+import { _type, _validate } from "./symbols";
 import { Face, ValidateFn } from "./validate";
 import { vality } from "./vality";
 
@@ -9,7 +9,7 @@ export interface RSE { [K: string]: Eny; };
 
 export type Primitive = string | number | boolean | null;
 
-export type Eny = Face<any, any, any> | readonly TOrFace<Eny>[] | Primitive | (() => RSE) | RSE;
+export type Eny = Face<any, any> | readonly TOrFace<Eny>[] | Primitive | (() => RSE) | RSE;
 
 /**
  * Make all properties in `T` required whose key is assignable to `K`
@@ -33,18 +33,18 @@ export type MakeRequired<T extends RSA, K extends keyof T> = {
 //   ? Face<"relation", U, true>
 //   : Face<"object", T, true>;
 
-export type EnyToFace<T> = T extends Face<any, any, any>
+export type EnyToFace<T> = T extends Face<any, any>
   ? T
   : T extends () => (infer U extends Eny)
-  ? Face<"relation", U, true>
-  : T extends readonly [TOrFace<infer U extends Eny>]
-  ? Face<"array", T, true>
+  ? Face<U, true>
+  : T extends readonly [TOrFace<Eny>]
+  ? Face<T, true>
   : T extends Primitive
-  ? Face<"literal", T, false>
+  ? Face<T, false>
   : T extends EnumOfTOrFace<infer U extends Eny>
-  ? Face<"enum", U, true>
+  ? Face<U, true>
   : T extends RSE
-  ? Face<"object", T, true>
+  ? Face<T, true>
   : never;
 
 // export function enyToGuard<T extends Face<any, any, any>>(eny: T): T;
@@ -78,7 +78,7 @@ function isArrayOrEnyShort(val: Eny): val is readonly TOrFace<Primitive>[] {
   return Array.isArray(val);
 }
 
-function isFace(val: Face<any, any, any> | (() => Eny) | RSE): val is Face<any, any, any> {
+function isFace(val: Face<any, any> | (() => Eny) | RSE): val is Face<any, any> {
   return _validate in val;
 }
 
@@ -92,11 +92,10 @@ type EnumOfTOrFace<T> = readonly [OneOrEnumOfTOrFace<T>, OneOrEnumOfTOrFace<T>, 
 
 export type TOrFace<T> =
   | T
-  | Face<string, T, false>
+  | Face<T, false>
   // I will come back and revisit this one I am a TypeScript Grandmaster, but for now, I can't get this to work
   // | Face<string, OneOrEnumOfTOrFace<T>, true>;
   | {
-    [_name]: string;
     [_validate]: any;
     [_type]: OneOrEnumOfTOrFace<T>;
     isValit?: true;

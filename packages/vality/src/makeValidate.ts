@@ -1,7 +1,7 @@
-import { _name, _type, _validate } from "./symbols";
+import { _special, _type, _validate } from "./symbols";
 import { types } from "./types";
 import { MakeRequired, RSA, RSN } from "./utils";
-import { Path, Validate, ValidateFn } from "./validate";
+import { Path, SpecialValidate, ValidateFn } from "./validate";
 import { ValitFn } from "./valit";
 
 export type SharedParameters<Name, Type, Options extends RSA, Fn> = [
@@ -43,7 +43,7 @@ export function makeValit<
   Arg extends any[],
   Type,
   Options extends RSA,
-  V extends boolean
+  IsValit extends boolean
 >(
   ...[name, fn, handleOptions, defaultOptions]: SharedParameters<
     Name,
@@ -51,7 +51,7 @@ export function makeValit<
     Options,
     (...args: Arg) => ValitFn<Type, Options>
   >
-): (...args: Arg) => Validate<Name, Type, Options, V> {
+): (...args: Arg) => SpecialValidate<Name, Type, Options, IsValit> {
   return (...args) => {
     const getValidateFnFromOptions =
       (options: Partial<CallOptions<Type, Options>>): ValidateFn<Type> =>
@@ -156,11 +156,11 @@ export function makeValit<
         if (typeof options === "function") options = options(parent);
         return getValidateFnFromOptions(options)(val, path, parent);
       }),
-      [_name]: name,
-    })) as Validate<Name, Type, Options, V>;
+      [_special]: name
+    })) as SpecialValidate<Name, Type, Options, IsValit>;
 
     validate[_validate] = applyFnType(getValidateFnFromOptions({}));
-    validate[_name] = name;
+    validate[_special] = name;
     if(!(name in types)) types[name] = name;
 
     return validate;

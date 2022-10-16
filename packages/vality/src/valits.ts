@@ -1,6 +1,6 @@
 import { types } from "types";
 import { config } from "./config";
-import { _name, _type, _validate } from "./symbols";
+import { _special, _validate } from "./symbols";
 import {
   Eny,
   enyToGuard,
@@ -8,7 +8,7 @@ import {
   OneOrEnumOfTOrFace, RSE
 } from "./utils";
 import { Error, ValidationResult } from "./validate";
-import { valit, Valit } from "./valit";
+import { SpecialValit, valit, Valit } from "./valit";
 import { vality } from "./vality";
 
 declare global {
@@ -17,7 +17,6 @@ declare global {
       array: <E extends Eny>(
         e: E
       ) => Valit<
-        "array",
         E[],
         {
           minLength: number;
@@ -32,7 +31,7 @@ declare global {
       >;
       tuple: <E extends Eny[]>(
         ...es: E
-      ) => Valit<
+      ) => SpecialValit<
         "tuple",
         E,
         {
@@ -42,12 +41,11 @@ declare global {
           bail: boolean;
         }
       >;
-      optional: <E extends Eny>(e: E) => Valit<"optional", undefined | E>;
-      enum: <E extends Eny[]>(...es: E) => Valit<"enum", E[number]>;
+      optional: <E extends Eny>(e: E) => Valit<undefined | E>;
+      enum: <E extends Eny[]>(...es: E) => Valit<E[number]>;
       object: <E extends RSE>(
         v: E
       ) => Valit<
-        "object",
         E,
         {
           /**
@@ -61,11 +59,11 @@ declare global {
       /**
        * This valit wraps the passed eny so that it is ignored by ParseIn
        */
-      readonly: <E extends Eny>(e: E) => Valit<"readonly", E>;
+      readonly: <E extends Eny>(e: E) => SpecialValit<"readonly", E>;
       // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
-      and: <E extends OneOrEnumOfTOrFace<RSE | Valit<"and", RSE[], any>>[]>(
+      and: <E extends OneOrEnumOfTOrFace<RSE | Valit<RSE[], any>>[]>(
         ...es: E
-      ) => Valit<
+      ) => SpecialValit<
         "and",
         E,
         {
@@ -80,7 +78,7 @@ declare global {
       dict: <K extends OneOrEnumOfTOrFace<string | number>, V extends Eny>(
         k: K,
         v: V
-      ) => Valit<
+      ) => SpecialValit<
         "dict",
         [K, V],
         {
@@ -153,7 +151,7 @@ vality.object = valit(
       const ek = e[k] as Eny;
       if (
         typeof ek === "function" &&
-        ek?.[_type as keyof typeof ek] === "readonly"
+        ek?.[_special as keyof typeof ek] === "readonly"
       )
         continue; // We'll deal with these later
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
@@ -175,7 +173,7 @@ vality.object = valit(
       if (
         ek === undefined ||
         (typeof ek === "function" &&
-          ek?.[_type as keyof typeof ek] === "readonly")
+          ek?.[_special as keyof typeof ek] === "readonly")
       ) {
         errors.push({
           message: "vality.object.extraProperty",
@@ -303,7 +301,7 @@ vality.and = valit(
           switch (typeOfGuard) {
             case "object": {
               const objectValue = {};
-              for (const k in eGuard[_validate][_type][0]) {
+              for (const k in eGuard[_validate][_special][0]) {
                 Object.assign(objectValue, {
                   [k]: value[k as keyof typeof value],
                 });
@@ -313,12 +311,12 @@ vality.and = valit(
               break;
             }
             case "enum":
-              for (const e of eGuard[_validate][_type]) {
+              for (const e of eGuard[_validate][_special]) {
                 const enumMemberGuardFn = enyToGuardFn(e);
 
                 const enumMemberValue = {};
                 // @ts-expect-error -- Undocumented
-                for (const k in enumMemberGuardFn[_type][0]) {
+                for (const k in enumMemberGuardFn[_special][0]) {
                   Object.assign(enumMemberValue, {
                     [k]: value[k as keyof typeof value],
                   });
@@ -337,7 +335,7 @@ vality.and = valit(
                 };
               break;
             case "and":
-              handleEs(eGuard[_validate][_type]);
+              handleEs(eGuard[_validate][_special]);
               break;
             default:
               throw new Error(
@@ -412,7 +410,7 @@ vality.dict = valit(
       [_validate](value, path, parent);
     }
 
-    const keysGuards = keyGuard[_validate][_type].map(enyToGuard);
+    const keysGuards = keyGuard[_validate][_special].map(enyToGuard);
 
     // These are the keys that must be set
     const literalKeys = keysGuards.filter(
@@ -448,9 +446,9 @@ vality.dict = valit(
               ...path,
               (
                 literalKeyGuard[_validate] as unknown as {
-                  [_type]: { [_type]: string; }[];
+                  [_special]: { [_special]: string; }[];
                 }
-              )[_type][0][_type],
+              )[_special][0][_special],
             ],
             options,
             value: undefined,
