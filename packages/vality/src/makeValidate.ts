@@ -1,4 +1,5 @@
 import { _name, _type, _validate } from "./symbols";
+import { types } from "./types";
 import { MakeRequired, RSA, RSN } from "./utils";
 import { Path, Validate, ValidateFn } from "./validate";
 import { ValitFn } from "./valit";
@@ -160,6 +161,7 @@ export function makeValit<
 
     validate[_validate] = applyFnType(getValidateFnFromOptions({}));
     validate[_name] = name;
+    if(!(name in types)) types[name] = name;
 
     return validate;
   };

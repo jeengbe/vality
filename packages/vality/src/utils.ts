@@ -21,24 +21,41 @@ export type MakeRequired<T extends RSA, K extends keyof T> = {
   };
 
 
-export type EnyToFace<T> = T extends [infer U]
-  ? Face<"array", U[], true>
-  : T extends [...infer U]
-  ? Face<"enum", U, true>
+// export type EnyToFace<T> = T extends [infer U]
+//   ? Face<"array", U[], true>
+//   : T extends [...infer U]
+//   ? Face<"enum", U, true>
+//   : T extends Primitive
+//   ? Face<"literal", T, false>
+//   : T extends Face<any, any, any>
+//   ? T
+//   : T extends () => infer U
+//   ? Face<"relation", U, true>
+//   : Face<"object", T, true>;
+
+export type EnyToFace<T> = T extends Face<any, any, any>
+  ? T
+  : T extends () => (infer U extends Eny)
+  ? Face<"relation", U, true>
+  : T extends readonly [TOrFace<infer U extends Eny>]
+  ? Face<"array", T, true>
   : T extends Primitive
   ? Face<"literal", T, false>
-  : T extends Face<any, any, any>
-  ? T
-  : T extends () => infer U
-  ? Face<"relation", U, true>
-  : Face<"object", T, true>;
+  : T extends EnumOfTOrFace<infer U extends Eny>
+  ? Face<"enum", U, true>
+  : T extends RSE
+  ? Face<"object", T, true>
+  : never;
 
-export function enyToGuard<T extends Face<any, any, any>>(eny: T): T;
-export function enyToGuard<T extends (() => Eny)>(eny: T): Face<"relation", T, true>;
-export function enyToGuard<T extends readonly [TOrFace<Eny>]>(eny: T): Face<"array", T, true>;
-export function enyToGuard<T extends OneOrEnumOfTOrFace<Eny>>(eny: T): Face<"enum", T, true>;
-export function enyToGuard<T extends RSE>(eny: T): Face<"object", T, true>;
-export function enyToGuard(eny: Eny): Face<any, any, any> {
+// export function enyToGuard<T extends Face<any, any, any>>(eny: T): T;
+// export function enyToGuard<T extends (() => Eny)>(eny: T): Face<"relation", T, true>;
+// export function enyToGuard<T extends readonly [TOrFace<Primitive>]>(eny: T): Face<"array", T, true>;
+// export function enyToGuard<T extends OneOrEnumOfTOrFace<Primitive>>(eny: T): T extends Primitive ? Face<"literal", T, true> : Face<"enum", T, true>;
+// export function enyToGuard<T extends Primitive>(eny: T): Face<"literal", T, true>;
+// export function enyToGuard<T extends EnumOfTOrFace<Primitive>>(eny: T): Face<"enum", T, true>;
+// export function enyToGuard<T extends RSE>(eny: T): Face<"object", T, true>;
+// export function enyToGuard(eny: Eny): Face<any, any, any> {
+export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
   if (isArrayOrEnyShort(eny)) {
     if (eny.length === 0) throw new Error("Empty array short");
     if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
@@ -57,7 +74,7 @@ export function enyToGuard(eny: Eny): Face<any, any, any> {
   return vality.object(eny as RSA);
 }
 
-function isArrayOrEnyShort(val: Eny): val is readonly TOrFace<Eny>[]{
+function isArrayOrEnyShort(val: Eny): val is readonly TOrFace<Primitive>[] {
   return Array.isArray(val);
 }
 
@@ -68,6 +85,22 @@ function isFace(val: Face<any, any, any> | (() => Eny) | RSE): val is Face<any, 
 export function enyToGuardFn<E extends Eny>(e: E): ValidateFn<any> {
   return enyToGuard(e)[_validate];
 }
+
+export type OneOrEnumOfTOrFace<T> = TOrFace<T> | EnumOfTOrFace<T>;
+
+type EnumOfTOrFace<T> = readonly [OneOrEnumOfTOrFace<T>, OneOrEnumOfTOrFace<T>, ...OneOrEnumOfTOrFace<T>[]];
+
+export type TOrFace<T> =
+  | T
+  | Face<string, T, false>
+  // I will come back and revisit this one I am a TypeScript Grandmaster, but for now, I can't get this to work
+  // | Face<string, OneOrEnumOfTOrFace<T>, true>;
+  | {
+    [_name]: string;
+    [_validate]: any;
+    [_type]: OneOrEnumOfTOrFace<T>;
+    isValit?: true;
+  };
 
 // Adapted from https://stackoverflow.com/a/59463385/12405307
 // union to intersection converter by @jcalz
@@ -100,17 +133,3 @@ type Unfoo<T> = T extends { foo: any; } ? T["foo"] : never;
 export type IntersectItems<T extends any[]> = Unfoo<
   Intersect<Parse<Values<Foo<T>>>>
 >;
-
-export type OneOrEnumOfTOrFace<T> = TOrFace<T> | readonly [OneOrEnumOfTOrFace<T>, OneOrEnumOfTOrFace<T>, ...OneOrEnumOfTOrFace<T>[]];
-
-export type TOrFace<T> =
-  | T
-  | Face<string, T, false>
-  // I will come back and revisit this one I am a TypeScript Grandmaster, but for now, I can't get this to work
-  // | Face<string, OneOrEnumOfTOrFace<T>, true>;
-  | {
-    [_name]: string;
-    [_validate]: any;
-    [_type]: OneOrEnumOfTOrFace<T>;
-    isValit?: true;
-  };

@@ -3,7 +3,7 @@ import { RSA, RSN } from "./utils";
 import type { Path, Validate, ValidationResult } from "./validate";
 
 export interface Valit<
-  Name extends string,
+  Name extends keyof vality.valits,
   Type,
   Options extends RSA = RSN
 > extends Validate<Name, Type, Options, true> { }

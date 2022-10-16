@@ -21,7 +21,7 @@ export interface Error {
 /**
  * A Face with a call signature that takes options and gives another Face back
  */
-export type Validate<Name extends string, Type, O, IsValit> = Face<
+export type Validate<Name extends keyof vality.guards | keyof vality.valits, Type, O, IsValit> = Face<
   Name,
   Type,
   IsValit
@@ -36,7 +36,7 @@ export type Validate<Name extends string, Type, O, IsValit> = Face<
 /**
  * The object that holds the validation function (and other stuff)
  */
-export interface Face<Name, Type, IsValit> {
+export interface Face<Name extends keyof vality.guards | keyof vality.valits, Type, IsValit> {
   [_name]: Name;
   [_validate]: ValidateFn<Type>;
   [_type]: Type;

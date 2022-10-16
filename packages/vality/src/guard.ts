@@ -8,7 +8,7 @@ import type { Path, Validate } from "./validate";
 import { ValitFn } from "./valit";
 
 export interface Guard<
-  Name extends string,
+  Name extends keyof vality.guards,
   Type,
   Options extends RSA = RSN
 > extends Validate<Name, Type, Options, false> { }

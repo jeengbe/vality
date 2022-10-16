@@ -1,5 +1,5 @@
+import { types } from "types";
 import { config } from "./config";
-import { Guard } from "./guard";
 import { _name, _type, _validate } from "./symbols";
 import {
   Eny,
@@ -303,7 +303,6 @@ vality.and = valit(
           switch (typeOfGuard) {
             case "object": {
               const objectValue = {};
-              // @ts-expect-error -- Untyped
               for (const k in eGuard[_validate][_type][0]) {
                 Object.assign(objectValue, {
                   [k]: value[k as keyof typeof value],
@@ -314,7 +313,6 @@ vality.and = valit(
               break;
             }
             case "enum":
-              // @ts-expect-error -- Untyped
               for (const e of eGuard[_validate][_type]) {
                 const enumMemberGuardFn = enyToGuardFn(e);
 
@@ -339,7 +337,6 @@ vality.and = valit(
                 };
               break;
             case "and":
-              // @ts-expect-error -- Untyped
               handleEs(eGuard[_validate][_type]);
               break;
             default:
@@ -387,40 +384,39 @@ vality.and = valit(
 vality.dict = valit(
   "dict",
   (k, v) => (value, options, path, parent) => {
-    if (typeof value !== "object" || value === null)
+    if (typeof value !== "object" || value === null) {
       return {
         valid: false,
         data: undefined,
         errors: [{ message: "vality.dict.base", path, options, value }],
       };
+    }
 
-    const keyGuard = enyToGuard(k) as unknown as
-      | Guard<any, string | number>
-      | Valit<any, string | number>;
-    const typeOfKey = keyGuard[_name];
+    const keyGuard = enyToGuard(k);
+    let typeOfKey: keyof vality.guards | keyof vality.valits = keyGuard[_name] as keyof vality.guards | keyof vality.valits;
+
+    // Resolve types until we hit a dead end
+    do {
+      typeOfKey = types[typeOfKey];
+    } while (types[typeOfKey] !== typeOfKey);
 
     // If we only pass a single value, we pretend we've got an enum with only that value to prevent duplicate code
-    if (
-      typeOfKey === "literal" ||
-      typeOfKey === "string" ||
-      typeOfKey === "number"
-    ) {
+    if (typeOfKey === "literal") {
       // No need to pass options as they're already applied to this instance
       // (Possibility to optimise here)
       return vality
         .dict(
           vality.enum(keyGuard), // This assertion is ok because we've already established that we're dealing with these types or literal versions
           v
-        )(options as { bail: boolean })
-        [_validate](value, path, parent);
+        )(options as { bail: boolean; })
+      [_validate](value, path, parent);
     }
 
-    // @ts-expect-error -- [_type] is not documented
     const keysGuards = keyGuard[_validate][_type].map(enyToGuard);
 
     // These are the keys that must be set
     const literalKeys = keysGuards.filter(
-      (g: { [_name]: string }) => g[_name] === "literal"
+      (g: { [_name]: string; }) => g[_name] === "literal"
     );
 
     // First we we make sure that all keys are valid
@@ -452,7 +448,7 @@ vality.dict = valit(
               ...path,
               (
                 literalKeyGuard[_validate] as unknown as {
-                  [_type]: { [_type]: string }[];
+                  [_type]: { [_type]: string; }[];
                 }
               )[_type][0][_type],
             ],
