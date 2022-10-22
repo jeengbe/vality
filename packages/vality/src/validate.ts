@@ -1,6 +1,6 @@
 import { CallOptions } from "./makeValidate";
 import { Parse } from "./parse";
-import { _special, _type, _validate } from "./symbols";
+import { _name, _type, _validate } from "./symbols";
 import { Eny, enyToGuardFn, RSE } from "./utils";
 import { vality } from "./vality";
 
@@ -43,7 +43,7 @@ export type SpecialValidate<Name, Type, Options, IsValit> = SpecialFace<
   ) => SpecialFace<Name, Type, IsValit>);
 
 export interface SpecialFace<Name, Type, IsValit> extends Face<Type, IsValit> {
-  [_special]: Name;
+  [_name]: Name;
 }
 
 // `isValit` isn't there at runtime so no worries about it not being a symbol :)

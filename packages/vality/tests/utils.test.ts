@@ -32,3 +32,6 @@ type d2 = Parse<typeof d2>;
 it("true", () => {
   expect(true).toBe(true);
 });
+
+
+// console.log(validate(v.dict("a", v.any), { }));

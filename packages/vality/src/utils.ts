@@ -1,5 +1,6 @@
 import { Parse } from "./parse";
-import { _type, _validate } from "./symbols";
+import { _name, _type, _validate } from "./symbols";
+import { types } from "./types";
 import { Face, ValidateFn } from "./validate";
 import { vality } from "./vality";
 
@@ -58,7 +59,9 @@ export type EnyToFace<T> = T extends Face<any, any>
 export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
   if (isArrayOrEnyShort(eny)) {
     if (eny.length === 0) throw new Error("Empty array short");
+    // @ts-ignore
     if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
+    // @ts-ignore
     return vality.enum(...eny.map(enyToGuard));
   }
   if (
@@ -67,10 +70,14 @@ export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
     typeof eny === "boolean" ||
     eny === null
   ) {
+    // @ts-ignore
     return vality.literal(eny);
   }
+  // @ts-ignore
   if (isFace(eny)) return eny;
+  // @ts-ignore
   if (typeof eny === "function") return vality.relation(eny);
+  // @ts-ignore
   return vality.object(eny as RSA);
 }
 
@@ -84,6 +91,25 @@ function isFace(val: Face<any, any> | (() => Eny) | RSE): val is Face<any, any> 
 
 export function enyToGuardFn<E extends Eny>(e: E): ValidateFn<any> {
   return enyToGuard(e)[_validate];
+}
+
+export function getRootType(guard: any): string {
+  let type = guard[_name];
+  let seen = [];
+  do {
+    type = types[type];
+    if(seen.indexOf(type) !== -1) throw new Error("Circular type definition");
+    seen.push(type);
+  } while (types[type] !== type);
+  return type;
+}
+
+export function simplifyEnumGuard(enumGuard: any) {
+  const type = getRootType(enumGuard);
+  if (type !== "enum") return enumGuard;
+
+  if (enumGuard[_type].length === 1) return enumGuard[_type][0];
+  return enumGuard;
 }
 
 export type OneOrEnumOfTOrFace<T> = TOrFace<T> | EnumOfTOrFace<T>;

@@ -1,11 +1,11 @@
-import { types } from "types";
 import { config } from "./config";
-import { _special, _validate } from "./symbols";
+import { _name, _type, _validate } from "./symbols";
 import {
   Eny,
   enyToGuard,
   enyToGuardFn,
-  OneOrEnumOfTOrFace, RSE
+  getRootType,
+  OneOrEnumOfTOrFace, RSE, simplifyEnumGuard
 } from "./utils";
 import { Error, ValidationResult } from "./validate";
 import { SpecialValit, valit, Valit } from "./valit";
@@ -151,7 +151,7 @@ vality.object = valit(
       const ek = e[k] as Eny;
       if (
         typeof ek === "function" &&
-        ek?.[_special as keyof typeof ek] === "readonly"
+        ek?.[_name as keyof typeof ek] === "readonly"
       )
         continue; // We'll deal with these later
       // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
@@ -173,7 +173,7 @@ vality.object = valit(
       if (
         ek === undefined ||
         (typeof ek === "function" &&
-          ek?.[_special as keyof typeof ek] === "readonly")
+          ek?.[_name as keyof typeof ek] === "readonly")
       ) {
         errors.push({
           message: "vality.object.extraProperty",
@@ -217,6 +217,7 @@ vality.enum = valit("enum", (...es) => (value, options, path, parent) => {
   };
 });
 
+// @ts-ignore
 vality.tuple = valit(
   "tuple",
   (...es) =>
@@ -278,6 +279,7 @@ vality.readonly = valit("readonly", (e) => (val, _options, path) => {
   };
 });
 
+// @ts-ignore
 vality.and = valit(
   "and",
   (...es) =>
@@ -295,13 +297,15 @@ vality.and = valit(
       const handleEs = (ess: typeof es) => {
         for (let i = 0; i < ess.length; i++) {
           const eGuard = enyToGuard(ess[i]);
+          // @ts-ignore
           const typeOfGuard = eGuard[_name] as string;
           let res = undefined as undefined | ValidationResult<any>;
 
           switch (typeOfGuard) {
             case "object": {
               const objectValue = {};
-              for (const k in eGuard[_validate][_special][0]) {
+              // @ts-ignore
+              for (const k in eGuard[_name][0]) {
                 Object.assign(objectValue, {
                   [k]: value[k as keyof typeof value],
                 });
@@ -311,12 +315,13 @@ vality.and = valit(
               break;
             }
             case "enum":
-              for (const e of eGuard[_validate][_special]) {
+              // @ts-ignore
+              for (const e of eGuard[_name]) {
                 const enumMemberGuardFn = enyToGuardFn(e);
 
                 const enumMemberValue = {};
                 // @ts-expect-error -- Undocumented
-                for (const k in enumMemberGuardFn[_special][0]) {
+                for (const k in enumMemberGuardFn[_name][0]) {
                   Object.assign(enumMemberValue, {
                     [k]: value[k as keyof typeof value],
                   });
@@ -335,7 +340,7 @@ vality.and = valit(
                 };
               break;
             case "and":
-              handleEs(eGuard[_validate][_special]);
+              handleEs(eGuard[_validate][_name]);
               break;
             default:
               throw new Error(
@@ -379,9 +384,11 @@ vality.and = valit(
   }
 );
 
+
+// @ts-ignore
 vality.dict = valit(
   "dict",
-  (k, v) => (value, options, path, parent) => {
+  (k, v) => (value, options, path) => {
     if (typeof value !== "object" || value === null) {
       return {
         valid: false,
@@ -390,90 +397,110 @@ vality.dict = valit(
       };
     }
 
+    // First, we resolve the key
     const keyGuard = enyToGuard(k);
-    let typeOfKey: keyof vality.guards | keyof vality.valits = keyGuard[_name] as keyof vality.guards | keyof vality.valits;
+    const simpleKeyGuard = simplifyEnumGuard(keyGuard);
+    const type = getRootType(simpleKeyGuard);
 
-    // Resolve types until we hit a dead end
-    do {
-      typeOfKey = types[typeOfKey];
-    } while (types[typeOfKey] !== typeOfKey);
+    let literalKeys;
+    let typeKeys;
 
-    // If we only pass a single value, we pretend we've got an enum with only that value to prevent duplicate code
-    if (typeOfKey === "literal") {
-      // No need to pass options as they're already applied to this instance
-      // (Possibility to optimise here)
-      return vality
-        .dict(
-          vality.enum(keyGuard), // This assertion is ok because we've already established that we're dealing with these types or literal versions
-          v
-        )(options as { bail: boolean; })
-      [_validate](value, path, parent);
+    switch (type) {
+      case "string":
+      case "number":
+        literalKeys = [];
+        typeKeys = [simpleKeyGuard];
+        break;
+      case "literal":
+        literalKeys = [simpleKeyGuard];
+        typeKeys = [];
+        break;
+      case "enum":
+        // @ts-ignore
+        [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce((acc, key) => {
+          const guard = enyToGuard(key);
+          // No need to simplify here, as simplify flattens out nested enums
+          const type = getRootType(guard);
+          if (type === "literal") {
+            acc[0].push(guard);
+          } else {
+            acc[1].push(guard);
+          }
+          return acc;
+        }, [[], []]);
+        break;
+      default:
+        // @ts-ignore
+        throw new Error("vality.dict: Unexpected type of property: " + simpleKeyGuard[_name]);
     }
 
-    const keysGuards = keyGuard[_validate][_special].map(enyToGuard);
-
-    // These are the keys that must be set
-    const literalKeys = keysGuards.filter(
-      (g: { [_name]: string; }) => g[_name] === "literal"
-    );
-
-    // First we we make sure that all keys are valid
     const errors: Error[] = [];
-    for (const key in value) {
-      if (!keyGuard[_validate](key, [...path, key], value).valid) {
+
+    // First, make sure that all literal keys are set
+    const valueKeys = Object.keys(value);
+    const newKeys: [string, string | number][] = [];
+    for (const literalKey of literalKeys) {
+      let foundKey: [string, string | number] | undefined;
+      for (const k of valueKeys) {
+        const res = literalKey[_validate](k, path, value);
+        if(res.valid) {
+          foundKey = [k, res.data];
+          break;
+        }
+      }
+      if (foundKey) {
+        newKeys.push(foundKey);
+      } else {
         errors.push({
-          message: "vality.dict.invalidProperty",
-          path: [...path, key],
+          message: "vality.dict.missingProperty",
+          path,
           options,
-          value: key,
+          value: literalKey[_type][0][_type],
         });
         if (options.bail) break;
       }
     }
-    if (errors.length) return { valid: false, data: undefined, errors };
 
-    // Then we make sure that all required (literal) keys are set
-    for (const literalKeyGuard of literalKeys) {
-      if (
-        !Object.keys(value).some(
-          (k) => literalKeyGuard[_validate](k, [...path, k], value).valid
-        )
-      ) {
-        if (!literalKeyGuard[_validate](k, path, value).valid) {
-          errors.push({
-            message: "vality.dict.missingProperty",
-            path: [
-              ...path,
-              (
-                literalKeyGuard[_validate] as unknown as {
-                  [_special]: { [_special]: string; }[];
-                }
-              )[_special][0][_special],
-            ],
-            options,
-            value: undefined,
-          });
-          if (options.bail) break;
+    if(options.bail && errors.length) return { valid: false, data: undefined, errors };
+
+    // All remaining keys must be covered by our type keys
+    const remainingKeys = valueKeys.filter(k => !newKeys.some(nk => nk[0] === k));
+    for (const remainingKey of remainingKeys) {
+      let newKey: [string, string | number] | undefined;
+      for(const typeKey of typeKeys) {
+        const res = typeKey[_validate](remainingKey, path, value);
+        if(res.valid) {
+          newKey = [remainingKey, res.data];
+          break;
         }
       }
+      if (newKey) {
+        newKeys.push(newKey);
+      } else {
+        errors.push({
+          message: "vality.dict.unexpectedProperty",
+          path,
+          options,
+          value: remainingKey,
+        });
+        if (options.bail) break;
+      }
     }
-    if (errors.length) return { valid: false, data: undefined, errors };
 
-    // And lastly, we make sure that all values are valid
-    const valueGuardFn = enyToGuardFn(v);
-    // We cheat with the type here, which is why its easiest to just say this is RSA
-    const data = {} as any;
-    for (const key in value) {
-      const res = valueGuardFn(
-        value[key as keyof typeof value],
-        [...path, key],
-        value
-      );
-      if (!res.valid) {
+    if(options.bail && errors.length) return { valid: false, data: undefined, errors };
+
+    // Construct return object
+    const data = {} as [typeof k, typeof v];
+    const valueGuard = enyToGuard(v);
+    for (const [oldKey, newKey] of newKeys) {
+      // @ts-ignore
+      const res = valueGuard[_validate](value[oldKey], [...path, oldKey], value);
+      if (res.valid) {
+        // @ts-ignore
+        data[newKey] = res.data;
+      } else {
         errors.push(...res.errors);
         if (options.bail) break;
-      } else {
-        data[key as keyof typeof value] = res.data;
       }
     }
     if (errors.length) return { valid: false, data: undefined, errors };

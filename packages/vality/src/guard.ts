@@ -1,5 +1,4 @@
 import { CallOptions, makeValit, SharedParameters } from "./makeValidate";
-import { _type } from "./symbols";
 import {
   RSA,
   RSN
@@ -70,8 +69,6 @@ export function guard<
           ],
         };
       });
-      // @ts-expect-error -- This nugget is also untyped
-      validateFn[_type] = fn[_type];
 
       return validateFn;
     },

@@ -262,11 +262,11 @@ describe("vality.object", () => {
           { value: { foo: 1 } },
         ],
         invalid: [
-          { value: { foo: 1, bar: 2 }, errors: [{ message: "vality.readonly.base", path: ["bar"], value: 2, options: {} }] },
+          { value: { foo: 1, bar: 2 }, errors: [{ message: "vality.object.extraProperty", path: ["bar"], value: 2, options: {} }] },
           {
             value: { foo: 1, bar: 2, baz: "foo" },
             errors: [
-              { message: "vality.readonly.base", path: ["bar"], value: 2, options: {} },
+              { message: "vality.object.extraProperty", path: ["bar"], value: 2, options: {} },
               { message: "vality.object.extraProperty", path: ["baz"], value: "foo", options: {} }
             ]
           },
@@ -566,8 +566,8 @@ describe("vality.dict", () => {
           ],
           invalid: [
             { value: 0 },
-            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: {} }] },
-            { value: { 0: "foo", "foo": "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: {} }] },
+            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.unexpectedProperty", path: [], value: "foo", options: {} }] },
+            { value: { 0: "foo", "foo": "bar" }, errors: [{ message: "vality.dict.unexpectedProperty", path: [], value: "foo", options: {} }] },
           ]
         });
 
@@ -592,22 +592,22 @@ describe("vality.dict", () => {
           ],
           invalid: [
             { value: 0 },
-            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }] },
-            { value: { 0: "foo" }, errors: [{ message: "vality.dict.invalidProperty", path: ["0"], value: "0", options: {} }] },
-            { value: { 0: "foo", "foo": "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["0"], value: "0", options: {} }] },
+            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: [], value: "foo", options: {} }] },
+            { value: { 0: "foo" }, errors: [{ message: "vality.dict.missingProperty", path: [], value: "foo", options: {} }, { message: "vality.dict.unexpectedProperty", path: [], value: "0", options: {} }] },
+            { value: { 0: "foo", "foo": "bar" }, errors: [{ message: "vality.dict.unexpectedProperty", path: [], value: "0", options: {} }] },
           ]
         });
 
         testValit("dict", v.dict(4, v.any), {
           valid: [
-            { value: { 4: "foo" } },
+            { value: { 4: "foo" }, expect: { "4": "foo" } },
             { value: { "4": "foo" } },
           ],
           invalid: [
             { value: 0 },
-            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: [4], value: undefined, options: {} }] },
-            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: {} }] },
-            { value: { 0: "foo" }, errors: [{ message: "vality.dict.invalidProperty", path: ["0"], value: "0", options: {} }] },
+            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: [], value: 4, options: {} }] },
+            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.missingProperty", path: [], value: 4, options: {} }, { message: "vality.dict.unexpectedProperty", path: [], value: "foo", options: {} }] },
+            { value: { 0: "foo" }, errors: [{ message: "vality.dict.missingProperty", path: [], value: 4, options: {} }, { message: "vality.dict.unexpectedProperty", path: [], value: "0", options: {} }] },
           ]
         });
       });
@@ -636,9 +636,9 @@ describe("vality.dict", () => {
           ],
           invalid: [
             { value: 0 },
-            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }, { message: "vality.dict.missingProperty", path: ["bar"], value: undefined, options: {} }] },
-            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.missingProperty", path: ["bar"], value: undefined, options: {} }] },
-            { value: { foo: "foo", bar: "bar", "baz": "qux" }, errors: [{ message: "vality.dict.invalidProperty", path: ["baz"], value: "baz", options: {} }] },
+            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: [], value: "foo", options: {} }, { message: "vality.dict.missingProperty", path: [], value: "bar", options: {} }] },
+            { value: { "foo": "bar" }, errors: [{ message: "vality.dict.missingProperty", path: [], value: "bar", options: {} }] },
+            { value: { foo: "foo", bar: "bar", "baz": "qux" }, errors: [{ message: "vality.dict.unexpectedProperty", path: [], value: "baz", options: {} }] },
           ]
         });
       });
@@ -652,8 +652,8 @@ describe("vality.dict", () => {
           ],
           invalid: [
             { value: 0 },
-            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }] },
-            { value: { 0: "foo" }, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: {} }] },
+            { value: {}, errors: [{ message: "vality.dict.missingProperty", path: [], value: "foo", options: {} }] },
+            { value: { 0: "foo" }, errors: [{ message: "vality.dict.missingProperty", path: [], value: "foo", options: {} }] },
           ]
         });
       })
@@ -683,8 +683,8 @@ describe("vality.dict", () => {
           { value: { 0: "foo" } },
         ],
         invalid: [
-          { value: { foo: "bar" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: { bail: true } }] },
-          { value: { foo: "bar", bar: "baz" }, errors: [{ message: "vality.dict.invalidProperty", path: ["foo"], value: "foo", options: { bail: true } }] },
+          { value: { foo: "bar" }, errors: [{ message: "vality.dict.unexpectedProperty", path: [], value: "foo", options: { bail: true } }] },
+          { value: { foo: "bar", bar: "baz" }, errors: [{ message: "vality.dict.unexpectedProperty", path: [], value: "foo", options: { bail: true } }] },
         ]
       });
 
@@ -693,7 +693,7 @@ describe("vality.dict", () => {
           { value: { foo: "bar", bar: "baz" } },
         ],
         invalid: [
-          { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: { bail: false } }, { message: "vality.dict.missingProperty", path: ["bar"], value: undefined, options: { bail: false } }] },
+          { value: {}, errors: [{ message: "vality.dict.missingProperty", path: [], value: "foo", options: { bail: false } }, { message: "vality.dict.missingProperty", path: [], value: "bar", options: { bail: false } }] },
         ]
       });
 
@@ -702,7 +702,7 @@ describe("vality.dict", () => {
           { value: { foo: "bar", bar: "baz" } },
         ],
         invalid: [
-          { value: {}, errors: [{ message: "vality.dict.missingProperty", path: ["foo"], value: undefined, options: { bail: true } }] },
+          { value: {}, errors: [{ message: "vality.dict.missingProperty", path: [], value: "foo", options: { bail: true } }] },
         ]
       });
 

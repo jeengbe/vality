@@ -1,4 +1,4 @@
-import { _special, _type, _validate } from "./symbols";
+import { _name, _type, _validate } from "./symbols";
 import { types } from "./types";
 import { MakeRequired, RSA, RSN } from "./utils";
 import { Path, SpecialValidate, ValidateFn } from "./validate";
@@ -141,26 +141,24 @@ export function makeValit<
           };
         };
 
-    function applyFnType<Fn extends Function>(f: Fn): Fn {
-      // @ts-expect-error -- This extra nugget of information is untyped
-      f[_type] = args;
-      return f;
-    }
-
+    // @ts-ignore
     const validate = ((
       options:
         | Partial<CallOptions<Type, Options>>
         | ((obj: any) => Partial<CallOptions<Type, Options>>)
     ) => ({
-      [_validate]: applyFnType((val, path, parent) => {
+      [_validate]: (val, path, parent) => {
         if (typeof options === "function") options = options(parent);
         return getValidateFnFromOptions(options)(val, path, parent);
-      }),
-      [_special]: name
+      },
+      [_type]: args,
+      [_name]: name
     })) as SpecialValidate<Name, Type, Options, IsValit>;
 
-    validate[_validate] = applyFnType(getValidateFnFromOptions({}));
-    validate[_special] = name;
+    validate[_validate] = getValidateFnFromOptions({});
+    // @ts-ignore
+    validate[_type] = args;
+    validate[_name] = name;
     if(!(name in types)) types[name] = name;
 
     return validate;
