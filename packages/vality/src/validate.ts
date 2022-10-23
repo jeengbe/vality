@@ -21,17 +21,7 @@ export interface Error {
 /**
  * A Face with a call signature that takes options and gives another Face back
  */
-export type Validate<Type, Options, IsValit> = Face<
-  Type,
-  IsValit
-> &
-  ((
-    options:
-      | Partial<CallOptions<Type, Options>>
-      | ((parent: any) => Partial<CallOptions<Type, Options>>)
-  ) => Face<Type, IsValit>);
-
-export type SpecialValidate<Name, Type, Options, IsValit> = SpecialFace<
+export type Validate<Name, Type, Options, IsValit> = Face<
   Name,
   Type,
   IsValit
@@ -40,17 +30,14 @@ export type SpecialValidate<Name, Type, Options, IsValit> = SpecialFace<
     options:
       | Partial<CallOptions<Type, Options>>
       | ((parent: any) => Partial<CallOptions<Type, Options>>)
-  ) => SpecialFace<Name, Type, IsValit>);
-
-export interface SpecialFace<Name, Type, IsValit> extends Face<Type, IsValit> {
-  [_name]: Name;
-}
+  ) => Face<Name, Type, IsValit>);
 
 // `isValit` isn't there at runtime so no worries about it not being a symbol :)
 /**
  * The object that holds the validation function (and other stuff)
  */
-export interface Face<Type, IsValit> {
+export interface Face<Name, Type, IsValit> {
+  [_name]: Name;
   [_validate]: ValidateFn<Type>;
   [_type]: Type;
   isValit?: IsValit;
@@ -66,8 +53,8 @@ export type ValidateFn<T> = (
 ) => ValidationResult<T>;
 
 export type ValidationResult<T> =
-  | { valid: true; data: T; errors: never[] }
-  | { valid: false; data: undefined; errors: Error[] };
+  | { valid: true; data: T; errors: readonly never[] }
+  | { valid: false; data: undefined; errors: readonly Error[] };
 
 export type Path = (string | number)[];
 

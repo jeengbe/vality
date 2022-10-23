@@ -1,7 +1,6 @@
 import { _name, _type, _validate } from "./symbols";
-import { types } from "./types";
 import { MakeRequired, RSA, RSN } from "./utils";
-import { Path, SpecialValidate, ValidateFn } from "./validate";
+import { Path, Validate, ValidateFn } from "./validate";
 import { ValitFn } from "./valit";
 
 export type SharedParameters<Name, Type, Options extends RSA, Fn> = [
@@ -12,7 +11,7 @@ export type SharedParameters<Name, Type, Options extends RSA, Fn> = [
   // Also, we purposefully don't initialize it by default to cut some corners further down when checking as we can just check if handleOptions === undefined
   handleOptions?: {
     // keyof ExtraOptions are ignored if present in handleOptions
-    [K in Exclude<keyof Options, keyof ExtraOptions<Type, Options>>]?: (
+    [K in string & Exclude<keyof Options, keyof ExtraOptions<Type, Options>>]?: (
       val: Type,
       o: NonNullable<Options[K]>,
       options: MakeRequired<Options, K> & Partial<ExtraOptions<Type, Options>>
@@ -30,16 +29,22 @@ export interface ExtraOptions<T, O> {
     parent?: any
   ) => unknown;
   default: T;
-  validate: (val: T, options: Partial<CallOptions<T, O>>) => boolean;
-};
+  validate: (
+    val: T,
+    options: Partial<CallOptions<T, O>>,
+    path: Path,
+    parent?: any
+  ) => boolean;
+  bail: boolean;
+}
 
 export type CallOptions<Type, Options> = Options extends RSN
   ? ExtraOptions<Type, Options>
   : // We Omit keyof Options here to allow Options to override default extra option implementations
-  Options & Omit<ExtraOptions<Type, Options>, keyof Options>;
+    Options & Omit<ExtraOptions<Type, Options>, keyof Options>;
 
 export function makeValit<
-  Name extends keyof (vality.valits & vality.guards),
+  Name extends keyof vality.valits | keyof vality.guards,
   Arg extends any[],
   Type,
   Options extends RSA,
@@ -51,95 +56,97 @@ export function makeValit<
     Options,
     (...args: Arg) => ValitFn<Type, Options>
   >
-): (...args: Arg) => SpecialValidate<Name, Type, Options, IsValit> {
+): (...args: Arg) => Validate<Name, Type, Options, IsValit> {
   return (...args) => {
     const getValidateFnFromOptions =
       (options: Partial<CallOptions<Type, Options>>): ValidateFn<Type> =>
-        (value, path, parent) => {
-          const {
-            transform = undefined,
-            preprocess = undefined,
-            default: defaultValue = undefined,
-            validate = undefined,
-            ...optionsWithoutExtras
-          }: Partial<CallOptions<Type, Options>> = { ...options };
+      (value, path, parent) => {
+        const {
+          transform = undefined,
+          preprocess = undefined,
+          default: defaultValue = undefined,
+          validate = undefined,
+          bail,
+          ...optionsWithoutExtras
+        }: Partial<CallOptions<Type, Options>> = options;
 
-          const optionsWithDefault = {
-            ...defaultOptions,
-            ...optionsWithoutExtras,
-          };
+        if (value === undefined && defaultValue !== undefined) {
+          return { valid: true, data: defaultValue, errors: [] };
+        }
 
-          // Validation follows a simple list of steps:
-          // =====
-          // 1: Preprocess the value (is provided)
-          // 2: Invoke the Valit function
-          // 2.1: If step 2 failed, check if a default value is provided and return it, else error
-          // 3: Transform the value (is provided)
-          // 4: Validate with options (using the value from before step 3 i.e. the untransformed value)
-          // 5: If options handlers fail, return errors, else a passed validation result
+        const optionsWithDefault = {
+          ...defaultOptions,
+          ...optionsWithoutExtras,
+        };
 
-          if (preprocess) {
-            value = preprocess(value, options, path, parent);
-          }
+        // Validation follows a simple list of steps:
+        // =====
+        // 1: Preprocess the value (is provided)
+        // 2: If no value is provided and we have a default value, return that
+        // 3: Invoke the Valit function
+        // 4: Transform the value (is provided)
+        // 5: Validate with options (using the value from before step 3 i.e. the untransformed value)
+        // 6: If options handlers fail, return errors, else a passed validation result
 
-          const data = fn(...args)(value, options, path, parent);
 
-          if (!data.valid) {
-            if (value === undefined && defaultValue !== undefined) {
-              return { valid: true, data: defaultValue, errors: [] };
-            }
+        if (preprocess) {
+          value = preprocess(value, options, path, parent);
+        }
 
-            return data;
-          }
+        const data = fn(...args)(value, options, path, parent);
 
-          if (validate?.(data.data, options) === false) {
-            return {
-              valid: false,
-              data: undefined,
-              errors: [
-                {
-                  message: `vality.${name}.custom`,
-                  path,
-                  options,
-                  value,
-                },
-              ],
-            };
-          }
+        if (!data.valid) {
+          return data;
+        }
 
-          // We retain a copy here because we pass the original data into handleOptions
-          const origData = data.data;
-          if (transform) {
-            data.data = transform(data.data);
-          }
-
-          if (handleOptions === undefined) return data;
-
-          const keysWithError = Object.keys(optionsWithDefault).filter(
-            (k) =>
-              handleOptions[k]?.(
-                origData,
-                optionsWithDefault[k]!,
-                options as MakeRequired<Options, typeof k>
-              ) === false
-          );
-
-          if (keysWithError.length === 0) return data;
+        if (validate?.(data.data, options, path, parent) === false) {
           return {
             valid: false,
             data: undefined,
-            errors: keysWithError.map((k) => ({
-              message:
-                // If a key is not present in options, it must have been a default Option, in which case we use the base error message
-                k in options
-                  ? `vality.${name}.options.${k}`
-                  : `vality.${name}.base`,
-              options,
-              path,
-              value,
-            })),
+            errors: [
+              {
+                message: `vality.${name}.custom`,
+                path,
+                options,
+                value,
+              },
+            ],
           };
+        }
+
+        // We retain a copy here because we pass the original data into handleOptions
+        const origData = data.data!;
+        if (transform) {
+          data.data = transform(data.data);
+        }
+
+        if (handleOptions === undefined) return data;
+
+        const keysWithError: string[] = [];
+        for (const key in optionsWithDefault) {
+          // ?. just in the case that we still somehow pass options that are not in handleOptions (just so we don't crash everything)
+          if (handleOptions[key]?.(origData, optionsWithDefault[key]!, options as MakeRequired<Options, typeof key>) === false) {
+            keysWithError.push(key);
+            if (bail) break;
+          }
+        }
+
+        if (keysWithError.length === 0) return data;
+        return {
+          valid: false,
+          data: undefined,
+          errors: keysWithError.map((k) => ({
+            message:
+              // If a key is not present in options, it must have been a default Option, in which case we use the base error message
+              k in options
+                ? `vality.${name}.options.${k}`
+                : `vality.${name}.base`,
+            options,
+            path,
+            value,
+          })),
         };
+      };
 
     // @ts-ignore
     const validate = ((
@@ -152,14 +159,13 @@ export function makeValit<
         return getValidateFnFromOptions(options)(val, path, parent);
       },
       [_type]: args,
-      [_name]: name
-    })) as SpecialValidate<Name, Type, Options, IsValit>;
+      [_name]: name,
+    })) as Validate<Name, Type, Options, IsValit>;
 
     validate[_validate] = getValidateFnFromOptions({});
     // @ts-ignore
     validate[_type] = args;
     validate[_name] = name;
-    if(!(name in types)) types[name] = name;
 
     return validate;
   };

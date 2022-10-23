@@ -1,12 +1,12 @@
 import { CallOptions, makeValit, SharedParameters } from "./makeValidate";
 import { RSA, RSN } from "./utils";
-import type { Path, SpecialValidate, Validate, ValidationResult } from "./validate";
+import type { Path, Validate, ValidationResult } from "./validate";
 
 export interface SpecialValit<
   Name extends keyof vality.valits,
   Type,
   Options extends RSA = RSN
-> extends SpecialValidate<Name, Type, Options, true> {}
+> extends Validate<Name, Type, Options, true> {}
 
 export interface Valit<
   Type,
@@ -42,6 +42,6 @@ export function valit<
     Options,
     (...args: Arg) => ValitFn<Type, Options>
   >
-): (...args: Arg) => SpecialValidate<Name, Type, Options, true> {
+): (...args: Arg) => Validate<Name, Type, Options, true> {
   return makeValit(name, fn, handleOptions, defaultOptions);
 }

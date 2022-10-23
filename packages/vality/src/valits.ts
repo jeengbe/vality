@@ -5,7 +5,9 @@ import {
   enyToGuard,
   enyToGuardFn,
   getRootType,
-  OneOrEnumOfTOrFace, RSE, simplifyEnumGuard
+  OneOrEnumOfTOrFace,
+  RSE,
+  simplifyEnumGuard
 } from "./utils";
 import { Error, ValidationResult } from "./validate";
 import { SpecialValit, valit, Valit } from "./valit";
@@ -21,41 +23,12 @@ declare global {
         {
           minLength: number;
           maxLength: number;
-          /**
-           * Whether to stop validating after the first error
-           *
-           * @default false
-           */
-          bail: boolean;
         }
       >;
-      tuple: <E extends Eny[]>(
-        ...es: E
-      ) => SpecialValit<
-        "tuple",
-        E,
-        {
-          /**
-           * @default false
-           */
-          bail: boolean;
-        }
-      >;
+      tuple: <E extends Eny[]>(...es: E) => SpecialValit<"tuple", E>;
       optional: <E extends Eny>(e: E) => Valit<undefined | E>;
       enum: <E extends Eny[]>(...es: E) => Valit<E[number]>;
-      object: <E extends RSE>(
-        v: E
-      ) => Valit<
-        E,
-        {
-          /**
-           * Whether to stop validating after the first error
-           *
-           * @default false
-           */
-          bail: boolean;
-        }
-      >;
+      object: <E extends RSE>(v: E) => Valit<E>;
       /**
        * This valit wraps the passed eny so that it is ignored by ParseIn
        */
@@ -63,33 +36,14 @@ declare global {
       // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
       and: <E extends OneOrEnumOfTOrFace<RSE | Valit<RSE[], any>>[]>(
         ...es: E
-      ) => SpecialValit<
-        "and",
-        E,
-        {
-          /**
-           * Whether to stop validating after the first error
-           *
-           * @default false
-           */
-          bail: boolean;
-        }
-      >;
+      ) => SpecialValit<"and", E>;
+      /**
+       * Mapped object type
+       */
       dict: <K extends OneOrEnumOfTOrFace<string | number>, V extends Eny>(
         k: K,
         v: V
-      ) => SpecialValit<
-        "dict",
-        [K, V],
-        {
-          /**
-           * Whether to stop validating after the first error
-           *
-           * @default false
-           */
-          bail: boolean;
-        }
-      >;
+      ) => SpecialValit<"dict", [K, V]>;
     }
   }
 }
@@ -131,7 +85,6 @@ vality.array = valit(
     maxLength: (val, o) => val.length <= o,
   },
   {
-    bail: false,
   }
 );
 
@@ -190,7 +143,6 @@ vality.object = valit(
   },
   {},
   {
-    bail: false,
   }
 );
 
@@ -254,7 +206,6 @@ vality.tuple = valit(
     },
   {},
   {
-    bail: false,
   }
 );
 
@@ -380,12 +331,9 @@ vality.and = valit(
     },
   {},
   {
-    bail: false,
   }
 );
 
-
-// @ts-ignore
 vality.dict = valit(
   "dict",
   (k, v) => (value, options, path) => {
@@ -417,21 +365,26 @@ vality.dict = valit(
         break;
       case "enum":
         // @ts-ignore
-        [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce((acc, key) => {
-          const guard = enyToGuard(key);
-          // No need to simplify here, as simplify flattens out nested enums
-          const type = getRootType(guard);
-          if (type === "literal") {
-            acc[0].push(guard);
-          } else {
-            acc[1].push(guard);
-          }
-          return acc;
-        }, [[], []]);
+        [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce(
+          (acc, key) => {
+            const guard = enyToGuard(key);
+            // No need to simplify here, as simplify flattens out nested enums
+            const type = getRootType(guard);
+            if (type === "literal") {
+              acc[0].push(guard);
+            } else {
+              acc[1].push(guard);
+            }
+            return acc;
+          },
+          [[], []]
+        );
         break;
       default:
         // @ts-ignore
-        throw new Error("vality.dict: Unexpected type of property: " + simpleKeyGuard[_name]);
+        throw new Error(
+          "vality.dict: Unexpected type of property: " + simpleKeyGuard[_name]
+        );
     }
 
     const errors: Error[] = [];
@@ -443,7 +396,7 @@ vality.dict = valit(
       let foundKey: [string, string | number] | undefined;
       for (const k of valueKeys) {
         const res = literalKey[_validate](k, path, value);
-        if(res.valid) {
+        if (res.valid) {
           foundKey = [k, res.data];
           break;
         }
@@ -461,15 +414,18 @@ vality.dict = valit(
       }
     }
 
-    if(options.bail && errors.length) return { valid: false, data: undefined, errors };
+    if (options.bail && errors.length)
+      return { valid: false, data: undefined, errors };
 
     // All remaining keys must be covered by our type keys
-    const remainingKeys = valueKeys.filter(k => !newKeys.some(nk => nk[0] === k));
+    const remainingKeys = valueKeys.filter(
+      (k) => !newKeys.some((nk) => nk[0] === k)
+    );
     for (const remainingKey of remainingKeys) {
       let newKey: [string, string | number] | undefined;
-      for(const typeKey of typeKeys) {
+      for (const typeKey of typeKeys) {
         const res = typeKey[_validate](remainingKey, path, value);
-        if(res.valid) {
+        if (res.valid) {
           newKey = [remainingKey, res.data];
           break;
         }
@@ -487,14 +443,19 @@ vality.dict = valit(
       }
     }
 
-    if(options.bail && errors.length) return { valid: false, data: undefined, errors };
+    if (options.bail && errors.length)
+      return { valid: false, data: undefined, errors };
 
     // Construct return object
     const data = {} as [typeof k, typeof v];
     const valueGuard = enyToGuard(v);
     for (const [oldKey, newKey] of newKeys) {
       // @ts-ignore
-      const res = valueGuard[_validate](value[oldKey], [...path, oldKey], value);
+      const res = valueGuard[_validate](
+        value[oldKey],
+        [...path, oldKey],
+        value
+      );
       if (res.valid) {
         // @ts-ignore
         data[newKey] = res.data;
@@ -508,6 +469,5 @@ vality.dict = valit(
   },
   {},
   {
-    bail: false,
   }
 );

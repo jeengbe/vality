@@ -10,7 +10,7 @@ export interface RSE { [K: string]: Eny; };
 
 export type Primitive = string | number | boolean | null;
 
-export type Eny = Face<any, any> | readonly TOrFace<Eny>[] | Primitive | (() => RSE) | RSE;
+export type Eny = Face<any, any, any> | readonly TOrFace<Eny>[] | Primitive | (() => RSE) | RSE;
 
 /**
  * Make all properties in `T` required whose key is assignable to `K`
@@ -48,14 +48,6 @@ export type EnyToFace<T> = T extends Face<any, any>
   ? Face<T, true>
   : never;
 
-// export function enyToGuard<T extends Face<any, any, any>>(eny: T): T;
-// export function enyToGuard<T extends (() => Eny)>(eny: T): Face<"relation", T, true>;
-// export function enyToGuard<T extends readonly [TOrFace<Primitive>]>(eny: T): Face<"array", T, true>;
-// export function enyToGuard<T extends OneOrEnumOfTOrFace<Primitive>>(eny: T): T extends Primitive ? Face<"literal", T, true> : Face<"enum", T, true>;
-// export function enyToGuard<T extends Primitive>(eny: T): Face<"literal", T, true>;
-// export function enyToGuard<T extends EnumOfTOrFace<Primitive>>(eny: T): Face<"enum", T, true>;
-// export function enyToGuard<T extends RSE>(eny: T): Face<"object", T, true>;
-// export function enyToGuard(eny: Eny): Face<any, any, any> {
 export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
   if (isArrayOrEnyShort(eny)) {
     if (eny.length === 0) throw new Error("Empty array short");
@@ -109,7 +101,7 @@ export function simplifyEnumGuard(enumGuard: any) {
   if (type !== "enum") return enumGuard;
 
   if (enumGuard[_type].length === 1) return enumGuard[_type][0];
-  return enumGuard;
+  return enumGuard[_type].map(simplifyEnumGuard);
 }
 
 export type OneOrEnumOfTOrFace<T> = TOrFace<T> | EnumOfTOrFace<T>;

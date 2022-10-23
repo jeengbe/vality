@@ -1,5 +1,5 @@
 import { Eny, IntersectItems, OneOrEnumOfTOrFace } from "./utils";
-import { Face, SpecialFace } from "./validate";
+import { Face } from "./validate";
 
 // Depending on the direction of the required type, we parse relations differently
 // If the type comes from the api ("out"), we type a relation as the corresponding type
@@ -22,11 +22,11 @@ export type RelationType = vality.Config extends { RelationType: infer R; }
 
 type DecD<D> = "in-layer-one" extends D ? "in" : D;
 
-export type Parse<T, _D = "out"> = T extends SpecialFace<"tuple", infer U, any>
+export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
-  : T extends SpecialFace<"and", infer U extends Eny[], true>
+  : T extends Face<"and", infer U extends Eny[], true>
   ? IntersectItems<U>
-  : T extends SpecialFace<
+  : T extends Face<
     "dict",
     [OneOrEnumOfTOrFace<infer L extends string | number>, infer V],
     true
