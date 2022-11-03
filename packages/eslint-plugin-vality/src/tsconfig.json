@@ -6,7 +6,6 @@
       "node"
     ],
     "outDir": "./../dist",
-    "sourceRoot": "SOURCE_ROOT"
   },
   "include": [
     "./index.ts"

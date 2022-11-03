@@ -163,11 +163,6 @@ jobs:
         with:
           package: eslint-plugin-vality
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
-      - name: Update 'tsconfig.json > sourceRoot'
-        run: sed -i
-          's/SOURCE_ROOT/https:\/\/raw.githubusercontent.com\/jeengbe\/vality\/${{
-          github.sha }}\/packages\/eslint-plugin-vality\/src\//g'
-          ./packages/eslint-plugin-vality/src/tsconfig.json
       - name: Build
         run: pnpm --filter eslint-plugin-vality run build
       - name: Upload build artifact
@@ -175,7 +170,7 @@ jobs:
         with:
           name: build-eslint-plugin-vality
           path: |-
-            ./packages/eslint-plugin-vality/dist
+            ./packages/eslint-plugin-vality/cjs
             ./packages/eslint-plugin-vality/mjs
             ./packages/eslint-plugin-vality/package.json
             ./packages/eslint-plugin-vality/README.md
@@ -323,11 +318,6 @@ jobs:
         with:
           package: vality
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
-      - name: Update 'tsconfig.json > sourceRoot'
-        run: sed -i
-          's/SOURCE_ROOT/https:\/\/raw.githubusercontent.com\/jeengbe\/vality\/${{
-          github.sha }}\/packages\/vality\/src\//g'
-          ./packages/vality/src/tsconfig.json
       - name: Build
         run: pnpm --filter vality run build
       - name: Upload build artifact
@@ -335,7 +325,7 @@ jobs:
         with:
           name: build-vality
           path: |-
-            ./packages/vality/dist
+            ./packages/vality/cjs
             ./packages/vality/mjs
             ./packages/vality/package.json
             ./packages/vality/README.md

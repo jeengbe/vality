@@ -11,6 +11,7 @@ declare global {
   namespace vality {
     interface guards {
       string: Guard<
+        "string",
         string,
         {
           minLength: number;
@@ -19,6 +20,7 @@ declare global {
         }
       >;
       number: Guard<
+        "number",
         number,
         {
           min: number;
@@ -36,8 +38,9 @@ declare global {
           unsafe: boolean;
         }
       >;
-      boolean: Guard<boolean>;
+      boolean: Guard<"boolean", boolean>;
       date: Guard<
+        "date",
         Date,
         {
           min: Date;
@@ -58,6 +61,7 @@ declare global {
       literal<P extends Primitive>(
         lit: P
       ): Guard<
+        "literal",
         P,
         {
           // Overwrite the default behaviour of 'default'
@@ -71,13 +75,14 @@ declare global {
       relation<S extends () => RSE>(
         model: S
       ): Valit<
+        "relation",
         // We return a valit because we have to parse its contents in Parse<>, and guards don't do that
         S,
         {
           transform: (v: RelationType) => RelationType;
         }
       >;
-      any: Guard<unknown>;
+      any: Guard<"any", unknown>;
     }
   }
 }
@@ -119,17 +124,13 @@ vality.number = guard(
   }
 );
 
-const y = ["1", 1, "true"];
-const n = ["0", 0, "false"];
+const y = new Set().add("1").add(1).add("true");
+const n = new Set().add("0").add(0).add("false");
 vality.boolean = guard("boolean", (val) => {
   if (typeof val === "boolean") return val;
   if (config.strict) return undefined;
   if (typeof val !== "string" && typeof val !== "number") return undefined;
-  return y.indexOf(val) !== -1
-    ? true
-    : n.indexOf(val) !== -1
-    ? false
-    : undefined;
+  return y.has(val) ? true : n.has(val) ? false : undefined;
 });
 
 vality.date = guard(
@@ -151,10 +152,12 @@ vality.date = guard(
 );
 
 vality.literal = (lit) => {
-  const guardFn: GuardFn<typeof lit, { default: boolean }> = (val, options) => {
+  // We don't do this directly inline to attach [_type] to guardFn
+  const guardFn: GuardFn<typeof lit, { default: boolean; }> = (val, options) => {
     if (options.default === true) {
       if (val === undefined) return lit;
     } else {
+      // We delete here to make sure it isn't used as a fallback default value in makeValit
       delete options.default;
     }
     if (val === lit) return lit;
@@ -167,12 +170,13 @@ vality.literal = (lit) => {
       typeof lit === "boolean" &&
       (typeof val === "string" || typeof val === "number")
     ) {
-      if (lit === true && y.indexOf(val) !== -1) return lit;
-      if (lit === false && n.indexOf(val) !== -1) return lit;
+      if (lit === true && y.has(val)) return lit;
+      if (lit === false && n.has(val)) return lit;
     }
     return undefined;
   };
-  Object.assign(guardFn, { [_type]: lit });
+  // @ts-expect-error -- Symbol is untyped
+  guardFn[_type] = lit;
 
   return guard("literal", guardFn);
 };

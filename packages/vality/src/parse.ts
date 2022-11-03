@@ -36,13 +36,13 @@ export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   }
   : T extends readonly [infer U] // Array Short
   ? Parse<U, DecD<_D>>[]
-  : T extends Face<(infer U)[], true> // Array Valit
+  : T extends Face<any, (infer U)[], true> // Array Valit
   ? Parse<U, DecD<_D>>[]
   : T extends readonly (infer U)[] // Enum Short
   ? Parse<U, DecD<_D>>
-  : T extends Face<infer U, true> // Valits' content needs to be parsed again
+  : T extends Face<any, infer U, true> // Valits' content needs to be parsed again
   ? Parse<U, DecD<_D>>
-  : T extends Face<infer U, false> // Whereas Guards' doesn't
+  : T extends Face<any, infer U, false> // Whereas Guards' doesn't
   ? U
   : T extends () => infer U // A model
   ? "in-layer-one" extends _D

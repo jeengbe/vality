@@ -7,9 +7,10 @@ import type { Path, Validate } from "./validate";
 import { ValitFn } from "./valit";
 
 export interface Guard<
+  Name,
   Type,
   Options extends RSA = RSN
-> extends Validate<Type, Options, false> { }
+> extends Validate<Name, Type, Options, false> { }
 
 /**
  * Extract options from a given guard from its name
@@ -18,8 +19,8 @@ export type GuardOptions<
   Name extends keyof vality.guards,
   G = vality.guards[Name]
 > = G extends
-  | Guard<infer Type, infer Options>
-  | ((...args: any[]) => Guard<infer Type, infer Options>)
+  | Guard<unknown, infer Type, infer Options>
+  | ((...args: any[]) => Guard<unknown, infer Type, infer Options>)
   ? [Type, Options]
   : never;
 
@@ -41,7 +42,7 @@ export function guard<
     Options,
     GuardFn<Type, Options>
   >
-): Validate<Type, Options, false> {
+): Validate<Name, Type, Options, false> {
   // Under the hood, a guard is just a Valit that gets the guard's implementation as inner
   return makeValit<Name, [GuardFn<Type, Options>], Type, Options, false>(
     name,

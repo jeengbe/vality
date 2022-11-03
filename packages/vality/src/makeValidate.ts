@@ -70,10 +70,6 @@ export function makeValit<
           ...optionsWithoutExtras
         }: Partial<CallOptions<Type, Options>> = options;
 
-        if (value === undefined && defaultValue !== undefined) {
-          return { valid: true, data: defaultValue, errors: [] };
-        }
-
         const optionsWithDefault = {
           ...defaultOptions,
           ...optionsWithoutExtras,
@@ -96,6 +92,10 @@ export function makeValit<
         const data = fn(...args)(value, options, path, parent);
 
         if (!data.valid) {
+          // We need to do this *after* fn() in order to allow custom behaviour of default values (in vality.literal) for example
+          if (value === undefined && defaultValue !== undefined) {
+            return { valid: true, data: defaultValue, errors: [] };
+          }
           return data;
         }
 

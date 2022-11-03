@@ -252,10 +252,6 @@ for (const pkg of getPackages()) {
           },
         },
         {
-          name: "Update 'tsconfig.json > sourceRoot'",
-          run: `sed -i 's/SOURCE_ROOT/https:\\/\\/raw.githubusercontent.com\\/jeengbe\\/vality\\/\${{ github.sha }}\\/packages\\/${pkg}\\/src\\//g' ./packages/${pkg}/src/tsconfig.json`,
-        },
-        {
           name: "Build",
           run: `pnpm --filter ${pkg} run build`,
         },
@@ -264,7 +260,7 @@ for (const pkg of getPackages()) {
           uses: "actions/upload-artifact@v2",
           with: {
             name: `build-${pkg}`,
-            path: `./packages/${pkg}/dist
+            path: `./packages/${pkg}/cjs
 ./packages/${pkg}/mjs
 ./packages/${pkg}/package.json
 ./packages/${pkg}/README.md
