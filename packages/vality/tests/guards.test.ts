@@ -798,28 +798,30 @@ describe("vality.literal", () => {
   });
 });
 
-test("vality.relation", () => {
-  testGuard(
-    "relation",
-    v.relation(() => ({})),
-    {
-      valid: [{ value: null }, { value: 0 }, { value: 1 }],
-      invalid: [
-        { value: "" },
-        { value: "foo" },
-        { value: "bar" },
-        { value: "foo bar" },
-        { value: true },
-        { value: false },
-        { value: undefined },
-        { value: {} },
-        { value: { foo: "bar" } },
-        { value: [] },
-        { value: ["foo"] },
-        { value: () => {} },
-      ],
-    }
-  );
+describe("vality.relation", () => {
+  test("base type check", () => {
+    testGuard(
+      "relation",
+      v.relation(() => ({})),
+      {
+        valid: [{ value: null }, { value: 0 }, { value: 1 }],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => { } },
+        ],
+      }
+    );
+  });
 
   test("type", () => {
     type M = {"my": "model"}
@@ -832,25 +834,27 @@ test("vality.relation", () => {
 
 });
 
-test("vality.any", () => {
-  testGuard("any", v.any, {
-    valid: [
-      { value: null },
-      { value: 0 },
-      { value: 1 },
-      { value: "" },
-      { value: "foo" },
-      { value: "bar" },
-      { value: "foo bar" },
-      { value: true },
-      { value: false },
-      { value: {} },
-      { value: { foo: "bar" } },
-      { value: [] },
-      { value: ["foo"] },
-      { value: () => {} },
-    ],
-    invalid: [{ value: undefined }],
+describe("vality.any", () => {
+  describe("base type check", () => {
+    testGuard("any", v.any, {
+      valid: [
+        { value: null },
+        { value: 0 },
+        { value: 1 },
+        { value: "" },
+        { value: "foo" },
+        { value: "bar" },
+        { value: "foo bar" },
+        { value: true },
+        { value: false },
+        { value: {} },
+        { value: { foo: "bar" } },
+        { value: [] },
+        { value: ["foo"] },
+        { value: () => { } },
+      ],
+      invalid: [{ value: undefined }],
+    });
   });
 
   test("type", () => {
