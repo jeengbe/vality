@@ -34,10 +34,10 @@
   "scripts": {
     "build": "concurrently \"tsc -p src/tsconfig.cjs.json\" \"tsc -p src/tsconfig.esm.json\"",
     "lint": "echo \"Error: no linting configured\"",
+    "test:coverage": "pnpm run test:unit --coverage",
     "test:unit": "jest tests --ci",
     "test:types": "tsc --noEmit -p tests/tsconfig.json",
     "typecheck": "concurrently \"tsc --noEmit -p src/tsconfig.cjs.json\" \"tsc --noEmit -p src/tsconfig.esm.json\"",
-    "test:coverage": "pnpm run test --coverage",
     "test:watch": "jest --watchAll --coverage tests"
   },
   "main": "./dist/cjs/index.js",
