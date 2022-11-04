@@ -37,7 +37,8 @@
   "scripts": {
     "build": "concurrently \"tsc -p src/tsconfig.cjs.json\" \"tsc -p src/tsconfig.mjs.json\"",
     "lint": "echo \"Error: no linting configured\"",
-    "test": "concurrently \"jest tests --ci\" \"tsc --noEmit -p tests/tsconfig.json\"",
+    "test:unit": "jest tests --ci",
+    "test:types": "tsc --noEmit -p tests/tsconfig.json",
     "typecheck": "concurrently \"tsc --noEmit -p src/tsconfig.cjs.json\" \"tsc --noEmit -p src/tsconfig.mjs.json\"",
     "test:coverage": "pnpm run test --coverage",
     "test:watch": "jest --watchAll --coverage tests"

@@ -82,8 +82,8 @@ jobs:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Lint
         run: pnpm --filter eslint-plugin-vality run lint
-  test-eslint-plugin-vality:
-    name: "Test: eslint-plugin-vality"
+  unit-test-eslint-plugin-vality:
+    name: "Unit Test: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -103,7 +103,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Test
         if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
-        run: pnpm --filter eslint-plugin-vality run test
+        run: pnpm --filter eslint-plugin-vality run test:unit
       - name: Test (coverage)
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
         run: pnpm --filter eslint-plugin-vality run test:coverage
@@ -113,6 +113,22 @@ jobs:
         with:
           name: coverage-eslint-plugin-vality
           path: ./packages/eslint-plugin-vality/coverage
+  type-test-eslint-plugin-vality:
+    name: "Type Test: eslint-plugin-vality"
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: eslint-plugin-vality
+          node-version: ${{ matrix.node-version }}
+      - name: Test
+        if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
+        run: pnpm --filter eslint-plugin-vality run test:type
   typecheck-eslint-plugin-vality:
     name: "Typecheck: eslint-plugin-vality"
     runs-on: ubuntu-latest
@@ -238,8 +254,8 @@ jobs:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Lint
         run: pnpm --filter vality run lint
-  test-vality:
-    name: "Test: vality"
+  unit-test-vality:
+    name: "Unit Test: vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -259,7 +275,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Test
         if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
-        run: pnpm --filter vality run test
+        run: pnpm --filter vality run test:unit
       - name: Test (coverage)
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
         run: pnpm --filter vality run test:coverage
@@ -269,6 +285,22 @@ jobs:
         with:
           name: coverage-vality
           path: ./packages/vality/coverage
+  type-test-vality:
+    name: "Type Test: vality"
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: vality
+          node-version: ${{ matrix.node-version }}
+      - name: Test
+        if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
+        run: pnpm --filter vality run test:type
   typecheck-vality:
     name: "Typecheck: vality"
     runs-on: ubuntu-latest

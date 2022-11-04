@@ -137,8 +137,8 @@ for (const pkg of getPackages()) {
         },
       ],
     },
-    [`test-${pkg}`]: {
-      name: `Test: ${pkg}`,
+    [`unit-test-${pkg}`]: {
+      name: `Unit Test: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: ["install"],
       strategy: {
@@ -162,7 +162,7 @@ for (const pkg of getPackages()) {
         {
           name: "Test",
           if: "${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}",
-          run: `pnpm --filter ${pkg} run test`,
+          run: `pnpm --filter ${pkg} run test:unit`,
         },
         {
           name: "Test (coverage)",
@@ -177,6 +177,30 @@ for (const pkg of getPackages()) {
             name: `coverage-${pkg}`,
             path: `./packages/${pkg}/coverage`,
           },
+        },
+      ],
+    },
+    [`type-test-${pkg}`]: {
+      name: `Type Test: ${pkg}`,
+      "runs-on": "ubuntu-latest",
+      needs: ["install"],
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v3",
+        },
+        {
+          name: "Install dependencies",
+          uses: "./.github/actions/setup",
+          with: {
+            package: pkg,
+            "node-version": "${{ matrix.node-version }}",
+          },
+        },
+        {
+          name: "Test",
+          if: "${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}",
+          run: `pnpm --filter ${pkg} run test:type`,
         },
       ],
     },
