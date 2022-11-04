@@ -261,6 +261,7 @@ for (const pkg of getPackages()) {
           with: {
             name: `build-${pkg}`,
             path: `./packages/${pkg}/dist
+./packages/${pkg}/src
 ./packages/${pkg}/package.json
 ./packages/${pkg}/README.md
 ./packages/${pkg}/LICENSE.json`,

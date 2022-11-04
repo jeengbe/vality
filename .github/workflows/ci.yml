@@ -171,6 +171,7 @@ jobs:
           name: build-eslint-plugin-vality
           path: |-
             ./packages/eslint-plugin-vality/dist
+            ./packages/eslint-plugin-vality/src
             ./packages/eslint-plugin-vality/package.json
             ./packages/eslint-plugin-vality/README.md
             ./packages/eslint-plugin-vality/LICENSE.json
@@ -325,6 +326,7 @@ jobs:
           name: build-vality
           path: |-
             ./packages/vality/dist
+            ./packages/vality/src
             ./packages/vality/package.json
             ./packages/vality/README.md
             ./packages/vality/LICENSE.json
