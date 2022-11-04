@@ -4,5 +4,6 @@
     "noErrorTruncation": true,
     "removeComments": true,
     "sourceMap": true,
+    "moduleResolution": "node"
   }
 }
