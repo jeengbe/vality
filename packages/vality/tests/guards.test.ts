@@ -1,4 +1,4 @@
-import { expectTypeOf } from "expect-type";
+import { expectType, TypeEqual } from "ts-expect";
 import { Error, Face, Parse, v, validate } from "vality";
 import { config } from "vality/config";
 import { RSA } from "vality/utils";
@@ -145,8 +145,8 @@ describe("vality.string", () => {
     const guard = v.string;
     const guardCalledArgs = v.string({});
 
-    expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<string>();
-    expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<string>();
+    expectType<TypeEqual<string, Parse<typeof guard>>>(true);
+    expectType<TypeEqual<string, Parse<typeof guardCalledArgs>>>(true);
   });
 });
 
@@ -304,8 +304,8 @@ describe("vality.number", () => {
     const guard = v.number;
     const guardCalledArgs = v.number({});
 
-    expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<number>();
-    expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<number>();
+    expectType<TypeEqual<number, Parse<typeof guard>>>(true);
+    expectType<TypeEqual<number, Parse<typeof guardCalledArgs>>>(true);
   });
 });
 
@@ -375,8 +375,8 @@ describe("vality.boolean", () => {
     const guard = v.boolean;
     const guardCalledArgs = v.boolean({});
 
-    expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<boolean>();
-    expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<boolean>();
+    expectType<TypeEqual<boolean, Parse<typeof guard>>>(true);
+    expectType<TypeEqual<boolean, Parse<typeof guardCalledArgs>>>(true);
   });
 });
 
@@ -537,8 +537,8 @@ describe("vality.date", () => {
     const guard = v.date;
     const guardCalledArgs = v.date({});
 
-    expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<Date>();
-    expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<Date>();
+    expectType<TypeEqual<Date, Parse<typeof guard>>>(true);
+    expectType<TypeEqual<Date, Parse<typeof guardCalledArgs>>>(true);
   });
 });
 
@@ -778,22 +778,22 @@ describe("vality.literal", () => {
       const guard = v.literal(1);
       const guardCalledArgs = v.literal(1)({});
 
-      expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<1>();
-      expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<1>();
+      expectType<TypeEqual<1, Parse<typeof guard>>>(true);
+      expectType<TypeEqual<1, Parse<typeof guardCalledArgs>>>(true);
     }
     {
       const guard = v.literal("foo");
       const guardCalledArgs = v.literal("foo")({});
 
-      expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<"foo">();
-      expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<"foo">();
+      expectType<TypeEqual<"foo", Parse<typeof guard>>>(true);
+      expectType<TypeEqual<"foo", Parse<typeof guardCalledArgs>>>(true);
     }
     {
       const guard = v.literal(true);
       const guardCalledArgs = v.literal(true)({});
 
-      expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<true>();
-      expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<true>();
+      expectType<TypeEqual<true, Parse<typeof guard>>>(true);
+      expectType<TypeEqual<true, Parse<typeof guardCalledArgs>>>(true);
     }
   });
 });
@@ -828,8 +828,8 @@ describe("vality.relation", () => {
     const guard = v.relation(null as any as () => M);
     const guardCalledArgs = v.relation(null as any as () => M)({});
 
-    expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<M>();
-    expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<M>();
+    expectType<TypeEqual<M, Parse<typeof guard>>>(true);
+    expectType<TypeEqual<M, Parse<typeof guardCalledArgs>>>(true);
   });
 
 });
@@ -861,7 +861,7 @@ describe("vality.any", () => {
     const guard = v.any;
     const guardCalledArgs = v.any({});
 
-    expectTypeOf<Parse<typeof guard>>().toEqualTypeOf<any>();
-    expectTypeOf<Parse<typeof guardCalledArgs>>().toEqualTypeOf<any>();
+    expectType<TypeEqual<unknown, Parse<typeof guard>>>(true);
+    expectType<TypeEqual<unknown, Parse<typeof guardCalledArgs>>>(true);
   });
 });
