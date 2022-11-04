@@ -4,13 +4,24 @@ import { types } from "./types";
 import { Face, ValidateFn } from "./validate";
 import { vality } from "./vality";
 
-export interface RSA { [K: string]: any; };
-export interface RSN { [K: string]: never; };
-export interface RSE { [K: string]: Eny; };
+export interface RSA {
+  [K: string]: any;
+}
+export interface RSN {
+  [K: string]: never;
+}
+export interface RSE {
+  [K: string]: Eny;
+}
 
 export type Primitive = string | number | boolean | null;
 
-export type Eny = Face<any, any, any> | readonly TOrFace<Eny>[] | Primitive | (() => RSE) | RSE;
+export type Eny =
+  | Face<any, any, any>
+  | readonly TOrFace<Eny>[]
+  | Primitive
+  | (() => RSE)
+  | RSE;
 
 /**
  * Make all properties in `T` required whose key is assignable to `K`
@@ -18,34 +29,30 @@ export type Eny = Face<any, any, any> | readonly TOrFace<Eny>[] | Primitive | ((
 export type MakeRequired<T extends RSA, K extends keyof T> = {
   [P in K]-?: T[P];
 } & {
-    [P in Exclude<keyof T, K>]: T[P];
-  };
+  [P in Exclude<keyof T, K>]: T[P];
+};
 
-
-// export type EnyToFace<T> = T extends [infer U]
-//   ? Face<"array", U[], true>
-//   : T extends [...infer U]
-//   ? Face<"enum", U, true>
-//   : T extends Primitive
-//   ? Face<"literal", T, false>
-//   : T extends Face<any, any, any>
-//   ? T
-//   : T extends () => infer U
-//   ? Face<"relation", U, true>
-//   : Face<"object", T, true>;
-
-export type EnyToFace<T> = T extends Face<any, any>
+export type EnyToFace<T> = T extends Face<any, any, any>
   ? T
-  : T extends () => (infer U extends Eny)
-  ? Face<U, true>
+  : // prettier-ignore
+  T extends (() => infer U extends Eny)
+  ? EnyToFace<U>
   : T extends readonly [TOrFace<Eny>]
-  ? Face<T, true>
+  ? Face<"array", T, true>
   : T extends Primitive
-  ? Face<T, false>
+  ? string extends T
+    ? Face<"string", T, false>
+    : number extends T
+    ? Face<"number", T, false>
+    : boolean extends T
+    ? Face<"boolean", T, false>
+    : null extends T
+    ? Face<"null", T, false>
+    : Face<"literal", T, false>
   : T extends EnumOfTOrFace<infer U extends Eny>
-  ? Face<U, true>
+  ? Face<"enum", U, true>
   : T extends RSE
-  ? Face<T, true>
+  ? Face<"object", T, true>
   : never;
 
 export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
@@ -77,7 +84,9 @@ function isArrayOrEnyShort(val: Eny): val is readonly TOrFace<Primitive>[] {
   return Array.isArray(val);
 }
 
-function isFace(val: Face<any, any> | (() => Eny) | RSE): val is Face<any, any> {
+function isFace(
+  val: Face<any, any, any> | (() => Eny) | RSE
+): val is Face<any, any, any> {
   return _validate in val;
 }
 
@@ -90,7 +99,7 @@ export function getRootType(guard: any): string {
   let seen = [];
   do {
     type = types[type];
-    if(seen.indexOf(type) !== -1) throw new Error("Circular type definition");
+    if (seen.indexOf(type) !== -1) throw new Error("Circular type definition");
     seen.push(type);
   } while (types[type] !== type);
   return type;
@@ -106,18 +115,22 @@ export function simplifyEnumGuard(enumGuard: any) {
 
 export type OneOrEnumOfTOrFace<T> = TOrFace<T> | EnumOfTOrFace<T>;
 
-type EnumOfTOrFace<T> = readonly [OneOrEnumOfTOrFace<T>, OneOrEnumOfTOrFace<T>, ...OneOrEnumOfTOrFace<T>[]];
+type EnumOfTOrFace<T> = readonly [
+  OneOrEnumOfTOrFace<T>,
+  OneOrEnumOfTOrFace<T>,
+  ...OneOrEnumOfTOrFace<T>[]
+];
 
 export type TOrFace<T> =
   | T
-  | Face<T, false>
+  | Face<any, T, false>
   // I will come back and revisit this one I am a TypeScript Grandmaster, but for now, I can't get this to work
   // | Face<string, OneOrEnumOfTOrFace<T>, true>;
   | {
-    [_validate]: any;
-    [_type]: OneOrEnumOfTOrFace<T>;
-    isValit?: true;
-  };
+      [_validate]: any;
+      [_type]: OneOrEnumOfTOrFace<T>;
+      isValit?: true;
+    };
 
 // Adapted from https://stackoverflow.com/a/59463385/12405307
 // union to intersection converter by @jcalz
@@ -135,7 +148,7 @@ type TupleKeys<T extends any[]> = Exclude<keyof T, keyof []>;
 // apply { foo: ... } to every type in tuple
 // Foo<[1, 2]> = { 0: { foo: 1 }, 1: { foo: 2 } }
 type Foo<T extends any[]> = {
-  [K in TupleKeys<T>]: { foo: T[K]; };
+  [K in TupleKeys<T>]: { foo: Parse<T[K]> };
 };
 
 // get union of field types of an object (another answer by @jcalz again, I guess)
@@ -144,9 +157,9 @@ type Values<T> = T[keyof T];
 
 // TS won't believe the result will always have a field "foo"
 // so we have to check for it with a conditional first
-type Unfoo<T> = T extends { foo: any; } ? T["foo"] : never;
+type Unfoo<T> = T extends { foo: any } ? T["foo"] : never;
 
 // combine three helpers to get an intersection of all the item types
 export type IntersectItems<T extends any[]> = Unfoo<
-  Intersect<Parse<Values<Foo<T>>>>
+  Intersect<Values<Foo<T>>>
 >;

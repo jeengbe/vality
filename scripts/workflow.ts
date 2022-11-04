@@ -260,8 +260,7 @@ for (const pkg of getPackages()) {
           uses: "actions/upload-artifact@v2",
           with: {
             name: `build-${pkg}`,
-            path: `./packages/${pkg}/cjs
-./packages/${pkg}/mjs
+            path: `./packages/${pkg}/dist
 ./packages/${pkg}/package.json
 ./packages/${pkg}/README.md
 ./packages/${pkg}/LICENSE.json`,
@@ -314,10 +313,12 @@ for (const pkg of getPackages()) {
           },
         },
         {
-          name: "Move dist/ to /",
+          name: "Add module types to dist/",
           "working-directory": `./packages/${pkg}`,
-          run: `mv ./dist/* ./
-rm -rf ./dist`,
+          run: [
+            `echo { "type": "commonjs" } > dist/cjs/package.json`,
+            `echo { "type": "module" } > dist/esm/package.json`,
+          ]
         },
         {
           name: "Install Node.js",

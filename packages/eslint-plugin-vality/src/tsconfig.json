@@ -2,10 +2,12 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": [
+      "ESNext"
+    ],
     "types": [
       "node"
-    ],
-    "outDir": "./../dist",
+    ]
   },
   "include": [
     "./index.ts"

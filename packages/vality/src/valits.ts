@@ -10,7 +10,7 @@ import {
   simplifyEnumGuard
 } from "./utils";
 import { Error, ValidationResult } from "./validate";
-import { SpecialValit, valit, Valit } from "./valit";
+import { valit, Valit } from "./valit";
 import { vality } from "./vality";
 
 declare global {
@@ -19,31 +19,32 @@ declare global {
       array: <E extends Eny>(
         e: E
       ) => Valit<
+        "array",
         E[],
         {
           minLength: number;
           maxLength: number;
         }
       >;
-      tuple: <E extends Eny[]>(...es: E) => SpecialValit<"tuple", E>;
-      optional: <E extends Eny>(e: E) => Valit<undefined | E>;
-      enum: <E extends Eny[]>(...es: E) => Valit<E[number]>;
-      object: <E extends RSE>(v: E) => Valit<E>;
+      tuple: <E extends Eny[]>(...es: E) => Valit<"tuple", E>;
+      optional: <E extends Eny>(e: E) => Valit<"optional", undefined | E>;
+      enum: <E extends Eny[]>(...es: E) => Valit<"enum", E[number]>;
+      object: <E extends RSE>(v: E) => Valit<"object", E>;
       /**
        * This valit wraps the passed eny so that it is ignored by ParseIn
        */
-      readonly: <E extends Eny>(e: E) => SpecialValit<"readonly", E>;
+      readonly: <E extends Eny>(e: E) => Valit<"readonly", E>;
       // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
       and: <E extends OneOrEnumOfTOrFace<RSE | Valit<RSE[], any>>[]>(
         ...es: E
-      ) => SpecialValit<"and", E>;
+      ) => Valit<"and", E>;
       /**
        * Mapped object type
        */
       dict: <K extends OneOrEnumOfTOrFace<string | number>, V extends Eny>(
         k: K,
         v: V
-      ) => SpecialValit<"dict", [K, V]>;
+      ) => Valit<"dict", [K, V]>;
     }
   }
 }
@@ -84,8 +85,7 @@ vality.array = valit(
     minLength: (val, o) => val.length >= o,
     maxLength: (val, o) => val.length <= o,
   },
-  {
-  }
+  {}
 );
 
 vality.object = valit(
@@ -142,8 +142,7 @@ vality.object = valit(
     return { valid: false, data: undefined, errors };
   },
   {},
-  {
-  }
+  {}
 );
 
 vality.optional = valit("optional", (e) => (val, _options, path, parent) => {
@@ -205,8 +204,7 @@ vality.tuple = valit(
       return { valid: false, data: undefined, errors };
     },
   {},
-  {
-  }
+  {}
 );
 
 // Gotta assert here as this is an exception where we don't just return your average valit, but need to add the _readonly marker
@@ -291,6 +289,7 @@ vality.and = valit(
                 };
               break;
             case "and":
+              // @ts-expect-error
               handleEs(eGuard[_validate][_name]);
               break;
             default:
@@ -330,8 +329,7 @@ vality.and = valit(
       return { valid: true, data, errors: [] };
     },
   {},
-  {
-  }
+  {}
 );
 
 vality.dict = valit(
@@ -366,6 +364,7 @@ vality.dict = valit(
       case "enum":
         // @ts-ignore
         [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce(
+          // @ts-expect-error
           (acc, key) => {
             const guard = enyToGuard(key);
             // No need to simplify here, as simplify flattens out nested enums
@@ -452,6 +451,7 @@ vality.dict = valit(
     for (const [oldKey, newKey] of newKeys) {
       // @ts-ignore
       const res = valueGuard[_validate](
+        // @ts-expect-error
         value[oldKey],
         [...path, oldKey],
         value
@@ -468,6 +468,5 @@ vality.dict = valit(
     return { valid: true, data, errors: [] };
   },
   {},
-  {
-  }
+  {}
 );

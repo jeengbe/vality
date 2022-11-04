@@ -14,7 +14,7 @@ export interface Valit<
 export type ValitOptions<
   Name extends keyof vality.valits,
   Fn = vality.valits[Name]
-> = Fn extends (...args: infer Args) => Valit<infer Type, infer Options>
+> = Fn extends (...args: infer Args) => Valit<any, infer Type, infer Options>
   ? [Args, Type, Options]
   : never;
 
