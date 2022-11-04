@@ -316,10 +316,8 @@ for (const pkg of getPackages()) {
         {
           name: "Add module types to dist/",
           "working-directory": `./packages/${pkg}`,
-          run: [
-            `echo { "type": "commonjs" } > dist/cjs/package.json`,
-            `echo { "type": "module" } > dist/esm/package.json`,
-          ]
+          run: `echo { "type": "commonjs" } > dist/cjs/package.json
+echo { "type": "module" } > dist/esm/package.json`,
         },
         {
           name: "Install Node.js",

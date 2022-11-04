@@ -210,9 +210,9 @@ jobs:
           path: ./packages/eslint-plugin-vality
       - name: Add module types to dist/
         working-directory: ./packages/eslint-plugin-vality
-        run:
-          - 'echo { "type": "commonjs" } > dist/cjs/package.json'
-          - 'echo { "type": "module" } > dist/esm/package.json'
+        run: |-
+          echo { "type": "commonjs" } > dist/cjs/package.json
+          echo { "type": "module" } > dist/esm/package.json
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
@@ -365,9 +365,9 @@ jobs:
           path: ./packages/vality
       - name: Add module types to dist/
         working-directory: ./packages/vality
-        run:
-          - 'echo { "type": "commonjs" } > dist/cjs/package.json'
-          - 'echo { "type": "module" } > dist/esm/package.json'
+        run: |-
+          echo { "type": "commonjs" } > dist/cjs/package.json
+          echo { "type": "module" } > dist/esm/package.json
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
