@@ -44,7 +44,7 @@ export type CallOptions<Type, Options> = Options extends RSN
     Options & Omit<ExtraOptions<Type, Options>, keyof Options>;
 
 export function makeValit<
-  Name extends keyof vality.valits | keyof vality.guards,
+  Name extends string,
   Arg extends any[],
   Type,
   Options extends RSA,
@@ -148,7 +148,6 @@ export function makeValit<
         };
       };
 
-    // @ts-ignore
     const validate = ((
       options:
         | Partial<CallOptions<Type, Options>>
@@ -158,13 +157,12 @@ export function makeValit<
         if (typeof options === "function") options = options(parent);
         return getValidateFnFromOptions(options)(val, path, parent);
       },
-      [_type]: args,
+      [_type]: args as unknown as Type,
       [_name]: name,
     })) as Validate<Name, Type, Options, IsValit>;
 
     validate[_validate] = getValidateFnFromOptions({});
-    // @ts-ignore
-    validate[_type] = args;
+    validate[_type] = args as unknown as Type;
     validate[_name] = name;
 
     return validate;

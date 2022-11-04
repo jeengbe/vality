@@ -2,6 +2,9 @@ import { CallOptions, makeValit, SharedParameters } from "./makeValidate";
 import { RSA, RSN } from "./utils";
 import type { Path, Validate, ValidationResult } from "./validate";
 
+/**
+ * In contrast to a Guard, a Valit's type is parsed again
+ */
 export interface Valit<
   Name,
   Type,
@@ -18,12 +21,14 @@ export type ValitOptions<
   ? [Args, Type, Options]
   : never;
 
-export type ValitFn<Type, Options> = (
-  val: unknown,
-  options: Partial<CallOptions<Type, Options>>,
-  path: Path,
-  parent?: any
-) => ValidationResult<Type>;
+export interface ValitFn<Type, Options> {
+  (
+    val: unknown,
+    options: Partial<CallOptions<Type, Options>>,
+    path: Path,
+    parent?: any
+  ): ValidationResult<Type>;
+}
 
 export function valit<
   Name extends keyof vality.valits,

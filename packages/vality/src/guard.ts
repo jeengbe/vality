@@ -6,6 +6,9 @@ import {
 import type { Path, Validate } from "./validate";
 import { ValitFn } from "./valit";
 
+/**
+ * A Guard is Validate whose type needn't be parsed again
+ */
 export interface Guard<
   Name,
   Type,
