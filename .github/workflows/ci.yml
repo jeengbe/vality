@@ -166,7 +166,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - lint-eslint-plugin-vality
-      - test-eslint-plugin-vality
+      - unit-test-eslint-plugin-vality
+      - type-test-eslint-plugin-vality
       - typecheck-eslint-plugin-vality
       - check-version-eslint-plugin-vality
     if: ${{ needs.check-version-eslint-plugin-vality.outputs.should-publish ==
@@ -195,7 +196,7 @@ jobs:
     name: "Upload coverage: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
-      - test-eslint-plugin-vality
+      - unit-test-eslint-plugin-vality
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -338,7 +339,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - lint-vality
-      - test-vality
+      - unit-test-vality
+      - type-test-vality
       - typecheck-vality
       - check-version-vality
     if: ${{ needs.check-version-vality.outputs.should-publish == 'true' }}
@@ -366,7 +368,7 @@ jobs:
     name: "Upload coverage: vality"
     runs-on: ubuntu-latest
     needs:
-      - test-vality
+      - unit-test-vality
     steps:
       - name: Checkout
         uses: actions/checkout@v3

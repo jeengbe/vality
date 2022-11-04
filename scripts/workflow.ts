@@ -257,7 +257,8 @@ for (const pkg of getPackages()) {
       "runs-on": "ubuntu-latest",
       needs: [
         `lint-${pkg}`,
-        `test-${pkg}`,
+        `unit-test-${pkg}`,
+        `type-test-${pkg}`,
         `typecheck-${pkg}`,
         `check-version-${pkg}`,
       ],
@@ -296,7 +297,7 @@ for (const pkg of getPackages()) {
     [`coverage-${pkg}`]: {
       name: `Upload coverage: ${pkg}`,
       "runs-on": "ubuntu-latest",
-      needs: [`test-${pkg}`],
+      needs: [`unit-test-${pkg}`],
       steps: [
         {
           name: "Checkout",
