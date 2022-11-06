@@ -26,6 +26,7 @@ function testValit({
   args = [],
   path = [],
   parent,
+  context = {},
   ...rest
 }: {
   name?: any;
@@ -38,6 +39,7 @@ function testValit({
   path?: any;
   parent?: any;
   value?: any;
+  context?: any;
 } = {}) {
   const value = "value" in rest ? rest.value : "foo";
 
@@ -53,7 +55,7 @@ function testValit({
   // We set this here, so that when we don't pass options (ie undefined), we can still get the correct value from the return object
   else options = {};
 
-  const res = valit[_validate](value, path, parent);
+  const res = valit[_validate](value, path, context, parent);
 
   return {
     name,
@@ -68,6 +70,7 @@ function testValit({
     value,
     valit,
     res,
+    context,
   };
 }
 
@@ -87,6 +90,7 @@ describe("testValit", () => {
         value,
         valit,
         res,
+        context,
       } = testValit();
 
       expect(name).toBe("__valit");
@@ -101,6 +105,7 @@ describe("testValit", () => {
       expect(value).toBe("foo");
       expect(valit).toEqual(expect.any(Function));
       expect(res).toBeValid("foo");
+      expect(context).toEqual({});
     }
     {
       const name = "test";
@@ -111,12 +116,13 @@ describe("testValit", () => {
       }));
       const fn = jest.fn(() => inner);
       const handleOptions = {};
-      const defaultOptions = { };
+      const defaultOptions = {};
       const options = {};
       const args = ["foo", "bar"];
       const path = ["foo", "bar"];
       const parent = {};
       const value = "baz";
+      const context = { foo: "bar" };
 
       const got = testValit({
         name,
@@ -129,6 +135,7 @@ describe("testValit", () => {
         path,
         parent,
         value,
+        context,
       });
       expect(got).toEqual({
         name,
@@ -147,7 +154,8 @@ describe("testValit", () => {
           data: "bazbar",
           errors: [],
         },
-      })
+        context,
+      });
     }
   });
 });
@@ -155,36 +163,61 @@ describe("testValit", () => {
 describe("valit", () => {
   describe("options", () => {
     it("works with no options", () => {
-      const { inner, value, path, parent } = testValit();
-      expect(inner).toHaveBeenCalledWith(value, {}, path, parent);
+      const { inner, value, path, parent, context } = testValit();
+      expect(inner).toHaveBeenCalledWith(value, {}, path, context, parent);
     });
 
     it("works with an options object", () => {
-      const { inner, options, value, path, parent } = testValit({
+      const { inner, options, value, path, parent, context } = testValit({
         options: { foo: "bar" },
       });
-      expect(inner).toHaveBeenCalledWith(value, options, path, parent);
+      expect(inner).toHaveBeenCalledWith(value, options, path, context, parent);
     });
 
     describe("options function", () => {
       it("works", () => {
         const options = { foo: "bar" };
-        const { inner, value, path, parent } = testValit({
+        const { inner, value, path, parent, context } = testValit({
           options: () => options,
         });
-        expect(inner).toHaveBeenCalledWith(value, options, path, parent);
+        expect(inner).toHaveBeenCalledWith(
+          value,
+          options,
+          path,
+          context,
+          parent
+        );
       });
 
       it("receives the parent object", () => {
         {
           const fn = jest.fn(() => ({}));
-          const { parent } = testValit({ options: fn });
-          expect(fn).toHaveBeenCalledWith(parent);
+          const { parent, context } = testValit({ options: fn });
+          expect(fn).toHaveBeenCalledWith(parent, context);
         }
         {
           const fn = jest.fn(() => ({}));
-          const { parent } = testValit({ options: fn, parent: { bar: "baz" } });
-          expect(fn).toHaveBeenCalledWith(parent);
+          const { parent, context } = testValit({
+            options: fn,
+            parent: { bar: "baz" },
+          });
+          expect(fn).toHaveBeenCalledWith(parent, context);
+        }
+      });
+
+      it("receives the context object", () => {
+        {
+          const fn = jest.fn(() => ({}));
+          const { parent, context } = testValit({ options: fn });
+          expect(fn).toHaveBeenCalledWith(parent, context);
+        }
+        {
+          const fn = jest.fn(() => ({}));
+          const { parent, context } = testValit({
+            options: fn,
+            context: { bar: "baz" },
+          });
+          expect(fn).toHaveBeenCalledWith(parent, context);
         }
       });
     });
@@ -339,23 +372,34 @@ describe("valit", () => {
 
     describe("preprocess", () => {
       it("works from options", () => {
-        const { res, inner, value, options, path, parent } = testValit({
-          options: { preprocess: (v: string) => v + "bar" },
-        });
+        const { res, inner, value, options, path, parent, context } = testValit(
+          {
+            options: { preprocess: (v: string) => v + "bar" },
+          }
+        );
         expect(inner).toHaveBeenCalledWith(
           value + "bar",
           options,
           path,
+          context,
           parent
         );
         expect(res.data).toEqual(value + "bar");
       });
 
       it("doesn't work from default options", () => {
-        const { res, inner, value, options, path, parent } = testValit({
-          defaultOptions: { preprocess: (v: string) => v + "bar" },
-        });
-        expect(inner).toHaveBeenCalledWith(value, options, path, parent);
+        const { res, inner, value, options, path, parent, context } = testValit(
+          {
+            defaultOptions: { preprocess: (v: string) => v + "bar" },
+          }
+        );
+        expect(inner).toHaveBeenCalledWith(
+          value,
+          options,
+          path,
+          context,
+          parent
+        );
         expect(res.data).toEqual(value);
       });
     });
@@ -379,21 +423,34 @@ describe("valit", () => {
         }
       });
 
-      it("inner is called with (value, options, path, parent)", () => {
+      it("inner is called with (value, options, path, context, parent)", () => {
         {
-          const { inner, value, options, path, parent } = testValit();
-          expect(inner).toHaveBeenCalledWith(value, options, path, parent);
+          const { inner, value, options, path, parent, context } = testValit();
+          expect(inner).toHaveBeenCalledWith(
+            value,
+            options,
+            path,
+            context,
+            parent
+          );
         }
         {
-          const { inner, value, options, path, parent } = testValit({
+          const { inner, value, options, path, parent, context } = testValit({
             value: "bar",
             options: {
               foo: "bar",
             },
             path: ["foo"],
             parent: { bar: "baz" },
+            context: { foo: "bar" },
           });
-          expect(inner).toHaveBeenCalledWith(value, options, path, parent);
+          expect(inner).toHaveBeenCalledWith(
+            value,
+            options,
+            path,
+            context,
+            parent
+          );
         }
       });
 
@@ -418,12 +475,18 @@ describe("valit", () => {
     describe("custom validate", () => {
       it("is called with (fn result, options, path, parent)", () => {
         const validate = jest.fn();
-        const { value, options, path, parent } = testValit({
+        const { value, options, path, parent, context } = testValit({
           options: {
             validate,
           },
         });
-        expect(validate).toHaveBeenCalledWith(value, options, path, parent);
+        expect(validate).toHaveBeenCalledWith(
+          value,
+          options,
+          path,
+          context,
+          parent
+        );
       });
 
       it("exists flow early if invalid", () => {
@@ -446,25 +509,41 @@ describe("valit", () => {
 
     describe("transform", () => {
       it("works from options", () => {
-        const { res, inner, value, options, path, parent } = testValit({
-          options: { transform: (v: string) => v + "bar" },
-        });
-        expect(inner).toHaveBeenCalledWith(value, options, path, parent);
+        const { res, inner, value, options, path, parent, context } = testValit(
+          {
+            options: { transform: (v: string) => v + "bar" },
+          }
+        );
+        expect(inner).toHaveBeenCalledWith(
+          value,
+          options,
+          path,
+          context,
+          parent
+        );
         expect(res.data).toEqual(value + "bar");
       });
 
       it("doesn't work from default options", () => {
-        const { res, inner, value, options, path, parent } = testValit({
-          defaultOptions: { transform: (v: string) => v + "bar" },
-        });
-        expect(inner).toHaveBeenCalledWith(value, options, path, parent);
+        const { res, inner, value, options, path, parent, context } = testValit(
+          {
+            defaultOptions: { transform: (v: string) => v + "bar" },
+          }
+        );
+        expect(inner).toHaveBeenCalledWith(
+          value,
+          options,
+          path,
+          context,
+          parent
+        );
         expect(res.data).toEqual(value);
       });
     });
 
     describe("handlers", () => {
       test("are called with the preprocessed value", () => {
-        const { handleOptions, value, options } = testValit({
+        const { handleOptions, value, options, context } = testValit({
           options: {
             preprocess: (v: string) => v + "bar",
             foo: true,
@@ -476,12 +555,13 @@ describe("valit", () => {
         expect(handleOptions.foo).toHaveBeenCalledWith(
           value + "bar",
           true,
-          options
+          options,
+          context
         );
       });
 
       test("are called with the un-transformed value", () => {
-        const { handleOptions, value, options } = testValit({
+        const { handleOptions, value, options, context } = testValit({
           handleOptions: {
             foo: jest.fn(),
           },
@@ -490,11 +570,16 @@ describe("valit", () => {
             foo: true,
           },
         });
-        expect(handleOptions.foo).toHaveBeenCalledWith(value, true, options);
+        expect(handleOptions.foo).toHaveBeenCalledWith(
+          value,
+          true,
+          options,
+          context
+        );
       });
 
       test("work from options", () => {
-        const { handleOptions, value, options } = testValit({
+        const { handleOptions, value, options, context } = testValit({
           handleOptions: {
             foo: jest.fn(),
           },
@@ -502,11 +587,16 @@ describe("valit", () => {
             foo: true,
           },
         });
-        expect(handleOptions.foo).toHaveBeenCalledWith(value, true, options);
+        expect(handleOptions.foo).toHaveBeenCalledWith(
+          value,
+          true,
+          options,
+          context
+        );
       });
 
       test("work from default options", () => {
-        const { handleOptions, value, options } = testValit({
+        const { handleOptions, value, options, context } = testValit({
           handleOptions: {
             foo: jest.fn(),
           },
@@ -514,11 +604,16 @@ describe("valit", () => {
             foo: true,
           },
         });
-        expect(handleOptions.foo).toHaveBeenCalledWith(value, true, options);
+        expect(handleOptions.foo).toHaveBeenCalledWith(
+          value,
+          true,
+          options,
+          context
+        );
       });
 
       it("overrides default options", () => {
-        const { handleOptions, value, options } = testValit({
+        const { handleOptions, value, options, context } = testValit({
           handleOptions: {
             foo: jest.fn(),
           },
@@ -529,22 +624,38 @@ describe("valit", () => {
             foo: true,
           },
         });
-        expect(handleOptions.foo).toHaveBeenCalledWith(value, true, options);
+        expect(handleOptions.foo).toHaveBeenCalledWith(
+          value,
+          true,
+          options,
+          context
+        );
       });
 
       it("errors if fails", () => {
-        const { res, name, handleOptions, value, path, options } = testValit({
-          handleOptions: {
-            foo: jest.fn(() => false),
-            bar: jest.fn(() => false),
-          },
-          options: {
-            foo: true,
-            bar: false,
-          },
-        });
-        expect(handleOptions.foo).toHaveBeenCalledWith(value, true, options);
-        expect(handleOptions.bar).toHaveBeenCalledWith(value, false, options);
+        const { res, name, handleOptions, value, path, options, context } =
+          testValit({
+            handleOptions: {
+              foo: jest.fn(() => false),
+              bar: jest.fn(() => false),
+            },
+            options: {
+              foo: true,
+              bar: false,
+            },
+          });
+        expect(handleOptions.foo).toHaveBeenCalledWith(
+          value,
+          true,
+          options,
+          context
+        );
+        expect(handleOptions.bar).toHaveBeenCalledWith(
+          value,
+          false,
+          options,
+          context
+        );
         expect(res).toBeInvalid(
           {
             message: `vality.${name}.options.foo`,
@@ -579,18 +690,24 @@ describe("valit", () => {
       });
 
       it("bails early if bail is true (options)", () => {
-        const { res, name, handleOptions, value, path, options } = testValit({
-          handleOptions: {
-            foo: jest.fn(() => false),
-            bar: jest.fn(() => false),
-          },
-          options: {
-            foo: true,
-            bar: true,
-            bail: true,
-          },
-        });
-        expect(handleOptions.foo).toHaveBeenCalledWith(value, true, options);
+        const { res, name, handleOptions, value, path, options, context } =
+          testValit({
+            handleOptions: {
+              foo: jest.fn(() => false),
+              bar: jest.fn(() => false),
+            },
+            options: {
+              foo: true,
+              bar: true,
+              bail: true,
+            },
+          });
+        expect(handleOptions.foo).toHaveBeenCalledWith(
+          value,
+          true,
+          options,
+          context
+        );
         expect(handleOptions.bar).not.toHaveBeenCalled();
         expect(res).toBeInvalid({
           message: `vality.${name}.options.foo`,
@@ -601,21 +718,32 @@ describe("valit", () => {
       });
 
       it("doesn't bail early if bail is true (default options)", () => {
-        const { res, name, handleOptions, value, path, options } = testValit({
-          handleOptions: {
-            foo: jest.fn(() => false),
-            bar: jest.fn(() => false),
-          },
-          options: {
-            foo: true,
-            bar: false,
-          },
-          defaultOptions: {
-            bail: true,
-          },
-        });
-        expect(handleOptions.foo).toHaveBeenCalledWith(value, true, options);
-        expect(handleOptions.bar).toHaveBeenCalledWith(value, false, options);
+        const { res, name, handleOptions, value, path, options, context } =
+          testValit({
+            handleOptions: {
+              foo: jest.fn(() => false),
+              bar: jest.fn(() => false),
+            },
+            options: {
+              foo: true,
+              bar: false,
+            },
+            defaultOptions: {
+              bail: true,
+            },
+          });
+        expect(handleOptions.foo).toHaveBeenCalledWith(
+          value,
+          true,
+          options,
+          context
+        );
+        expect(handleOptions.bar).toHaveBeenCalledWith(
+          value,
+          false,
+          options,
+          context
+        );
         expect(res).toBeInvalid(
           {
             message: `vality.${name}.options.foo`,
