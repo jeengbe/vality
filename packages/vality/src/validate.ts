@@ -1,4 +1,4 @@
-import { config } from "config";
+import { config } from "./config";
 import { CallOptions } from "./makeValidate";
 import { Parse } from "./parse";
 import { _name, _type, _validate } from "./symbols";
