@@ -175,7 +175,7 @@ vality.literal = (lit) => {
     }
     return undefined;
   };
-  // @ts-expect-error -- Symbol is untyped
+  // @ts-expect-error Symbol is untyped
   guardFn[_type] = lit;
 
   return guard("literal", guardFn);

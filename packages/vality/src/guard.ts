@@ -3,7 +3,7 @@ import {
   RSA,
   RSN
 } from "./utils";
-import type { Path, Validate } from "./validate";
+import type { Context, Path, Validate } from "./validate";
 import { ValitFn } from "./valit";
 
 /**
@@ -31,6 +31,7 @@ export type GuardFn<Type, Options> = (
   value: unknown,
   options: Partial<CallOptions<Type, Options>>,
   path: Path,
+  context: Context,
   parent?: any
 ) => Type | undefined;
 

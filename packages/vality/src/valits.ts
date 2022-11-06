@@ -1,5 +1,6 @@
-import { config } from "./config";
+import { Parse } from "parse";
 import { _name, _type, _validate } from "./symbols";
+import { intersectObjects } from "./typeUtils";
 import {
   Eny,
   enyToGuard,
@@ -9,53 +10,58 @@ import {
   RSE,
   simplifyEnumGuard
 } from "./utils";
-import { Error, ValidationResult } from "./validate";
+import { Error, mergeOptions, ValidationResult } from "./validate";
 import { valit, Valit } from "./valit";
 import { vality } from "./vality";
 
 declare global {
   namespace vality {
     interface valits {
-      array: <E extends Eny>(
-        e: E
-      ) => Valit<
+      array: (e: Eny) => Valit<
         "array",
-        E[],
+        typeof e[],
         {
           minLength: number;
           maxLength: number;
         }
       >;
-      tuple: <E extends Eny[]>(...es: E) => Valit<"tuple", E>;
-      optional: <E extends Eny>(e: E) => Valit<"optional", undefined | E>;
-      enum: <E extends Eny[]>(...es: E) => Valit<"enum", E[number]>;
-      object: <E extends RSE>(v: E) => Valit<"object", E>;
-      /**
-       * This valit wraps the passed eny so that it is ignored by ParseIn
-       */
-      readonly: <E extends Eny>(e: E) => Valit<"readonly", E>;
-      // v.and() only accepts objects, enums of only objects or valits that resolve to objects (object/enum) and enums
-      and: <E extends OneOrEnumOfTOrFace<RSE | Valit<RSE[], any>>[]>(
+      tuple: <E extends Eny[]>(...es: E) => Valit<"tuple", typeof es>;
+      optional: <E extends Eny>(
+        e: E
+      ) => Valit<"optional", undefined | typeof e>;
+      enum: <E extends Eny[]>(...es: E) => Valit<"enum", typeof es[number]>;
+      object: <O extends RSE>(o: O) => Valit<"object", typeof o>;
+      readonly: <E extends Eny>(e: E) => Valit<"readonly", typeof e>;
+      and: <E extends OneOrEnumOfTOrFace<RSE | RSE[]>[]>(
         ...es: E
-      ) => Valit<"and", E>;
-      /**
-       * Mapped object type
-       */
+      ) => Valit<
+        "and",
+        typeof es,
+        {
+          transform: (
+            val: Parse<Valit<"and", typeof es>>
+          ) => Parse<Valit<"and", typeof es>>;
+        }
+      >;
       dict: <K extends OneOrEnumOfTOrFace<string | number>, V extends Eny>(
         k: K,
         v: V
-      ) => Valit<"dict", [K, V]>;
+      ) => Valit<"dict", [typeof k, typeof v]>;
     }
   }
 }
 
 vality.array = valit(
   "array",
-  (e) => (value, options, path) => {
+  (e) => (value, options, path, context) => {
     const fn = enyToGuardFn(e);
+
+    const { strict, bail } = mergeOptions(options, context);
+
     if (!Array.isArray(value)) {
-      if (!config.strict) {
-        const res = fn(value, [...path, 0], value);
+      if (!strict) {
+        // We accept single values in non-strict mode
+        const res = fn(value, [...path, 0], context, [value]);
         if (res.valid) {
           return { valid: true, data: [res.data], errors: [] };
         }
@@ -66,14 +72,14 @@ vality.array = valit(
         errors: [{ message: "vality.array.base", path, options, value }],
       };
     }
-    const data: any[] = [];
+
+    const data: typeof e[] = [];
     const errors: Error[] = [];
     for (let k = 0; k < value.length; k++) {
-      // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want
-      const res = fn(value[k], [...path, k], value);
+      const res = fn(value[k], [...path, k], context, value);
       if (!res.valid) {
         errors.push(...res.errors);
-        if (options.bail) break;
+        if (bail) break;
       } else {
         data.push(res.data);
       }
@@ -84,133 +90,178 @@ vality.array = valit(
   {
     minLength: (val, o) => val.length >= o,
     maxLength: (val, o) => val.length <= o,
-  },
-  {}
+  }
 );
 
-vality.object = valit(
-  "object",
-  (e) => (value, options, path) => {
-    if (typeof value !== "object" || value === null)
-      return {
-        valid: false,
-        data: undefined,
-        errors: [{ message: "vality.object.base", path, options, value }],
-      };
-    const data = {} as typeof e;
-    const errors: Error[] = [];
-    // We iterate the passed object (the model) first
-    for (const k in e) {
-      const ek = e[k] as Eny;
-      if (
-        typeof ek === "function" &&
-        ek?.[_name as keyof typeof ek] === "readonly"
-      )
-        continue; // We'll deal with these later
-      // We can do this assertion here, since in the worst case, we'll get undefined, which is what we want to
-      const res = enyToGuardFn(ek)(
-        value[k as keyof typeof value],
-        [...path, k],
-        value
-      );
-      if (!res.valid) {
-        errors.push(...res.errors);
-        if (options.bail) break;
-      } else {
-        data[k] = res.data;
+vality.object = valit("object", (o) => (value, options, path, context) => {
+  if (typeof value !== "object" || value === null)
+    return {
+      valid: false,
+      data: undefined,
+      errors: [{ message: "vality.object.base", path, options, value }],
+    };
+
+  const { bail, allowExtraProperties } = mergeOptions(options, context);
+
+  const data: any = {};
+  const errors: Error[] = [];
+
+  // We iterate the passed object (the model) first
+  for (let k in o) {
+    const ek: Eny = o[k];
+
+    // If the eny is a Valit and its name is readonly
+    if (
+      ((typeof ek === "object" && ek !== null) || typeof ek === "function") &&
+      // @ts-expect-error Is ok since if it is undefined, then that's ok too
+      ek[_name] === "readonly"
+    ) {
+      continue; // We'll deal with these later
+    }
+
+    const ekGuard = enyToGuard(ek);
+    // Also check for 'key[]' if 'key' is an array Valit
+    // See 'vality.object > member type check > allows "key[]" as "key" if value is of type array'
+    if (ekGuard[_name] === "array") {
+      // @ts-expect-error
+      if (value[k] === undefined && value[`${k}[]`] !== undefined) {
+        k = `${k}[]` as typeof k;
       }
     }
-    // And then check for additional keys
+
+    const res = ekGuard[_validate](
+      // @ts-expect-error We can do this assertion here, since in the worst case, we'll get undefined, which is what we want too (=> e.g. "Expected string, received undefined")
+      value[k],
+      [...path, k],
+      context,
+      value
+    );
+    if (!res.valid) {
+      errors.push(...res.errors);
+      if (bail) break;
+    } else {
+      data[k] = res.data;
+    }
+  }
+
+  if (bail && errors.length) return { valid: false, data: undefined, errors };
+
+  // And then check for excess keys
+  if (!allowExtraProperties) {
     for (const k in value) {
-      const ek = e[k];
+      const ek = o[k];
+
+      // If we get 'key[]', allow if 'key' is not set, but expected to be an array
+      // Holy cow, this seems expensive
+      // TODO: Optimize
+      if (ek === undefined) {
+        if (k.endsWith("[]")) {
+          const k2 = k.slice(0, -2);
+          // @ts-expect-error
+          if (value[k2] === undefined && o[k2] !== undefined) {
+            if (enyToGuard(o[k2])[_name] === "array") continue;
+          }
+        }
+      }
+
+      // If there is no eny for this key, or if it's readonly
       if (
         ek === undefined ||
-        (typeof ek === "function" &&
-          ek?.[_name as keyof typeof ek] === "readonly")
+        (((typeof ek === "object" && ek !== null) ||
+          typeof ek === "function") &&
+          // @ts-expect-error Is ok since if it is undefined, then that's ok too
+          ek[_name] === "readonly")
       ) {
         errors.push({
           message: "vality.object.extraProperty",
           path: [...path, k],
           options,
-          value: value[k as keyof typeof value],
+          // @ts-expect-error If it is undefined, then we'll just take that
+          value: value[k],
         });
-        if (options.bail) break;
+        if (bail) break;
       }
     }
-    if (errors.length === 0)
-      return { valid: true, data: data as typeof e, errors: [] };
-    return { valid: false, data: undefined, errors };
-  },
-  {},
-  {}
-);
-
-vality.optional = valit("optional", (e) => (val, _options, path, parent) => {
-  // Here, we must first check whether the eny allows undefined (as is the case with default values)
-  // If it validates, all good. Else, we allow undefined, or else return the original error the eny had returned.
-  const enyVal = enyToGuardFn(e)(val, path, parent);
-  if (enyVal.valid) return enyVal;
-  if (val === undefined) return { valid: true, data: undefined, errors: [] };
-  if (!config.strict && val === null)
-    return { valid: true, data: undefined, errors: [] };
-  return enyVal;
-});
-
-vality.enum = valit("enum", (...es) => (value, options, path, parent) => {
-  for (const e of es) {
-    const res = enyToGuardFn(e)(value, path, parent);
-    if (res.valid) return res;
   }
-  return {
-    valid: false,
-    data: undefined,
-    errors: [{ message: "vality.enum.base", path, options, value }],
-  };
+
+  if (errors.length === 0) return { valid: false, data: undefined, errors };
+  return { valid: true, data, errors: [] };
 });
 
-// @ts-ignore
-vality.tuple = valit(
-  "tuple",
-  (...es) =>
-    (value, options, path) => {
-      if (!Array.isArray(value))
-        return {
-          valid: false,
-          data: undefined,
-          errors: [{ message: "vality.tuple.base", path, options, value }],
-        };
-      const data = [] as unknown as typeof es;
-      const errors: Error[] = [];
-      for (let i = 0; i < es.length; i++) {
-        const res = enyToGuardFn(es[i])(value[i], [...path, i], value);
-        if (!res.valid) {
-          errors.push(...res.errors);
-          if (options.bail) break;
-        } else {
-          data[i] = res.data;
-        }
-      }
-      for (let i = es.length; i < value.length; i++) {
-        errors.push({
-          message: "vality.tuple.extraProperty",
-          path: [...path, i],
-          options,
-          value: value[i],
-        });
-        if (options.bail) break;
-      }
+vality.optional = valit(
+  "optional",
+  (e) => (val, options, path, context, parent) => {
+    // Here, we must first check whether the eny allows undefined (as is the case with default values)
+    // If it validates, all good. Else, we allow undefined, or else return the original error the eny had returned.
+    const enyVal = enyToGuardFn(e)(val, path, context, parent);
+    if (enyVal.valid) return enyVal;
+    if (val === undefined) return { valid: true, data: undefined, errors: [] };
 
-      if (errors.length === 0) return { valid: true, data, errors: [] };
-      return { valid: false, data: undefined, errors };
-    },
-  {},
-  {}
+    const { strict } = mergeOptions(options, context);
+
+    // Allow `null` in non-strict mode
+    if (!strict && val === null)
+      return { valid: true, data: undefined, errors: [] };
+    return enyVal;
+  }
 );
 
-// Gotta assert here as this is an exception where we don't just return your average valit, but need to add the _readonly marker
-// This is required as vality.object checks for this symbol to correctly check for readonly properties to be unset, not just of value undefined
+vality.enum = valit(
+  "enum",
+  (...es) =>
+    (value, options, path, context, parent) => {
+      for (const e of es) {
+        const res = enyToGuardFn(e)(value, path, context, parent);
+        if (res.valid) return res;
+      }
+      return {
+        valid: false,
+        data: undefined,
+        errors: [{ message: "vality.enum.base", path, options, value }],
+      };
+    }
+);
+
+vality.tuple = valit("tuple", (...es) => (value, options, path, context) => {
+  if (!Array.isArray(value))
+    return {
+      valid: false,
+      data: undefined,
+      errors: [{ message: "vality.tuple.base", path, options, value }],
+    };
+
+  const { bail, allowExtraProperties } = mergeOptions(options, context);
+
+  const data: any = [];
+  const errors: Error[] = [];
+  for (let i = 0; i < es.length; i++) {
+    const res = enyToGuardFn(es[i])(value[i], [...path, i], context, value);
+    if (!res.valid) {
+      errors.push(...res.errors);
+      if (bail) break;
+    } else {
+      data[i] = res.data;
+    }
+  }
+
+  if (!allowExtraProperties) {
+    for (let i = es.length; i < value.length; i++) {
+      errors.push({
+        message: "vality.tuple.extraProperty",
+        path: [...path, i],
+        options,
+        value: value[i],
+      });
+      if (bail) break;
+    }
+  }
+
+  if (errors.length) return { valid: false, data: undefined, errors };
+  return { valid: true, data, errors: [] };
+});
 
 // We still attach _validate, though, as (for whatever reason) this valit may still be called directly, and we really don't want a runtime error in that situation
+// If we ever encounter 'vality.readonly.base' in tests, it means that we handle readonly keys incorrectly somewhere
 vality.readonly = valit("readonly", (e) => (val, _options, path) => {
   if (val === undefined)
     return { valid: true, data: undefined as unknown as typeof e, errors: [] };
@@ -228,11 +279,10 @@ vality.readonly = valit("readonly", (e) => (val, _options, path) => {
   };
 });
 
-// @ts-ignore
 vality.and = valit(
   "and",
   (...es) =>
-    (value, options, path, parent) => {
+    (value, options, path, context, parent) => {
       if (typeof value !== "object" || value === null)
         return {
           valid: false,
@@ -240,233 +290,154 @@ vality.and = valit(
           errors: [{ message: "vality.and.base", path, options, value }],
         };
 
-      const data = {} as typeof es;
-      const errors: Error[] = [];
-
-      const handleEs = (ess: typeof es) => {
-        for (let i = 0; i < ess.length; i++) {
-          const eGuard = enyToGuard(ess[i]);
-          // @ts-ignore
-          const typeOfGuard = eGuard[_name] as string;
-          let res = undefined as undefined | ValidationResult<any>;
-
-          switch (typeOfGuard) {
-            case "object": {
-              const objectValue = {};
-              // @ts-ignore
-              for (const k in eGuard[_name][0]) {
-                Object.assign(objectValue, {
-                  [k]: value[k as keyof typeof value],
-                });
-              }
-
-              res = eGuard[_validate](objectValue, path, parent);
-              break;
-            }
-            case "enum":
-              // @ts-ignore
-              for (const e of eGuard[_name]) {
-                const enumMemberGuardFn = enyToGuardFn(e);
-
-                const enumMemberValue = {};
-                // @ts-expect-error -- Undocumented
-                for (const k in enumMemberGuardFn[_name][0]) {
-                  Object.assign(enumMemberValue, {
-                    [k]: value[k as keyof typeof value],
-                  });
-                }
-
-                res = enumMemberGuardFn(enumMemberValue, path, parent);
-                if (res.valid) break;
-              }
-              if (!res)
-                res = {
-                  valid: false,
-                  data: undefined,
-                  errors: [
-                    { message: "vality.enum.base", path, options, value },
-                  ],
-                };
-              break;
-            case "and":
-              // @ts-expect-error
-              handleEs(eGuard[_validate][_name]);
-              break;
-            default:
-              throw new Error(
-                "vality.and: Unexpected type of guard: " + typeOfGuard
-              );
-          }
-
-          if (!res) continue;
-          if (!res.valid) {
-            errors.push(...res.errors);
-            if (options.bail) break;
-          } else {
-            Object.assign(data, res.data);
-          }
-        }
-      };
-
-      handleEs(es);
-
-      if (errors.length !== 0) return { valid: false, data: undefined, errors };
-
-      const gotKeys = Object.keys(data).length;
-      const expectedKeys = Object.keys(value).length;
-      if (gotKeys < expectedKeys) {
-        return {
-          valid: false,
-          data: undefined,
-          errors: [
-            { message: "vality.and.extraProperties", path, options, value },
-          ],
-        };
-      } else if (gotKeys > expectedKeys) {
-        throw new Error("This can't happen");
-      }
-
-      return { valid: true, data, errors: [] };
-    },
-  {},
-  {}
+      return intersectObjects<typeof es>(es)(options)[_validate](
+        value,
+        path,
+        context,
+        parent
+      ) as ValidationResult<typeof es>;
+    }
 );
 
-vality.dict = valit(
-  "dict",
-  (k, v) => (value, options, path) => {
-    if (typeof value !== "object" || value === null) {
-      return {
-        valid: false,
-        data: undefined,
-        errors: [{ message: "vality.dict.base", path, options, value }],
-      };
-    }
+vality.dict = valit("dict", (k, v) => (value, options, path, context) => {
+  if (typeof value !== "object" || value === null) {
+    return {
+      valid: false,
+      data: undefined,
+      errors: [{ message: "vality.dict.base", path, options, value }],
+    };
+  }
 
-    // First, we resolve the key
-    const keyGuard = enyToGuard(k);
-    const simpleKeyGuard = simplifyEnumGuard(keyGuard);
-    const type = getRootType(simpleKeyGuard);
+  const { bail, allowExtraProperty } = mergeOptions(options, context);
 
-    let literalKeys;
-    let typeKeys;
+  // First, we resolve the key
+  const keyGuard = enyToGuard(k);
+  const simpleKeyGuard = simplifyEnumGuard(keyGuard);
+  const type = getRootType(simpleKeyGuard);
 
-    switch (type) {
-      case "string":
-      case "number":
-        literalKeys = [];
-        typeKeys = [simpleKeyGuard];
+  let literalKeys;
+  let typeKeys;
+
+  switch (type) {
+    case "string":
+    case "number":
+      literalKeys = [];
+      typeKeys = [simpleKeyGuard];
+      break;
+    case "literal":
+      literalKeys = [simpleKeyGuard];
+      typeKeys = [];
+      break;
+    case "enum":
+      [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce(
+        // @ts-expect-error
+        (acc, key) => {
+          const guard = enyToGuard(key);
+          // No need to simplify here, as simplify flattens out nested enums
+          const type = getRootType(guard);
+          if (type === "literal") {
+            acc[0].push(guard);
+          } else {
+            acc[1].push(guard);
+          }
+          return acc;
+        },
+        [[], []]
+      );
+      break;
+    default:
+      throw new Error(
+        "vality.dict: Unexpected type of property: " + simpleKeyGuard[_name]
+      );
+  }
+
+  const errors: Error[] = [];
+
+  // First, make sure that all literal keys are set
+  const valueKeys = Object.keys(value);
+  const newProperties: [string, string | number][] = [];
+  for (const literalKey of literalKeys) {
+    let foundProperty: [string, string | number] | undefined;
+    for (const k of valueKeys) {
+      const res = literalKey[_validate](k, path, value, context);
+      if (res.valid) {
+        foundProperty = [k, res.data];
         break;
-      case "literal":
-        literalKeys = [simpleKeyGuard];
-        typeKeys = [];
-        break;
-      case "enum":
-        // @ts-ignore
-        [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce(
-          // @ts-expect-error
-          (acc, key) => {
-            const guard = enyToGuard(key);
-            // No need to simplify here, as simplify flattens out nested enums
-            const type = getRootType(guard);
-            if (type === "literal") {
-              acc[0].push(guard);
-            } else {
-              acc[1].push(guard);
-            }
-            return acc;
-          },
-          [[], []]
-        );
-        break;
-      default:
-        // @ts-ignore
-        throw new Error(
-          "vality.dict: Unexpected type of property: " + simpleKeyGuard[_name]
-        );
-    }
-
-    const errors: Error[] = [];
-
-    // First, make sure that all literal keys are set
-    const valueKeys = Object.keys(value);
-    const newKeys: [string, string | number][] = [];
-    for (const literalKey of literalKeys) {
-      let foundKey: [string, string | number] | undefined;
-      for (const k of valueKeys) {
-        const res = literalKey[_validate](k, path, value);
-        if (res.valid) {
-          foundKey = [k, res.data];
-          break;
-        }
       }
-      if (foundKey) {
-        newKeys.push(foundKey);
-      } else {
+    }
+    if (foundProperty) {
+      newProperties.push(foundProperty);
+    } else {
+      if (
+        ((typeof v === "object" && v !== null) || typeof v === "function") &&
+        // @ts-expect-error Is ok since if it is undefined, then that's ok too
+        v[_name] !== "optional"
+      ) {
         errors.push({
           message: "vality.dict.missingProperty",
           path,
           options,
           value: literalKey[_type][0][_type],
         });
-        if (options.bail) break;
+        if (bail) break;
       }
     }
+  }
 
-    if (options.bail && errors.length)
-      return { valid: false, data: undefined, errors };
+  if (bail && errors.length) return { valid: false, data: undefined, errors };
 
-    // All remaining keys must be covered by our type keys
-    const remainingKeys = valueKeys.filter(
-      (k) => !newKeys.some((nk) => nk[0] === k)
-    );
-    for (const remainingKey of remainingKeys) {
-      let newKey: [string, string | number] | undefined;
-      for (const typeKey of typeKeys) {
-        const res = typeKey[_validate](remainingKey, path, value);
-        if (res.valid) {
-          newKey = [remainingKey, res.data];
-          break;
-        }
+  // All remaining keys must be covered by our type keys
+  const remainingProperties = valueKeys.filter(
+    (k) => !newProperties.some((nk) => nk[0] === k)
+  );
+  for (const remainingKey of remainingProperties) {
+    /**
+     * @key Actual key in the object
+     * @value Key it will be mapped to
+     */
+    let newProperty: [string, string | number] | undefined;
+    for (const typeKey of typeKeys) {
+      const res = typeKey[_validate](remainingKey, path, value, context);
+      if (res.valid) {
+        newProperty = [remainingKey, res.data];
+        break;
       }
-      if (newKey) {
-        newKeys.push(newKey);
-      } else {
+    }
+    if (newProperty) {
+      newProperties.push(newProperty);
+    } else {
+      if (!allowExtraProperty) {
         errors.push({
           message: "vality.dict.unexpectedProperty",
           path,
           options,
           value: remainingKey,
         });
-        if (options.bail) break;
+        if (bail) break;
       }
     }
+  }
 
-    if (options.bail && errors.length)
-      return { valid: false, data: undefined, errors };
+  if (bail && errors.length) return { valid: false, data: undefined, errors };
 
-    // Construct return object
-    const data = {} as [typeof k, typeof v];
-    const valueGuard = enyToGuard(v);
-    for (const [oldKey, newKey] of newKeys) {
-      // @ts-ignore
-      const res = valueGuard[_validate](
-        // @ts-expect-error
-        value[oldKey],
-        [...path, oldKey],
-        value
-      );
-      if (res.valid) {
-        // @ts-ignore
-        data[newKey] = res.data;
-      } else {
-        errors.push(...res.errors);
-        if (options.bail) break;
-      }
+  // Construct return object
+  const data: any = {};
+  const valueGuard = enyToGuard(v);
+  for (const [oldKey, newKey] of newProperties) {
+    const res = valueGuard[_validate](
+      // @ts-expect-error
+      value[oldKey],
+      [...path, oldKey],
+      value,
+      context
+    );
+    if (res.valid) {
+      data[newKey] = res.data;
+    } else {
+      errors.push(...res.errors);
+      if (bail) break;
     }
-    if (errors.length) return { valid: false, data: undefined, errors };
-    return { valid: true, data, errors: [] };
-  },
-  {},
-  {}
-);
+  }
+  if (errors.length) return { valid: false, data: undefined, errors };
+  return { valid: true, data, errors: [] };
+});
