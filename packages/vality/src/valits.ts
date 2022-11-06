@@ -308,7 +308,7 @@ vality.dict = valit("dict", (k, v) => (value, options, path, context) => {
     };
   }
 
-  const { bail, allowExtraProperty } = mergeOptions(options, context);
+  const { bail, allowExtraProperties } = mergeOptions(options, context);
 
   // First, we resolve the key
   const keyGuard = enyToGuard(k);
@@ -406,7 +406,7 @@ vality.dict = valit("dict", (k, v) => (value, options, path, context) => {
     if (newProperty) {
       newProperties.push(newProperty);
     } else {
-      if (!allowExtraProperty) {
+      if (!allowExtraProperties) {
         errors.push({
           message: "vality.dict.unexpectedProperty",
           path,
