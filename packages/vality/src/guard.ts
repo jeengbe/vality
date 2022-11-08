@@ -30,8 +30,8 @@ export type GuardOptions<
 export type GuardFn<Type, Options> = (
   value: unknown,
   options: Partial<CallOptions<Type, Options>>,
-  path: Path,
   context: Context,
+  path: Path,
   parent?: any
 ) => Type | undefined;
 
@@ -51,8 +51,8 @@ export function guard<
   return makeValit<Name, [GuardFn<Type, Options>], Type, Options, false>(
     name,
     (fn: GuardFn<Type, Options>): ValitFn<Type, Options> => {
-      const validateFn: ValitFn<Type, Options> = ((value, options, path, parent) => {
-        const res = fn(value, options, path, parent);
+      const validateFn: ValitFn<Type, Options> = ((value, options, path, context, parent) => {
+        const res = fn(value, options, context, path, parent);
         if (res !== undefined) {
           return {
             valid: true,

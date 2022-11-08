@@ -9,28 +9,37 @@ export function testGuard(
   {
     option,
     options,
-    valid,
-    invalid,
+    context,
+    config: newConfig,
+    valid = [],
+    invalid = [],
   }: {
     option?: string;
     options?: RSA;
-    valid: {
+    context?: RSA;
+    config?: RSA;
+    default?: RSA;
+    valid?: {
       value: unknown;
       expect?: unknown;
     }[];
-    invalid: {
+    invalid?: {
       value: unknown;
       errors?: Error[];
     }[];
   }
 ) {
+  // @ts-ignore
+  for (const k in config) delete config[k];
+  Object.assign(config, newConfig);
+
   for (const v of valid) {
-    expect(validate(guard, v.value)).toBeValid(
+    expect(validate(guard, v.value, context)).toBeValid(
       "expect" in v ? v.expect : v.value
     );
   }
   for (const v of invalid) {
-    expect(validate(guard, v.value)).toBeInvalid(
+    expect(validate(guard, v.value, context)).toBeInvalid(
       ...(v.errors ?? [
         {
           message: option
@@ -48,9 +57,72 @@ export function testGuard(
 describe("vality.string", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      config.strict = true;
+      testGuard(
+        "string",
+        v.string({
+          strict: true,
+        }),
+        {
+          options: {
+            strict: true,
+          },
+          valid: [
+            { value: "" },
+            { value: "foo" },
+            { value: "bar" },
+            { value: "foo bar" },
+          ],
+          invalid: [
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1 },
+            { value: 1.5 },
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
 
       testGuard("string", v.string, {
+        context: {
+          strict: true,
+        },
+        valid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+        ],
+        invalid: [
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("string", v.string, {
+        config: {
+          strict: true,
+        },
         valid: [
           { value: "" },
           { value: "foo" },
@@ -77,7 +149,95 @@ describe("vality.string", () => {
     });
 
     test("in non-strict mode", () => {
-      config.strict = false;
+      testGuard(
+        "string",
+        v.string({
+          strict: false,
+        }),
+        {
+          options: {
+            strict: false,
+          },
+          valid: [
+            { value: "" },
+            { value: "foo" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: -1.5, expect: "-1.5" },
+            { value: -1, expect: "-1" },
+            { value: 0, expect: "0" },
+            { value: 1, expect: "1" },
+            { value: 1.5, expect: "1.5" },
+          ],
+          invalid: [
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
+
+      testGuard("string", v.string, {
+        context: {
+          strict: false,
+        },
+        valid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5, expect: "-1.5" },
+          { value: -1, expect: "-1" },
+          { value: 0, expect: "0" },
+          { value: 1, expect: "1" },
+          { value: 1.5, expect: "1.5" },
+        ],
+        invalid: [
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("string", v.string, {
+        config: {
+          strict: false,
+        },
+        valid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5, expect: "-1.5" },
+          { value: -1, expect: "-1" },
+          { value: 0, expect: "0" },
+          { value: 1, expect: "1" },
+          { value: 1.5, expect: "1.5" },
+        ],
+        invalid: [
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
 
       testGuard("string", v.string, {
         valid: [
@@ -153,9 +313,62 @@ describe("vality.string", () => {
 describe("vality.number", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      config.strict = true;
+      testGuard("number", v.number({
+        strict: true
+      }), {
+        options: {strict: true},
+        valid: [
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
 
       testGuard("number", v.number, {
+        context: {strict: true},
+        valid: [
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("number", v.number, {
+        config: {strict: true},
         valid: [
           { value: -1.5 },
           { value: -1 },
@@ -182,7 +395,100 @@ describe("vality.number", () => {
     });
 
     test("in non-strict mode", () => {
-      config.strict = false;
+      testGuard("number", v.number({
+        strict: false
+      }), {
+        options: {strict: false},
+        valid: [
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: "-1.5", expect: -1.5 },
+          { value: "-1", expect: -1 },
+          { value: "0", expect: 0 },
+          { value: "1", expect: 1 },
+          { value: "1.5", expect: 1.5 },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("number", v.number, {
+        context: {strict: false},
+        valid: [
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: "-1.5", expect: -1.5 },
+          { value: "-1", expect: -1 },
+          { value: "0", expect: 0 },
+          { value: "1", expect: 1 },
+          { value: "1.5", expect: 1.5 },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("number", v.number, {
+        config: {strict: false},
+        valid: [
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: "-1.5", expect: -1.5 },
+          { value: "-1", expect: -1 },
+          { value: "0", expect: 0 },
+          { value: "1", expect: 1 },
+          { value: "1.5", expect: 1.5 },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
 
       testGuard("number", v.number, {
         valid: [
@@ -312,9 +618,54 @@ describe("vality.number", () => {
 describe("vality.boolean", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      config.strict = true;
+      testGuard("boolean", v.boolean({strict: true}), {
+        options: { strict: true },
+        valid: [{ value: true }, { value: false }],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
 
       testGuard("boolean", v.boolean, {
+        context: { strict: true },
+        valid: [{ value: true }, { value: false }],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("boolean", v.boolean, {
+        config: { strict: true },
         valid: [{ value: true }, { value: false }],
         invalid: [
           { value: "" },
@@ -338,7 +689,95 @@ describe("vality.boolean", () => {
     });
 
     test("in non-strict mode", () => {
-      config.strict = false;
+      testGuard("boolean", v.boolean({strict: false}), {
+        options: { strict: false },
+        valid: [
+          { value: true },
+          { value: false },
+          { value: "true", expect: true },
+          { value: "false", expect: false },
+          { value: "1", expect: true },
+          { value: "0", expect: false },
+          { value: 1, expect: true },
+          { value: 0, expect: false },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 1.5 },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("boolean", v.boolean, {
+        context: { strict: false },
+        valid: [
+          { value: true },
+          { value: false },
+          { value: "true", expect: true },
+          { value: "false", expect: false },
+          { value: "1", expect: true },
+          { value: "0", expect: false },
+          { value: 1, expect: true },
+          { value: 0, expect: false },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 1.5 },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("boolean", v.boolean, {
+        config: { strict: false },
+        valid: [
+          { value: true },
+          { value: false },
+          { value: "true", expect: true },
+          { value: "false", expect: false },
+          { value: "1", expect: true },
+          { value: "0", expect: false },
+          { value: 1, expect: true },
+          { value: 0, expect: false },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 1.5 },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
 
       testGuard("boolean", v.boolean, {
         valid: [
@@ -383,9 +822,58 @@ describe("vality.boolean", () => {
 describe("vality.date", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      config.strict = true;
+      testGuard("date", v.date({strict: true}), {
+        options: { strict: true },
+        valid: [{ value: new Date() }, { value: new Date(NaN) }],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
 
       testGuard("date", v.date, {
+        context: { strict: true },
+        valid: [{ value: new Date() }, { value: new Date(NaN) }],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("date", v.date, {
+        config: { strict: true },
         valid: [{ value: new Date() }, { value: new Date(NaN) }],
         invalid: [
           { value: "" },
@@ -411,7 +899,161 @@ describe("vality.date", () => {
     });
 
     test("in non-strict mode", () => {
-      config.strict = false;
+      testGuard("date", v.date({strict: false}), {
+        options: { strict: false },
+        valid: [
+          { value: new Date() },
+          {
+            value: "2020-01-01",
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1577836800000
+            ),
+          },
+          {
+            value: "2020-01-01T00:00:00.000Z",
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1577836800000
+            ),
+          },
+          {
+            value: -1,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === -1
+            ),
+          },
+          {
+            value: 0,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 0
+            ),
+          },
+          {
+            value: 1,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1
+            ),
+          },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("date", v.date, {
+        context: { strict: false },
+        valid: [
+          { value: new Date() },
+          {
+            value: "2020-01-01",
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1577836800000
+            ),
+          },
+          {
+            value: "2020-01-01T00:00:00.000Z",
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1577836800000
+            ),
+          },
+          {
+            value: -1,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === -1
+            ),
+          },
+          {
+            value: 0,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 0
+            ),
+          },
+          {
+            value: 1,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1
+            ),
+          },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("date", v.date, {
+        config: { strict: false },
+        valid: [
+          { value: new Date() },
+          {
+            value: "2020-01-01",
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1577836800000
+            ),
+          },
+          {
+            value: "2020-01-01T00:00:00.000Z",
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1577836800000
+            ),
+          },
+          {
+            value: -1,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === -1
+            ),
+          },
+          {
+            value: 0,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 0
+            ),
+          },
+          {
+            value: 1,
+            expect: expect.callback(
+              (val) => val instanceof Date && val.getTime() === 1
+            ),
+          },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "foo" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
 
       testGuard("date", v.date, {
         valid: [
@@ -545,9 +1187,10 @@ describe("vality.date", () => {
 describe("vality.literal", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      config.strict = true;
-
-      testGuard("literal", v.literal("foo"), {
+      testGuard("literal", v.literal("foo")({
+        strict: true,
+      }), {
+        options: { strict: true },
         valid: [{ value: "foo" }],
         invalid: [
           { value: "" },
@@ -570,7 +1213,60 @@ describe("vality.literal", () => {
         ],
       });
 
+      testGuard("literal", v.literal(7)({
+        strict: true,
+      }), {
+        options: { strict: true },
+        valid: [{ value: 7 }],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: "7" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
       testGuard("literal", v.literal(7), {
+        context: { strict: true },
+        valid: [{ value: 7 }],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: "7" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 0 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("literal", v.literal(7), {
+        config: { strict: true },
         valid: [{ value: 7 }],
         invalid: [
           { value: "" },
@@ -596,9 +1292,10 @@ describe("vality.literal", () => {
     });
 
     test("in non-strict mode", () => {
-      config.strict = false;
-
-      testGuard("literal", v.literal("foo"), {
+      testGuard("literal", v.literal("foo")({
+        strict: false,
+      }), {
+        options: { strict: false },
         valid: [{ value: "foo" }],
         invalid: [
           { value: "" },
@@ -621,7 +1318,10 @@ describe("vality.literal", () => {
         ],
       });
 
-      testGuard("literal", v.literal("7"), {
+      testGuard("literal", v.literal("7")({
+        strict: false,
+      }), {
+        options: { strict: false },
         valid: [{ value: "7" }, { value: 7, expect: "7" }],
         invalid: [
           { value: "" },
@@ -644,7 +1344,10 @@ describe("vality.literal", () => {
         ],
       });
 
-      testGuard("literal", v.literal(7.5), {
+      testGuard("literal", v.literal(7.5)({
+        strict: false,
+      }), {
+        options: { strict: false },
         valid: [{ value: 7.5 }, { value: "7.5", expect: 7.5 }],
         invalid: [
           { value: "" },
@@ -667,7 +1370,10 @@ describe("vality.literal", () => {
         ],
       });
 
-      testGuard("literal", v.literal(true), {
+      testGuard("literal", v.literal(true)({
+        strict: false,
+      }), {
+        options: { strict: false },
         valid: [
           { value: true },
           { value: "true", expect: true },
@@ -683,6 +1389,89 @@ describe("vality.literal", () => {
           { value: 0 },
           { value: 1.5 },
           { value: false },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("literal", v.literal(false)({
+        strict: false,
+      }), {
+        options: { strict: false },
+        valid: [
+          { value: false },
+          { value: "false", expect: false },
+          { value: "0", expect: false },
+          { value: 0, expect: false },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("literal", v.literal(false), {
+        context: { strict: false },
+        valid: [
+          { value: false },
+          { value: "false", expect: false },
+          { value: "0", expect: false },
+          { value: 0, expect: false },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
+          { value: undefined },
+          { value: null },
+          { value: {} },
+          { value: { foo: "bar" } },
+          { value: [] },
+          { value: ["foo"] },
+          { value: () => {} },
+        ],
+      });
+
+      testGuard("literal", v.literal(false), {
+        config: { strict: false },
+        valid: [
+          { value: false },
+          { value: "false", expect: false },
+          { value: "0", expect: false },
+          { value: 0, expect: false },
+        ],
+        invalid: [
+          { value: "" },
+          { value: "bar" },
+          { value: "foo bar" },
+          { value: -1.5 },
+          { value: -1 },
+          { value: 1 },
+          { value: 1.5 },
+          { value: true },
           { value: undefined },
           { value: null },
           { value: {} },
@@ -817,21 +1606,20 @@ describe("vality.relation", () => {
           { value: { foo: "bar" } },
           { value: [] },
           { value: ["foo"] },
-          { value: () => { } },
+          { value: () => {} },
         ],
       }
     );
   });
 
   test("type", () => {
-    type M = {"my": "model"}
+    type M = { my: "model" };
     const guard = v.relation(null as any as () => M);
     const guardCalledArgs = v.relation(null as any as () => M)({});
 
     expectType<TypeEqual<M, Parse<typeof guard>>>(true);
     expectType<TypeEqual<M, Parse<typeof guardCalledArgs>>>(true);
   });
-
 });
 
 describe("vality.any", () => {
@@ -851,7 +1639,7 @@ describe("vality.any", () => {
         { value: { foo: "bar" } },
         { value: [] },
         { value: ["foo"] },
-        { value: () => { } },
+        { value: () => {} },
       ],
       invalid: [{ value: undefined }],
     });
@@ -863,5 +1651,37 @@ describe("vality.any", () => {
 
     expectType<TypeEqual<unknown, Parse<typeof guard>>>(true);
     expectType<TypeEqual<unknown, Parse<typeof guardCalledArgs>>>(true);
+  });
+});
+
+describe("vality.never", () => {
+  describe("base type check", () => {
+    testGuard("never", v.never, {
+      invalid: [
+        { value: null },
+        { value: 0 },
+        { value: 1 },
+        { value: "" },
+        { value: "foo" },
+        { value: "bar" },
+        { value: "foo bar" },
+        { value: true },
+        { value: false },
+        { value: {} },
+        { value: { foo: "bar" } },
+        { value: [] },
+        { value: ["foo"] },
+        { value: () => {} },
+        { value: undefined },
+      ],
+    });
+  });
+
+  test("type", () => {
+    const guard = v.never;
+    const guardCalledArgs = v.never({});
+
+    expectType<TypeEqual<never, Parse<typeof guard>>>(true);
+    expectType<TypeEqual<never, Parse<typeof guardCalledArgs>>>(true);
   });
 });

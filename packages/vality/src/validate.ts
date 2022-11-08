@@ -2,7 +2,7 @@ import { config } from "./config";
 import { CallOptions } from "./makeValidate";
 import { Parse } from "./parse";
 import { _name, _type, _validate } from "./symbols";
-import { Eny, enyToGuardFn, RSE } from "./utils";
+import { Eny, enyToGuardFn, RSA } from "./utils";
 import { vality } from "./vality";
 
 export interface Error {
@@ -94,12 +94,20 @@ const defaults = {
   allowExtraProperties: true,
   strict: false,
   bail: false,
-}
+};
 
-export function mergeOptions(options: Context, context: Context): Required<Context> {
+export function mergeOptions(
+  options: Partial<RSA>,
+  context: Partial<RSA>
+): Required<Context> {
   return {
-    allowExtraProperties: options.allowExtraProperties ?? context.allowExtraProperties ?? config.allowExtraProperties ?? defaults.allowExtraProperties,
-    strict: options.strict ?? context.strict ?? config.strict ?? defaults.strict,
+    allowExtraProperties:
+      options.allowExtraProperties ??
+      context.allowExtraProperties ??
+      config.allowExtraProperties ??
+      defaults.allowExtraProperties,
+    strict:
+      options.strict ?? context.strict ?? config.strict ?? defaults.strict,
     bail: options.bail ?? context.bail ?? config.bail ?? defaults.bail,
   };
 }
@@ -107,15 +115,11 @@ export function mergeOptions(options: Context, context: Context): Required<Conte
 export function validate<E extends Eny>(
   schema: E,
   val: unknown,
-  bail = false
+  context?: RSA
 ): ValidationResult<Parse<E>> {
   // Call top-level functions (So they're not treated as relations)
   if (typeof schema === "function" && !(_validate in schema))
-    schema = vality.object((schema as () => RSE)())(
-      bail === true ? { bail } : {}
-    ) as unknown as E;
+    schema = vality.object(schema())as unknown as E;
 
-  const context = {};
-
-  return enyToGuardFn(schema)(val, [], context, undefined);
+  return enyToGuardFn(schema)(val, [], context ?? {}, undefined);
 }

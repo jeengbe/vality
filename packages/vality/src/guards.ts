@@ -1,9 +1,8 @@
-import { config } from "./config";
 import { guard, Guard, GuardFn } from "./guard";
 import { RelationType } from "./parse";
 import { _type } from "./symbols";
 import { Primitive, RSE } from "./utils";
-import { validate } from "./validate";
+import { mergeOptions, validate } from "./validate";
 import { Valit } from "./valit";
 import { vality } from "./vality";
 
@@ -83,15 +82,19 @@ declare global {
         }
       >;
       any: Guard<"any", unknown>;
+      never: Guard<"never", never>;
     }
   }
 }
 
 vality.string = guard(
   "string",
-  (val) => {
+  (val, options, context) => {
     if (typeof val === "string") return val;
-    if (config.strict) return undefined;
+
+    const { strict } = mergeOptions(options, context)
+
+    if (strict) return undefined;
     if (typeof val !== "number") return undefined;
     return val.toString();
   },
@@ -104,9 +107,12 @@ vality.string = guard(
 
 vality.number = guard(
   "number",
-  (val) => {
+  (val, options, context) => {
     if (typeof val === "number") return val;
-    if (config.strict) return undefined;
+
+    const { strict } = mergeOptions(options, context)
+
+    if (strict) return undefined;
     if (typeof val !== "string") return undefined;
     const nr = Number.parseFloat(val);
     if (Number.isNaN(nr)) return undefined;
@@ -126,18 +132,24 @@ vality.number = guard(
 
 const y = new Set().add("1").add(1).add("true");
 const n = new Set().add("0").add(0).add("false");
-vality.boolean = guard("boolean", (val) => {
+vality.boolean = guard("boolean", (val, options, context) => {
   if (typeof val === "boolean") return val;
-  if (config.strict) return undefined;
+
+  const { strict } = mergeOptions(options, context)
+
+  if (strict) return undefined;
   if (typeof val !== "string" && typeof val !== "number") return undefined;
   return y.has(val) ? true : n.has(val) ? false : undefined;
 });
 
 vality.date = guard(
   "date",
-  (val) => {
+  (val, options, context) => {
     if (val instanceof Date) return val;
-    if (config.strict) return undefined;
+
+    const { strict } = mergeOptions(options, context)
+
+    if (strict) return undefined;
     if (typeof val !== "string" && typeof val !== "number") return undefined;
     const date = new Date(val);
     if (Number.isNaN(date.getTime())) return undefined;
@@ -153,7 +165,7 @@ vality.date = guard(
 
 vality.literal = (lit) => {
   // We don't do this directly inline to attach [_type] to guardFn
-  const guardFn: GuardFn<typeof lit, { default: boolean; }> = (val, options) => {
+  const guardFn: GuardFn<typeof lit, { default: boolean; }> = (val, options, context) => {
     if (options.default === true) {
       if (val === undefined) return lit;
     } else {
@@ -161,7 +173,10 @@ vality.literal = (lit) => {
       delete options.default;
     }
     if (val === lit) return lit;
-    if (config.strict) return undefined;
+
+    const { strict } = mergeOptions(options, context)
+
+    if (strict) return undefined;
     if (typeof lit === "string" && typeof val === "number")
       return val.toString() === lit ? lit : undefined;
     if (typeof lit === "number" && typeof val === "string")
@@ -200,3 +215,5 @@ vality.relation = () =>
   }) as any;
 
 vality.any = guard("any", (val) => val);
+
+vality.never = guard("never", () => undefined);
