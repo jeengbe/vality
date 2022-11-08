@@ -1,5 +1,8 @@
+import { expectType, TypeEqual } from "ts-expect";
+import { Parse } from "vality";
 import { makeValit } from "vality/makeValidate";
 import { _name, _type, _validate } from "vality/symbols";
+import { Valit } from "vality/valit";
 
 function testValit({
   name = "__valit",
@@ -760,5 +763,14 @@ describe("valit", () => {
         );
       });
     });
+  });
+
+  describe("type", () => {
+    type T = { foo: "bar"; };
+    const valit = null as unknown as Valit<"name", T>
+    const valitCalled = null as unknown as ReturnType<Valit<"name", T> & Function>
+
+    expectType<TypeEqual<T, Parse<typeof valit>>>(true);
+    expectType<TypeEqual<T, Parse<typeof valitCalled>>>(true);
   });
 });

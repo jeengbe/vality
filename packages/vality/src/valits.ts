@@ -17,7 +17,7 @@ import { vality } from "./vality";
 declare global {
   namespace vality {
     interface valits {
-      array: (e: Eny) => Valit<
+      array: <E extends Eny>(e: E) => Valit<
         "array",
         typeof e[],
         {
