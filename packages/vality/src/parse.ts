@@ -11,12 +11,12 @@ import { Face } from "./validate";
 
 declare global {
   namespace vality {
-    interface Config { }
+    interface Config {}
   }
 }
 
 // This is how a relation should be passed to the api (in "in"-mode)
-export type RelationType = vality.Config extends { RelationType: infer R; }
+export type RelationType = vality.Config extends { RelationType: infer R }
   ? R
   : number | null;
 
@@ -27,13 +27,13 @@ export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   : T extends Face<"and", infer U extends Eny[], true>
   ? IntersectItems<U>
   : T extends Face<
-    "dict",
-    [OneOrEnumOfTOrFace<infer L extends string | number>, infer V],
-    true
-  >
+      "dict",
+      [OneOrEnumOfTOrFace<infer L extends string | number>, infer V],
+      true
+    >
   ? {
-    [P in L]: Parse<V, DecD<_D>>;
-  }
+      [P in L]: Parse<V, DecD<_D>>;
+    }
   : T extends readonly [infer U] // Array Short
   ? Parse<U, DecD<_D>>[]
   : T extends Face<any, (infer U)[], true> // Array Valit
@@ -46,15 +46,15 @@ export type Parse<T, _D = "out"> = T extends Face<"tuple", infer U, any>
   ? U
   : T extends () => infer U // A model
   ? "in-layer-one" extends _D
-  ? Parse<U, "in">
-  : "in" extends _D
-  ? RelationType
-  : Parse<U, _D>
+    ? Parse<U, "in">
+    : "in" extends _D
+    ? RelationType
+    : Parse<U, _D>
   : {
-    -readonly [K in keyof T as Parse<T[K], _D> extends never
-    ? never
-    : K]: Parse<T[K], DecD<_D>>;
-  };
+      -readonly [K in keyof T as Parse<T[K], _D> extends never
+        ? never
+        : K]: Parse<T[K], DecD<_D>>;
+    };
 
 export type ParseOut<T> = Parse<T>;
 export type ParseIn<T> = Parse<T, "in-layer-one">;

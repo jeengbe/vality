@@ -772,3 +772,7 @@ describe("vality.dict", () => {
     expect(true).toBe(false);
   });
 });
+
+test("a", () => {
+  console.log(validate(v.and({ a: "a" }, { b: "b" }), { a: "a", b: "b" }));
+});

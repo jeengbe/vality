@@ -1,6 +1,6 @@
 import { Parse } from "parse";
 import { _name, _type, _validate } from "./symbols";
-import { intersectObjects } from "./typeUtils";
+import { intersect } from "./typeUtils";
 import {
   Eny,
   enyToGuard,
@@ -17,7 +17,9 @@ import { vality } from "./vality";
 declare global {
   namespace vality {
     interface valits {
-      array: <E extends Eny>(e: E) => Valit<
+      array: <E extends Eny>(
+        e: E
+      ) => Valit<
         "array",
         typeof e[],
         {
@@ -38,9 +40,7 @@ declare global {
         "and",
         typeof es,
         {
-          transform: (
-            val: Parse<Valit<"and", typeof es>>
-          ) => Parse<Valit<"and", typeof es>>;
+          transform: (val: Parse<Valit<"and", E>>) => Parse<Valit<"and", E>>;
         }
       >;
       dict: <K extends OneOrEnumOfTOrFace<string | number>, V extends Eny>(
@@ -279,6 +279,7 @@ vality.readonly = valit("readonly", (e) => (val, _options, path) => {
   };
 });
 
+// @ts-expect-error 'IntersectItems<RSE[]>' gives 'never'
 vality.and = valit(
   "and",
   (...es) =>
@@ -290,7 +291,8 @@ vality.and = valit(
           errors: [{ message: "vality.and.base", path, options, value }],
         };
 
-      return intersectObjects<typeof es>(es)(options)[_validate](
+      // @ts-expect-error
+      return intersect(es)(options)[_validate](
         value,
         path,
         context,

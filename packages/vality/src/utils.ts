@@ -160,6 +160,4 @@ type Values<T> = T[keyof T];
 type Unfoo<T> = T extends { foo: any } ? T["foo"] : never;
 
 // combine three helpers to get an intersection of all the item types
-export type IntersectItems<T extends any[]> = Unfoo<
-  Intersect<Values<Foo<T>>>
->;
+export type IntersectItems<T extends any[]> = Unfoo<Intersect<Values<Foo<T>>>>;
