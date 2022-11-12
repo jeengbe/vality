@@ -1,5 +1,5 @@
 import { CompoundFn } from "./compound";
-import { _guard, _name, _type } from "./symbols";
+import { _flags, _guard, _name, _type } from "./symbols";
 import { RSA } from "./utils";
 import { Context, Path, ValidationResult } from "./validate";
 
@@ -50,6 +50,7 @@ export interface Guard<Name, Type, IsCompound> {
   [_name]: Name;
   [_guard]: GuardFn<Type>;
   [_type]: Type;
+  [_flags]: Map<string, unknown>;
   isCompound?: IsCompound;
 }
 
@@ -90,7 +91,7 @@ export function makeValit<
   >
 ): (...args: Arg) => Valit<Name, Type, Options, IsValit> {
   return (...args) => {
-    const getValidateFnFromOptions =
+    const getGuardFnFromOptions =
       (options: CallOptions<Type, Options>): GuardFn<Type> =>
       (value, context, path, parent) => {
         const {
@@ -186,18 +187,22 @@ export function makeValit<
         };
       };
 
+    const flagsMap = new Map();
+
     const validate = (options => ({
       [_name]: name,
       [_guard]: (val, context, path, parent) => {
         if (typeof options === "function") options = options(parent, context);
-        return getValidateFnFromOptions(options)(val, context, path, parent);
+        return getGuardFnFromOptions(options)(val, context, path, parent);
       },
       [_type]: args as unknown as Type,
+      [_flags]: flagsMap,
     })) as Valit<Name, Type, Options, IsValit>;
 
     validate[_name] = name;
-    validate[_guard] = getValidateFnFromOptions({});
+    validate[_guard] = getGuardFnFromOptions({});
     validate[_type] = args as unknown as Type;
+    validate[_flags] = flagsMap;
 
     return validate;
   };

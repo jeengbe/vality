@@ -32,14 +32,8 @@ export function scalar<
 ): Valit<Name, Type, Options, false> {
   return makeValit<Name, [ScalarFn<Type, Options>], Type, Options, false>(
     name,
-    (fn: ScalarFn<Type, Options>): CompoundFn<Type, Options> => {
-      const compoundFn: CompoundFn<Type, Options> = (
-        value,
-        options,
-        context,
-        path,
-        parent
-      ) => {
+    (fn: ScalarFn<Type, Options>): CompoundFn<Type, Options> =>
+      (value, options, context, path, parent) => {
         const res = fn(value, options, context, path, parent);
         if (res !== undefined) {
           return {
@@ -61,10 +55,7 @@ export function scalar<
             },
           ],
         };
-      };
-
-      return compoundFn;
-    },
+      },
     handleOptions,
     defaultOptions
   )(scalarFn);

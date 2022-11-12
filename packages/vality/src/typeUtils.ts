@@ -40,7 +40,9 @@ export function isScalar(g: Guard<any, any, any>): boolean {
 }
 
 
-export function getName(g: Guard<any, any, any>): string {
+export function getName(e: Eny): string {
+  const g = enyToGuard(e);
+
   let type = g[_name];
   const seen = new Set();
   if (!(type in types)) return type;

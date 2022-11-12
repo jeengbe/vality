@@ -1,6 +1,6 @@
 import { Guard, GuardFn } from "valit";
 import { Parse } from "./parse";
-import { _guard } from "./symbols";
+import { _flags, _guard } from "./symbols";
 import { vality } from "./vality";
 
 export interface RSA {
@@ -42,15 +42,14 @@ export type EnyToGuard<T> = T extends Guard<any, any, any>
   ? Guard<"object", T, true>
   : never;
 
-export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
+export function enyToGuard<E extends Eny>(eny: E): Guard<any, any, any> {
   // The issue with this function is that the connection to E gets lost within the branches
   // so TS can no longer be sure that the type actually matches the defined return type
+  // Which means, that we unfortunately have to 'Guard<any, any, any>' this
   // See https://www.typescriptlang.org/play?jsx=0#code/DYUwLgBAZgvAPAFQHwAoBuAuBBKLEQAeYIAdgCYDOARAIZUD8tVGVARlTEmjD043S3ZA for a minimal example of the issue.
   // The code is minified for the link to fit into this comment, but expanding it shows the issue more clearly.
 
-  // @ts-expect-error
   if (isGuard(eny)) return eny;
-  // @ts-expect-error
   // Needs to be checked after isGuard since functions can be guards
   if (typeof eny === "function") return vality.object(eny());
 
@@ -60,16 +59,13 @@ export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
     typeof eny === "boolean" ||
     eny === null
   ) {
-    // @ts-expect-error
     return vality.literal(eny);
   }
 
   if (Array.isArray(eny)) {
     // Model is malformed, it's ok to throw an error here
     if (eny.length === 0) throw new Error("Empty array short");
-    // @ts-expect-error
     if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
-    // @ts-expect-error
     return vality.enum(...eny.map(enyToGuard));
   }
 
@@ -88,6 +84,13 @@ function isGuard(val: Eny): val is Guard<any, any, any> {
 // For ease-of-use's sake, type this as any
 export function enyToGuardFn<E extends Eny>(e: E): GuardFn<any> {
   return enyToGuard(e)[_guard];
+}
+
+const emptyMap = new Map();
+
+export function getFlags(e: Eny): ReadonlyMap<string, unknown> {
+  if (!isGuard(e)) return emptyMap;
+  return e[_flags] ?? emptyMap;
 }
 
 export type OneOrEnumOfTOrGuard<T> = TOrGuard<T> | EnumOfTOrGuard<T>;

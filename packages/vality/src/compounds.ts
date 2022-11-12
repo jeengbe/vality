@@ -1,13 +1,9 @@
 import { Compound, compound } from "./compound";
-import { _guard, _name, _type } from "./symbols";
+import { _guard } from "./symbols";
 import { getName } from "./typeUtils";
-import {
-  Eny,
-  enyToGuard,
-  enyToGuardFn, RSE
-} from "./utils";
+import { Eny, enyToGuard, enyToGuardFn, getFlags, RSE } from "./utils";
 import { Error, mergeOptions } from "./validate";
-import { v, vality } from "./vality";
+import { vality } from "./vality";
 
 declare global {
   namespace vality {
@@ -16,7 +12,7 @@ declare global {
         e: E
       ) => Compound<
         "array",
-        E,
+        E[],
         {
           bail: boolean;
           minLength: number;
@@ -24,7 +20,7 @@ declare global {
         }
       >;
       tuple: <E extends Eny[]>(...es: E) => Compound<"tuple", E>;
-      enum: <E extends Eny[]>(...es: E) => Compound<"enum", E>;
+      enum: <E extends Eny[]>(...es: E) => Compound<"enum", E[number]>;
       object: <O extends RSE>(
         o: O
       ) => Compound<
@@ -34,7 +30,7 @@ declare global {
           allowExtraProperties: boolean;
           bail: boolean;
         }
-        >;
+      >;
       // /*
       //  * Complex
       //  */
@@ -53,16 +49,6 @@ declare global {
       //     ) => Parse<Compound<"and", E>>;
       //   }
       // >;
-    }
-
-    interface flags {
-      optional: <E extends Eny>(
-        e: E
-      ) => Flagged<E, "optional", true>;
-      from: <F extends string>(
-        key: F
-      ) => <E extends Eny>(e: E) => Flagged<E, "from", F>;
-      readonly: <E extends Eny>(e: E) => Flagged<E, "readonly", true>;
     }
   }
 }
@@ -109,156 +95,116 @@ vality.array = compound(
   }
 );
 
-vality.object = compound("object", (o) => (value, options, context, path) => {
-  if (typeof value !== "object" || value === null || Array.isArray(value))
-    return {
-      valid: false,
-      data: undefined,
-      errors: [{ message: "vality.object.base", path, options, value }],
-    };
+vality.object = compound(
+  "object",
+  (o) => (value, options, context, path, flags) => {
+    if (typeof value !== "object" || value === null || Array.isArray(value))
+      return {
+        valid: false,
+        data: undefined,
+        errors: [{ message: "vality.object.base", path, options, value }],
+      };
 
-  const { bail, allowExtraProperties } = mergeOptions(options, context);
-
-  const data: any = {};
-  const errors: Error[] = [];
-
-  // We iterate the passed object (the model) first
-  for (let objectKey in o) {
-    let valueKey: string = objectKey;
-    const objectKeyEny: Eny = o[objectKey];
-
-    // If the eny is a Valit and its name is readonly
-    if (
-      ((typeof objectKeyEny === "object" && objectKeyEny !== null) ||
-        typeof objectKeyEny === "function") &&
-      // @ts-expect-error Is ok since if it is undefined, then that's ok too
-      getName(objectKeyEny) === "readonly"
-    ) {
-      // If the key is readonly, we don't expect it to be set
-      continue; // We'll deal with these later
-    }
-
-    const objectKeyGuard = enyToGuard(objectKeyEny);
-    // Also check for 'key[]' if 'key' is an array Valit
-    // See 'vality.object > member type check > allows "key[]" as "key" if value is of type array'
-    if (getName(objectKeyGuard) === "array") {
-      // If 'key' is not set on the value, but 'key[]' is, we'll use that one to acquire the value
-      if (
-        // @ts-expect-error
-        value[objectKey] === undefined &&
-        // @ts-expect-error
-        value[`${objectKey}[]`] !== undefined
-      ) {
-        valueKey = `${objectKey}[]`;
-      }
-    }
-
-    if (objectKeyGuard[_name] === "from") {
-      valueKey = objectKeyGuard[_guard][_type][0][_type];
-    }
-
-    const res = objectKeyGuard[_guard](
-      // @ts-expect-error We can do this assertion here, since in the worst case, we'll get undefined, which is what we want too (=> e.g. "Expected string, received undefined")
-      value[valueKey],
-      context,
-      [...path, valueKey],
-      value
+    const { strict, bail, allowExtraProperties } = mergeOptions(
+      options,
+      context
     );
-    if (!res.valid) {
-      errors.push(...res.errors);
-      if (bail) break;
-    } else {
-      data[objectKey] = res.data;
-    }
-  }
 
-  if (bail && errors.length) return { valid: false, data: undefined, errors };
+    const data: any = {};
+    const errors: Error[] = [];
 
-  // And then check for excess keys
-  if (!allowExtraProperties) {
-    for (const k in value) {
-      const ek = o[k];
+    // We iterate the passed object (the model) first
+    for (const objectKey in o) {
+      let valueKey: string = objectKey;
+      const objectKeyEny: Eny = o[objectKey];
 
-      // If we get 'key[]', allow if 'key' is not set, but expected to be an array
-      // Holy cow, this seems expensive
-      // TODO: Optimize
-      if (ek === undefined) {
-        if (k.endsWith("[]")) {
-          const k2 = k.slice(0, -2);
+      if (getFlags(objectKeyEny).has("readonly")) {
+        // If the key is readonly, we don't expect it to be set
+        continue; // We'll deal with these later
+      }
+
+      const objectKeyGuard = enyToGuard(objectKeyEny);
+
+      // Also check for 'key[]' if 'key' is an array Valit
+      // See 'vality.object > member type check > allows "key[]" as "key" if value is of type array'
+      if (getName(objectKeyGuard) === "array") {
+        // If 'key' is not set on the value, but 'key[]' is, we'll use that one to acquire the value
+        if (
           // @ts-expect-error
-          if (value[k2] === undefined && o[k2] !== undefined) {
-            if (enyToGuard(o[k2])[_name] === "array") continue;
+          value[objectKey] === undefined &&
+          // @ts-expect-error
+          value[`${objectKey}[]`] !== undefined
+        ) {
+          valueKey = `${objectKey}[]`;
+        }
+      }
+
+      if (getFlags(objectKeyEny).has("from")) {
+        valueKey = getFlags(objectKeyEny).get("from") as string;
+        if (value[valueKey] === undefined) {
+          if (!strict) {
+            valueKey = objectKey;
           }
         }
       }
 
-      // If there is no eny for this key, or if it's readonly
-      if (
-        ek === undefined ||
-        (((typeof ek === "object" && ek !== null) ||
-          typeof ek === "function") &&
-          // @ts-expect-error Is ok since if it is undefined, then that's ok too
-          getName(ek) === "readonly")
-      ) {
-        errors.push({
-          message: "vality.object.extraProperty",
-          path: [...path, k],
-          options,
-          // @ts-expect-error If it is undefined, then we'll just take that
-          value: value[k],
-        });
+      const res = objectKeyGuard[_guard](
+        // @ts-expect-error We can do this assertion here, since in the worst case, we'll get undefined, which is what we want too (=> e.g. "Expected string, received undefined")
+        value[valueKey],
+        context,
+        [...path, valueKey],
+        value
+      );
+      if (!res.valid) {
+        errors.push(...res.errors);
         if (bail) break;
+      } else {
+        data[objectKey] = res.data;
       }
     }
-  }
 
-  if (errors.length) return { valid: false, data: undefined, errors };
-  return { valid: true, data, errors: [] };
-});
+    if (bail && errors.length) return { valid: false, data: undefined, errors };
 
-v.from = (key: string) => flag("from", key);
+    // And then check for excess keys
+    if (!allowExtraProperties) {
+      for (const valueKey in value) {
+        const optionsValueEny = o[valueKey];
 
-vality.optional = compound(
-  "optional",
-  (e) => (val, options, context, path, parent) => {
-    // Here, we must first check whether the eny allows undefined (as is the case with default values)
-    // If it validates, all good. Else, we allow undefined, or else return the original error the eny had returned.
-    const enyVal = enyToGuardFn(e)(val, context, path, parent);
-    if (enyVal.valid) return enyVal;
-    if (val === undefined) return { valid: true, data: undefined, errors: [] };
+        // If we get 'key[]', allow if 'key' is not set, but expected to be an array
+        // Holy cow, this seems expensive
+        // TODO: Optimize
+        if (optionsValueEny === undefined) {
+          if (valueKey.endsWith("[]")) {
+            const valueKeySliced = valueKey.slice(0, -2);
+            // @ts-expect-error
+            if (
+              value[valueKeySliced] === undefined &&
+              o[valueKeySliced] !== undefined
+            ) {
+              if (getName(o[valueKeySliced]) === "array") continue;
+            }
+          }
+        }
 
-    const { strict } = mergeOptions(options, context);
+        // If there is no eny for this key, or if it's readonly
+        if (
+          optionsValueEny === undefined ||
+          getFlags(optionsValueEny).has("readonly")
+        ) {
+          errors.push({
+            message: "vality.object.extraProperty",
+            path: [...path, valueKey],
+            options,
+            // @ts-expect-error If it is undefined, then we'll just take that
+            value: value[valueKey],
+          });
+          if (bail) break;
+        }
+      }
+    }
 
-    // Allow `null` in non-strict mode
-    if (!strict && val === null)
-      return { valid: true, data: undefined, errors: [] };
-    return enyVal;
-  }
-);
-
-// We still attach _validate, though, as (for whatever reason) this valit may still be called directly, and we really don't want a runtime error in that situation
-// If we ever encounter 'vality.readonly.base' in tests, it means that we handle readonly keys incorrectly somewhere
-vality.readonly = compound(
-  "readonly",
-  (e) => (val, _options, _context, path) => {
-    if (val === undefined)
-      return {
-        valid: true,
-        data: undefined as unknown as typeof e,
-        errors: [],
-      };
-    return {
-      valid: false,
-      data: undefined,
-      errors: [
-        {
-          message: "vality.readonly.base",
-          path,
-          options: {},
-          value: val,
-        },
-      ],
-    };
+    if (errors.length) return { valid: false, data: undefined, errors };
+    return { valid: true, data, errors: [] };
   }
 );
 
@@ -315,7 +261,6 @@ vality.tuple = compound("tuple", (...es) => (value, options, context, path) => {
   if (errors.length) return { valid: false, data: undefined, errors };
   return { valid: true, data, errors: [] };
 });
-
 
 // // @ts-expect-error 'IntersectItems<RSE[]>' gives 'never'
 // vality.and = compound(

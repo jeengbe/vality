@@ -865,11 +865,9 @@ describe("vality.object", () => {
     });
 
     describe("property remapping", () => {
-      it.only("allows for remapping", () => {
+      it("allows for remapping", () => {
         testCompound("object", v.object({ foo: v.from("bar")(v.number) }), {
-          valid: [
-            { value: { bar: 1 }, expect: { foo: 1 } },
-          ],
+          valid: [{ value: { bar: 1 }, expect: { foo: 1 } }],
         });
       });
 
@@ -881,10 +879,7 @@ describe("vality.object", () => {
             bar: v.from("baz")(v.number),
           }),
           {
-            valid: [
-              { value: { baz: 1 }, expect: { foo: 1, bar: 1 } },
-              { value: { foo: 1, bar: 1 }, expect: { foo: 1, bar: 1 } },
-            ],
+            valid: [{ value: { baz: 1 }, expect: { foo: 1, bar: 1 } }],
           }
         );
       });
@@ -895,7 +890,6 @@ describe("vality.object", () => {
             "object",
             v.object({ foo: v.from("bar")(v.number) })({ strict: true }),
             {
-              options: { strict: true },
               valid: [{ value: { bar: 1 }, expect: { foo: 1 } }],
               invalid: [
                 {
@@ -903,7 +897,7 @@ describe("vality.object", () => {
                   errors: [
                     {
                       message: "vality.number.base",
-                      options: { strict: true },
+                      options: {},
                       path: ["bar"],
                       value: undefined,
                     },
@@ -984,19 +978,9 @@ describe("vality.object", () => {
 
         test("default", () => {
           testCompound("object", v.object({ foo: v.from("bar")(v.number) }), {
-            valid: [{ value: { bar: 1 }, expect: { foo: 1 } }],
-            invalid: [
-              {
-                value: { foo: 1 },
-                errors: [
-                  {
-                    message: "vality.number.base",
-                    options: {},
-                    path: ["bar"],
-                    value: undefined,
-                  },
-                ],
-              },
+            valid: [
+              { value: { bar: 1 }, expect: { foo: 1 } },
+              { value: { foo: 1 } },
             ],
           });
 
