@@ -23,11 +23,11 @@ export type RelationType = vality.Config extends { RelationType: infer R }
 
 type DecD<D> = "in-layer-one" extends D ? "in" : D;
 
-export type Parse<T, _D = "out"> = T extends Flagged<
-  infer U,
-  infer Name,
-  infer Value
->
+export type IsAny<T> = 0 extends 1 & T ? true : false;
+
+export type Parse<T, _D = "out"> = IsAny<T> extends true
+  ? any
+  : T extends Flagged<infer U, infer Name, infer Value>
   ? Name extends "optional"
     ? Parse<U, _D> | undefined
     : Parse<U, _D>

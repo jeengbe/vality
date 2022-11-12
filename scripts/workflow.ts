@@ -40,7 +40,7 @@ const workflow = {
     "build-docs": {
       name: "Build docs",
       "runs-on": "ubuntu-latest",
-      needs: ["install"],
+      needs: ["install", "build-vality"],
       steps: [
         {
           name: "Checkout",
@@ -55,13 +55,21 @@ const workflow = {
           },
         },
         {
+          name: "Download Vality build artifact",
+          uses: "actions/download-artifact@v2",
+          with: {
+            name: `build-vality`,
+            path: `./packages/vality`,
+          },
+        },
+        {
           name: "Restore webpack cache",
           uses: "actions/cache@v3",
           with: {
             path: "docs/node_modules/.cache/webpack",
             key: "docs-webpack-cache",
             "restore-keys": "docs-webpack-cache",
-          }
+          },
         },
         {
           name: "Build docs",
@@ -73,7 +81,7 @@ const workflow = {
           with: {
             path: "docs/node_modules/.cache/webpack",
             key: "docs-webpack-cache",
-          }
+          },
         },
         {
           name: "Upload docs artifact",
@@ -95,7 +103,7 @@ const workflow = {
       if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       environment: {
         name: "Docs",
-        url: "${{ steps.deployment.outputs.page_url }}"
+        url: "${{ steps.deployment.outputs.page_url }}",
       },
       concurrency: {
         group: "deploy-docs",
@@ -105,7 +113,7 @@ const workflow = {
         {
           name: "Deploy",
           id: "deployment",
-          uses: "actions/deploy-pages@v1"
+          uses: "actions/deploy-pages@v1",
         },
       ],
     },
@@ -247,7 +255,7 @@ for (const pkg of getPackages()) {
           with: {
             "file-name": `./packages/${pkg}/package.json`,
             "file-url": `https://unpkg.com/${pkg}/package.json`,
-            "static-checking": "localIsNew"
+            "static-checking": "localIsNew",
           },
         },
       ],
