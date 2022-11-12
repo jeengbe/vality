@@ -268,9 +268,7 @@ for (const pkg of getPackages()) {
         `unit-test-${pkg}`,
         `type-test-${pkg}`,
         `typecheck-${pkg}`,
-        `check-version-${pkg}`,
       ],
-      if: `\${{ needs.check-version-${pkg}.outputs.should-publish == 'true' }}`,
       steps: [
         {
           name: "Checkout",
@@ -333,6 +331,7 @@ for (const pkg of getPackages()) {
       name: `Publish: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: [`build-${pkg}`, `check-version-${pkg}`],
+      if: `\${{ needs.check-version-${pkg}.outputs.should-publish == 'true' }}`,
       environment: {
         name: `npm: ${pkg}`,
         url: `https://www.npmjs.com/package/${pkg}`,

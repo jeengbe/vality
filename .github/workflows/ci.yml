@@ -175,9 +175,6 @@ jobs:
       - unit-test-eslint-plugin-vality
       - type-test-eslint-plugin-vality
       - typecheck-eslint-plugin-vality
-      - check-version-eslint-plugin-vality
-    if: ${{ needs.check-version-eslint-plugin-vality.outputs.should-publish ==
-      'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -222,6 +219,8 @@ jobs:
     needs:
       - build-eslint-plugin-vality
       - check-version-eslint-plugin-vality
+    if: ${{ needs.check-version-eslint-plugin-vality.outputs.should-publish ==
+      'true' }}
     environment:
       name: "npm: eslint-plugin-vality"
       url: https://www.npmjs.com/package/eslint-plugin-vality
@@ -348,8 +347,6 @@ jobs:
       - unit-test-vality
       - type-test-vality
       - typecheck-vality
-      - check-version-vality
-    if: ${{ needs.check-version-vality.outputs.should-publish == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -394,6 +391,7 @@ jobs:
     needs:
       - build-vality
       - check-version-vality
+    if: ${{ needs.check-version-vality.outputs.should-publish == 'true' }}
     environment:
       name: "npm: vality"
       url: https://www.npmjs.com/package/vality
