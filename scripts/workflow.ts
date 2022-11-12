@@ -73,15 +73,15 @@ const workflow = {
         },
         {
           "name": "x",
-          "run": "ls -la ../packages/vality",
+          "run": "ls -la ./packages/vality",
         },
         {
           "name": "xy",
-          "run": "ls -la ../packages/vality/dist",
+          "run": "ls -la ./packages/vality/dist",
         },
         {
           "name": "xyzg",
-          "run": "cat ../packages/vality/package.json",
+          "run": "cat ./packages/vality/package.json",
         },
         {
           name: "Build docs",
