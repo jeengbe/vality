@@ -14,7 +14,6 @@ declare global {
         "array",
         E[],
         {
-          bail: boolean;
           minLength: number;
           maxLength: number;
         }
@@ -28,7 +27,6 @@ declare global {
         O,
         {
           allowExtraProperties: boolean;
-          bail: boolean;
         }
       >;
       // /*
@@ -141,6 +139,7 @@ vality.object = compound(
 
       if (getFlags(objectKeyEny).has("from")) {
         valueKey = getFlags(objectKeyEny).get("from") as string;
+        // @ts-expect-error Expected since we want to check if it's there
         if (value[valueKey] === undefined) {
           if (!strict) {
             valueKey = objectKey;

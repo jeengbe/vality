@@ -24,6 +24,7 @@ export function intersect(
   // If one type is a scalar, the intersect is never
   if (guards.some(isScalar)) return vality.never;
 
+  return null as any;
 }
 
 export function isNever(g: Guard<any, any, any>): boolean {

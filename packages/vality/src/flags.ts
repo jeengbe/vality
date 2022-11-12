@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-vality.from = (key: string) =>
+vality.from = (key) =>
   flag(
     "from",
     key,

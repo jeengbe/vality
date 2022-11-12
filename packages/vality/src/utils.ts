@@ -1,6 +1,6 @@
-import { Guard, GuardFn } from "valit";
 import { Parse } from "./parse";
 import { _flags, _guard } from "./symbols";
+import { Guard, GuardFn } from "./valit";
 import { vality } from "./vality";
 
 export interface RSA {

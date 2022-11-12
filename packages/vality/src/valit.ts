@@ -5,6 +5,7 @@ import { Context, Path, ValidationResult } from "./validate";
 
 export interface SpecialOptions<T, O> {
   strict: boolean;
+  bail: boolean;
   preprocess: (
     val: unknown,
     options: Partial<CallOptions<T, O>>,
@@ -117,7 +118,8 @@ export function makeValit<
         // 5: Validate with options (using the value from before step 3 i.e. the untransformed value)
         // 6: If options handlers fail, return errors, else a passed validation result
 
-        if (preprocess) {
+        if (typeof preprocess === "function") {
+          // @ts-expect-error
           value = preprocess(value, options, context, path, parent);
         }
 
@@ -131,7 +133,8 @@ export function makeValit<
           return data;
         }
 
-        if (validate?.(data.data, options, context, path, parent) === false) {
+        // @ts-expect-error
+        if (typeof validate === "function" && validate(data.data, options, context, path, parent) === false) {
           return {
             valid: false,
             data: undefined,
@@ -148,7 +151,8 @@ export function makeValit<
 
         // We retain a copy here because we pass the original data into handleOptions
         const origData = data.data!;
-        if (transform) {
+        if (typeof transform === "function") {
+          // @ts-expect-error
           data.data = transform(data.data);
         }
 
