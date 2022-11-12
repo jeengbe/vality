@@ -1,15 +1,15 @@
 import { _flags, _guard, _name, _type } from "./symbols";
-import { Eny, EnyToGuard } from "./utils";
+import { Eny } from "./utils";
 
 export type Flagged<
   E extends Eny,
   Name extends string,
   Value
-> = EnyToGuard<E> & {
+  > = E & {
   [_flags]: { [K in Name]: Value };
 };
 
-export function flag(name: string, value: string, fn) {
+export function flag(name: string, value: unknown, fn) {
   return (...args) => {
     const [inner] = args;
 

@@ -1,3 +1,4 @@
+import { Flagged } from "./flag";
 import { Eny, IntersectItems, OneOrEnumOfTOrGuard } from "./utils";
 import { Guard } from "./valit";
 
@@ -22,7 +23,15 @@ export type RelationType = vality.Config extends { RelationType: infer R }
 
 type DecD<D> = "in-layer-one" extends D ? "in" : D;
 
-export type Parse<T, _D = "out"> = T extends Guard<"tuple", infer U, any>
+export type Parse<T, _D = "out"> = T extends Flagged<
+  infer U,
+  infer Name,
+  infer Value
+>
+  ? Name extends "optional"
+    ? Parse<U, _D> | undefined
+    : Parse<U, _D>
+  : T extends Guard<"tuple", infer U, any>
   ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
   : T extends Guard<"and", infer U extends Eny[], true>
   ? IntersectItems<U>

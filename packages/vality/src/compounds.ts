@@ -176,8 +176,8 @@ vality.object = compound(
         if (optionsValueEny === undefined) {
           if (valueKey.endsWith("[]")) {
             const valueKeySliced = valueKey.slice(0, -2);
-            // @ts-expect-error
             if (
+              // @ts-expect-error
               value[valueKeySliced] === undefined &&
               o[valueKeySliced] !== undefined
             ) {

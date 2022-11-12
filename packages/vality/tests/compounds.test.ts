@@ -1192,153 +1192,11 @@ describe("vality.object", () => {
     });
 
     test("marks optional properties as optional", () => {
-      const valit = v.object({ foo: v.optional(v.number), bar: v.string });
-      expectType<TypeEqual<{ foo: number; bar: string }, Parse<typeof valit>>>(
-        true
-      );
+      const valit = { foo: v.optional(v.number), bar: v.string };
+      expectType<
+        TypeEqual<{ foo: number | undefined; bar: string }, Parse<typeof valit>>
+      >(true);
     });
-  });
-});
-
-describe("vality.optional", () => {
-  describe("type check", () => {
-    it("passes (value, context, path, parent) correctly", () => {
-      const guard = jest.fn(() => ({
-        valid: true,
-        data: undefined,
-        errors: [],
-      }));
-
-      testCompound("object", v.optional({ [_guard]: guard }), {
-        context: {
-          strict: false,
-        },
-        ignore: [{ value: "foo" }, { value: 1 }],
-      });
-
-      expect(guard).toHaveBeenCalledWith(
-        "foo",
-        { strict: false },
-        [],
-        undefined
-      );
-      expect(guard).toHaveBeenCalledWith(1, { strict: false }, [], undefined);
-    });
-
-    it("passes if member passes", () => {
-      testCompound("optional", v.optional(v.number), {
-        valid: [{ value: 1 }],
-      });
-    });
-
-    it("fails if member fails", () => {
-      testCompound("optional", v.optional(v.number), {
-        invalid: [
-          {
-            value: "foo",
-            errors: [
-              {
-                message: "vality.number.base",
-                options: {},
-                path: [],
-                value: "foo",
-              },
-            ],
-          },
-        ],
-      });
-    });
-  });
-
-  it("allows 'undefined'", () => {
-    testCompound("optional", v.optional(v.number), {
-      valid: [{ value: undefined }, {} as any],
-    });
-  });
-
-  describe("allows 'null' in non-strict mode", () => {
-    test("options", () => {
-      testCompound("optional", v.optional(v.number)({ strict: true }), {
-        options: { strict: true },
-        invalid: [
-          {
-            value: null,
-            errors: [
-              {
-                message: "vality.number.base",
-                options: {},
-                path: [],
-                value: null,
-              },
-            ],
-          },
-        ],
-      });
-
-      testCompound("optional", v.optional(v.number)({ strict: false }), {
-        options: { strict: false },
-        valid: [{ value: null, expect: undefined }],
-      });
-    });
-
-    test("context", () => {
-      testCompound("optional", v.optional(v.number), {
-        context: { strict: true },
-        invalid: [
-          {
-            value: null,
-            errors: [
-              {
-                message: "vality.number.base",
-                options: {},
-                path: [],
-                value: null,
-              },
-            ],
-          },
-        ],
-      });
-
-      testCompound("optional", v.optional(v.number), {
-        context: { strict: false },
-        valid: [{ value: null, expect: undefined }],
-      });
-    });
-
-    test("config", () => {
-      testCompound("optional", v.optional(v.number), {
-        config: { strict: true },
-        invalid: [
-          {
-            value: null,
-            errors: [
-              {
-                message: "vality.number.base",
-                options: {},
-                path: [],
-                value: null,
-              },
-            ],
-          },
-        ],
-      });
-
-      testCompound("optional", v.optional(v.number), {
-        config: { strict: false },
-        valid: [{ value: null, expect: undefined }],
-      });
-    });
-
-    test("default", () => {
-      testCompound("optional", v.optional(v.number), {
-        valid: [{ value: null, expect: undefined }],
-      });
-    });
-  });
-
-  test("type", () => {
-    const valit = v.optional(v.number);
-    expectType<TypeEqual<number | undefined, Parse<typeof valit>>>(true);
   });
 });
 
@@ -1450,8 +1308,4 @@ describe("vality.dict", () => {
   });
 
   test("type", () => {});
-});
-
-test.skip("a", () => {
-  console.log(validate(v.and({ a: "a" }, { b: "b" }), { a: "a", b: "b" }));
 });
