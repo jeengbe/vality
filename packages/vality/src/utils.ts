@@ -1,14 +1,10 @@
+import { Guard, GuardFn } from "valit";
 import { Parse } from "./parse";
-import { _name, _type, _validate } from "./symbols";
-import { types } from "./types";
-import { Face, ValidateFn } from "./validate";
+import { _guard } from "./symbols";
 import { vality } from "./vality";
 
 export interface RSA {
   [K: string]: any;
-}
-export interface RSN {
-  [K: string]: never;
 }
 export interface RSE {
   [K: string]: Eny;
@@ -17,120 +13,95 @@ export interface RSE {
 export type Primitive = string | number | boolean | null;
 
 export type Eny =
-  | Face<any, any, any>
-  | readonly TOrFace<Eny>[]
+  | Guard<any, any, any>
+  | readonly TOrGuard<Eny>[]
   | Primitive
   | (() => RSE)
   | RSE;
 
-/**
- * Make all properties in `T` required whose key is assignable to `K`
- */
-export type MakeRequired<T extends RSA, K extends keyof T> = {
-  [P in K]-?: T[P];
-} & {
-  [P in Exclude<keyof T, K>]: T[P];
-};
-
-export type EnyToFace<T> = T extends Face<any, any, any>
+export type EnyToGuard<T> = T extends Guard<any, any, any>
   ? T
-  : // prettier-ignore
+  : // prettier-ignore -- Wrongly removes parentheses
   T extends (() => infer U extends Eny)
-  ? EnyToFace<U>
-  : T extends readonly [TOrFace<Eny>]
-  ? Face<"array", T, true>
+  ? EnyToGuard<U>
+  : T extends readonly [TOrGuard<Eny>]
+  ? Guard<"array", T, true>
   : T extends Primitive
   ? string extends T
-    ? Face<"string", T, false>
+    ? Guard<"string", T, false>
     : number extends T
-    ? Face<"number", T, false>
+    ? Guard<"number", T, false>
     : boolean extends T
-    ? Face<"boolean", T, false>
+    ? Guard<"boolean", T, false>
     : null extends T
-    ? Face<"null", T, false>
-    : Face<"literal", T, false>
-  : T extends EnumOfTOrFace<infer U extends Eny>
-  ? Face<"enum", U, true>
+    ? Guard<"null", T, false>
+    : Guard<"literal", T, false>
+  : T extends EnumOfTOrGuard<infer U extends Eny>
+  ? Guard<"enum", U, true>
   : T extends RSE
-  ? Face<"object", T, true>
+  ? Guard<"object", T, true>
   : never;
 
-export function enyToGuard<E extends Eny>(eny: E): EnyToFace<E> {
-  if (isArrayOrEnyShort(eny)) {
-    if (eny.length === 0) throw new Error("Empty array short");
-    // @ts-ignore
-    if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
-    // @ts-ignore
-    return vality.enum(...eny.map(enyToGuard));
-  }
+export function enyToGuard<E extends Eny>(eny: E): EnyToGuard<E> {
+  // The issue with this function is that the connection to E gets lost within the branches
+  // so TS can no longer be sure that the type actually matches the defined return type
+  // See https://www.typescriptlang.org/play?jsx=0#code/DYUwLgBAZgvAPAFQHwAoBuAuBBKLEQAeYIAdgCYDOARAIZUD8tVGVARlTEmjD043S3ZA for a minimal example of the issue.
+  // The code is minified for the link to fit into this comment, but expanding it shows the issue more clearly.
+
+  // @ts-expect-error
+  if (isGuard(eny)) return eny;
+  // @ts-expect-error
+  // Needs to be checked after isGuard since functions can be guards
+  if (typeof eny === "function") return vality.object(eny());
+
   if (
     typeof eny === "string" ||
     typeof eny === "number" ||
     typeof eny === "boolean" ||
     eny === null
   ) {
-    // @ts-ignore
+    // @ts-expect-error
     return vality.literal(eny);
   }
-  // @ts-ignore
-  if (isFace(eny)) return eny;
-  // @ts-ignore
-  if (typeof eny === "function") return vality.relation(eny);
-  // @ts-ignore
-  return vality.object(eny as RSA);
+
+  if (Array.isArray(eny)) {
+    // Model is malformed, it's ok to throw an error here
+    if (eny.length === 0) throw new Error("Empty array short");
+    // @ts-expect-error
+    if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
+    // @ts-expect-error
+    return vality.enum(...eny.map(enyToGuard));
+  }
+
+  // @ts-expect-error See above reason, and also, Array.isArray doesn't correctly narrow the type
+  return vality.object(eny);
 }
 
-function isArrayOrEnyShort(val: Eny): val is readonly TOrFace<Primitive>[] {
-  return Array.isArray(val);
+function isGuard(val: Eny): val is Guard<any, any, any> {
+  return (
+    (typeof val === "object" || typeof val === "function") &&
+    val !== null &&
+    _guard in val
+  );
 }
 
-function isFace(
-  val: Face<any, any, any> | (() => Eny) | RSE
-): val is Face<any, any, any> {
-  return _validate in val;
+// For ease-of-use's sake, type this as any
+export function enyToGuardFn<E extends Eny>(e: E): GuardFn<any> {
+  return enyToGuard(e)[_guard];
 }
 
-export function enyToGuardFn<E extends Eny>(e: E): ValidateFn<any> {
-  return enyToGuard(e)[_validate];
-}
+export type OneOrEnumOfTOrGuard<T> = TOrGuard<T> | EnumOfTOrGuard<T>;
 
-export function getRootType(guard: any): string {
-  let type = guard[_name];
-  let seen = [];
-  do {
-    type = types[type];
-    if (seen.indexOf(type) !== -1) throw new Error("Circular type definition");
-    seen.push(type);
-  } while (types[type] !== type);
-  return type;
-}
-
-export function simplifyEnumGuard(enumGuard: any) {
-  const type = getRootType(enumGuard);
-  if (type !== "enum") return enumGuard;
-
-  if (enumGuard[_type].length === 1) return enumGuard[_type][0];
-  return enumGuard[_type].map(simplifyEnumGuard);
-}
-
-export type OneOrEnumOfTOrFace<T> = TOrFace<T> | EnumOfTOrFace<T>;
-
-type EnumOfTOrFace<T> = readonly [
-  OneOrEnumOfTOrFace<T>,
-  OneOrEnumOfTOrFace<T>,
-  ...OneOrEnumOfTOrFace<T>[]
+type EnumOfTOrGuard<T> = readonly [
+  OneOrEnumOfTOrGuard<T>,
+  OneOrEnumOfTOrGuard<T>,
+  ...OneOrEnumOfTOrGuard<T>[]
 ];
 
-export type TOrFace<T> =
+ type TOrGuard<T> =
   | T
-  | Face<any, T, false>
-  // I will come back and revisit this one I am a TypeScript Grandmaster, but for now, I can't get this to work
-  // | Face<string, OneOrEnumOfTOrFace<T>, true>;
-  | {
-      [_validate]: any;
-      [_type]: OneOrEnumOfTOrFace<T>;
-      isValit?: true;
-    };
+  | Guard<any, T, false>
+  | Guard<any, OneOrEnumOfTOrGuard<T>, true>;
 
 // Adapted from https://stackoverflow.com/a/59463385/12405307
 // union to intersection converter by @jcalz

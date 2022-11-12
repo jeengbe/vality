@@ -1,8 +1,8 @@
 import "./config";
 
 // Import inbuilt guards and valits
-import "./guards";
-import "./valits";
+import "./scalars";
+import "./compounds";
 
 // Export vality
 export * from "./parse";

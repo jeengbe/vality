@@ -1,12 +1,11 @@
 import { expectType, TypeEqual } from "ts-expect";
 import { Parse } from "vality";
-import { makeValit } from "vality/makeValidate";
-import { _name, _type, _validate } from "vality/symbols";
-import { Valit } from "vality/valit";
+import { _guard, _name, _type } from "vality/symbols";
+import { makeValit, Valit } from "vality/valit";
 
 function testValit({
   name = "__valit",
-  inner = jest.fn((value, options, path) =>
+  inner = jest.fn((value, options, _context, path) =>
     value
       ? ({ valid: true, data: value, errors: [] } as const)
       : ({
@@ -58,7 +57,7 @@ function testValit({
   // We set this here, so that when we don't pass options (ie undefined), we can still get the correct value from the return object
   else options = {};
 
-  const res = valit[_validate](value, path, context, parent);
+  const res = valit[_guard](value, context, path, parent);
 
   return {
     name,
@@ -167,14 +166,14 @@ describe("valit", () => {
   describe("options", () => {
     it("works with no options", () => {
       const { inner, value, path, parent, context } = testValit();
-      expect(inner).toHaveBeenCalledWith(value, {}, path, context, parent);
+      expect(inner).toHaveBeenCalledWith(value, {}, context, path, parent);
     });
 
     it("works with an options object", () => {
       const { inner, options, value, path, parent, context } = testValit({
         options: { foo: "bar" },
       });
-      expect(inner).toHaveBeenCalledWith(value, options, path, context, parent);
+      expect(inner).toHaveBeenCalledWith(value, options, context, path, parent);
     });
 
     describe("options function", () => {
@@ -186,8 +185,8 @@ describe("valit", () => {
         expect(inner).toHaveBeenCalledWith(
           value,
           options,
-          path,
           context,
+          path,
           parent
         );
       });
@@ -230,7 +229,7 @@ describe("valit", () => {
     describe("no options", () => {
       it("attaches [_validate]", () => {
         const { valit } = testValit();
-        expect(valit[_validate]).toEqual(expect.any(Function));
+        expect(valit[_guard]).toEqual(expect.any(Function));
       });
 
       it("attaches [_type]", () => {
@@ -259,7 +258,7 @@ describe("valit", () => {
     describe("options object", () => {
       it("attaches [_validate]", () => {
         const { valit } = testValit({ options: { foo: "bar" } });
-        expect(valit[_validate]).toEqual(expect.any(Function));
+        expect(valit[_guard]).toEqual(expect.any(Function));
       });
 
       it("attaches [_type]", () => {
@@ -294,7 +293,7 @@ describe("valit", () => {
     describe("options function", () => {
       it("attaches [_validate]", () => {
         const { valit } = testValit({ options: () => ({ foo: "bar" }) });
-        expect(valit[_validate]).toEqual(expect.any(Function));
+        expect(valit[_guard]).toEqual(expect.any(Function));
       });
 
       it("attaches [_type]", () => {
@@ -383,8 +382,8 @@ describe("valit", () => {
         expect(inner).toHaveBeenCalledWith(
           value + "bar",
           options,
-          path,
           context,
+          path,
           parent
         );
         expect(res.data).toEqual(value + "bar");
@@ -399,8 +398,8 @@ describe("valit", () => {
         expect(inner).toHaveBeenCalledWith(
           value,
           options,
-          path,
           context,
+          path,
           parent
         );
         expect(res.data).toEqual(value);
@@ -426,14 +425,14 @@ describe("valit", () => {
         }
       });
 
-      it("inner is called with (value, options, path, context, parent)", () => {
+      it("inner is called with (value, options, context, path, parent)", () => {
         {
           const { inner, value, options, path, parent, context } = testValit();
           expect(inner).toHaveBeenCalledWith(
             value,
             options,
-            path,
             context,
+            path,
             parent
           );
         }
@@ -450,14 +449,14 @@ describe("valit", () => {
           expect(inner).toHaveBeenCalledWith(
             value,
             options,
-            path,
             context,
+            path,
             parent
           );
         }
       });
 
-      it("exists flow early if invalid", () => {
+      it("exits flow early if invalid", () => {
         const fn = jest.fn();
         const { res, path, options, value } = testValit({
           value: undefined,
@@ -486,8 +485,8 @@ describe("valit", () => {
         expect(validate).toHaveBeenCalledWith(
           value,
           options,
-          path,
           context,
+          path,
           parent
         );
       });
@@ -520,8 +519,8 @@ describe("valit", () => {
         expect(inner).toHaveBeenCalledWith(
           value,
           options,
-          path,
           context,
+          path,
           parent
         );
         expect(res.data).toEqual(value + "bar");
@@ -536,8 +535,8 @@ describe("valit", () => {
         expect(inner).toHaveBeenCalledWith(
           value,
           options,
-          path,
           context,
+          path,
           parent
         );
         expect(res.data).toEqual(value);
@@ -766,11 +765,14 @@ describe("valit", () => {
   });
 
   describe("type", () => {
-    type T = { foo: "bar"; };
-    const valit = null as unknown as Valit<"name", T>
-    const valitCalled = null as unknown as ReturnType<Valit<"name", T> & Function>
+    type T = { foo: "bar" };
 
-    expectType<TypeEqual<T, Parse<typeof valit>>>(true);
-    expectType<TypeEqual<T, Parse<typeof valitCalled>>>(true);
+    expectType<TypeEqual<T, Parse<Valit<"__test__", T, never, false>>>>(true);
+    expectType<
+      TypeEqual<
+        T,
+        Parse<ReturnType<Valit<"__test__", T, never, false> & Function>>
+      >
+    >(true);
   });
 });

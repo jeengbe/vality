@@ -1,58 +1,54 @@
-import { Face } from "validate";
-import { Guard } from "./guard";
-import { _type } from "./symbols";
+import { Compound } from "./compound";
+import { Scalar } from "./scalar";
+import { _name } from "./symbols";
+import { types } from "./types";
 import { Eny, enyToGuard, RSA } from "./utils";
-import { Valit } from "./valit";
+import { Guard } from "./valit";
 import { vality } from "./vality";
 
 export function intersect(
   ...obj: Eny[]
-): Valit<"object", RSA> | Guard<"never", never> {
+): Compound<"object", RSA> | Scalar<"never", never> | Scalar<"any", any> {
   if (!obj.length) return vality.never;
 
-  const [firstFace, ...faces] = obj.map(enyToGuard);
-  const commonKeys = Object.keys(firstFace[_type]).filter((k) =>
-    faces.every((f) => k in f[_type])
-  );
+  const guards = obj.map(enyToGuard);
 
-  if (!commonKeys.length) return vality.object({});
+  // If there is only one guard, we can just return it
+  if (guards.length === 1) return guards[0] as any;
+  // The easiest check first is to see whether any of the values are never
+  if (guards.some(isNever)) return vality.never;
+  // If any of the guards are any, we can just return any
+  if (guards.some(isAny)) return vality.any;
 
-  const commonTypes: RSA = {};
-
-  for (const k of commonKeys) {
-    commonTypes[k] = intersect(
-      firstFace[_type][k],
-      ...faces.map((f) => f[_type][k])
-    );
-
-    // If two types are incompatible, the intersection is never and we can exit early
-    if (commonTypes[k] === vality.never) return vality.never;
-  }
-
-  return vality.object(commonTypes);
-}
-
-function intersectWorker(aE: Eny, bE: Eny) {
-  const a = enyToGuard(aE);
-  const b = enyToGuard(bE);
-
-  // T ∩ ∅ = ∅
-  // ∅ ∩ T = ∅
-  if (a[_type] === "never" || b[_type] === "never") return vality.never;
-
-  // T ∩ T = T
-  if (typesAreSame(a, b)) return a;
-
-
+  // The next step is comparing types
+  // If one type is a scalar, the intersect is never
+  if (guards.some(isScalar)) return vality.never;
 
 }
 
-function typesAreSame(a: Face<any, any, any>, b: Face<any, any, any>) {
-  if (a === b) return true;
-  if (a[_type] !== b[_type]) return false;
-  switch (a[_type]) {
-    case "and": {
+export function isNever(g: Guard<any, any, any>): boolean {
+  return getName(g) === "never";
+}
 
-    }
+export function isAny(g: Guard<any, any, any>): boolean {
+  return getName(g) === "any";
+}
+
+const primitiveTypes = new Set(["string", "number", "boolean", "date", "literal"]);
+export function isScalar(g: Guard<any, any, any>): boolean {
+  return primitiveTypes.has(getName(g));
+}
+
+
+export function getName(g: Guard<any, any, any>): string {
+  let type = g[_name];
+  const seen = new Set();
+  if (!(type in types)) return type;
+
+  while (types[type] !== type) {
+    type = types[type];
+    if (seen.has(type)) throw new Error("Circular type definition");
+    seen.add(type);
   }
+  return type;
 }

@@ -1,11 +1,12 @@
 import { expectType, TypeEqual } from "ts-expect";
-import { Error, Face, Parse, v, validate } from "vality";
+import { Error, Parse, v, validate } from "vality";
 import { config } from "vality/config";
 import { RSA } from "vality/utils";
+import { Guard } from "vality/valit";
 
-export function testGuard(
-  name: keyof vality.guards,
-  guard: Face<any, any, any>,
+export function testScalar(
+  name: keyof vality.scalars,
+  guard: Guard<any, any, any>,
   {
     option,
     options,
@@ -57,7 +58,7 @@ export function testGuard(
 describe("vality.string", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      testGuard(
+      testScalar(
         "string",
         v.string({
           strict: true,
@@ -91,7 +92,7 @@ describe("vality.string", () => {
         }
       );
 
-      testGuard("string", v.string, {
+      testScalar("string", v.string, {
         context: {
           strict: true,
         },
@@ -119,7 +120,7 @@ describe("vality.string", () => {
         ],
       });
 
-      testGuard("string", v.string, {
+      testScalar("string", v.string, {
         config: {
           strict: true,
         },
@@ -149,7 +150,7 @@ describe("vality.string", () => {
     });
 
     test("in non-strict mode", () => {
-      testGuard(
+      testScalar(
         "string",
         v.string({
           strict: false,
@@ -183,7 +184,7 @@ describe("vality.string", () => {
         }
       );
 
-      testGuard("string", v.string, {
+      testScalar("string", v.string, {
         context: {
           strict: false,
         },
@@ -211,7 +212,7 @@ describe("vality.string", () => {
         ],
       });
 
-      testGuard("string", v.string, {
+      testScalar("string", v.string, {
         config: {
           strict: false,
         },
@@ -239,7 +240,7 @@ describe("vality.string", () => {
         ],
       });
 
-      testGuard("string", v.string, {
+      testScalar("string", v.string, {
         valid: [
           { value: "" },
           { value: "foo" },
@@ -268,7 +269,7 @@ describe("vality.string", () => {
 
   describe("options", () => {
     test("minLength", () => {
-      testGuard("string", v.string({ minLength: 2 }), {
+      testScalar("string", v.string({ minLength: 2 }), {
         option: "minLength",
         options: {
           minLength: 2,
@@ -279,7 +280,7 @@ describe("vality.string", () => {
     });
 
     test("maxLength", () => {
-      testGuard("string", v.string({ maxLength: 2 }), {
+      testScalar("string", v.string({ maxLength: 2 }), {
         option: "maxLength",
         options: {
           maxLength: 2,
@@ -290,7 +291,7 @@ describe("vality.string", () => {
     });
 
     test("match", () => {
-      testGuard("string", v.string({ match: /^(?:foo|bar)+$/ }), {
+      testScalar("string", v.string({ match: /^(?:foo|bar)+$/ }), {
         option: "match",
         options: {
           match: /^(?:foo|bar)+$/,
@@ -310,10 +311,40 @@ describe("vality.string", () => {
 describe("vality.number", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      testGuard("number", v.number({
-        strict: true
-      }), {
-        options: {strict: true},
+      testScalar(
+        "number",
+        v.number({
+          strict: true,
+        }),
+        {
+          options: { strict: true },
+          valid: [
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1 },
+            { value: 1.5 },
+          ],
+          invalid: [
+            { value: "" },
+            { value: "foo" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
+
+      testScalar("number", v.number, {
+        context: { strict: true },
         valid: [
           { value: -1.5 },
           { value: -1 },
@@ -338,34 +369,8 @@ describe("vality.number", () => {
         ],
       });
 
-      testGuard("number", v.number, {
-        context: {strict: true},
-        valid: [
-          { value: -1.5 },
-          { value: -1 },
-          { value: 0 },
-          { value: 1 },
-          { value: 1.5 },
-        ],
-        invalid: [
-          { value: "" },
-          { value: "foo" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: true },
-          { value: false },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
-
-      testGuard("number", v.number, {
-        config: {strict: true},
+      testScalar("number", v.number, {
+        config: { strict: true },
         valid: [
           { value: -1.5 },
           { value: -1 },
@@ -392,10 +397,45 @@ describe("vality.number", () => {
     });
 
     test("in non-strict mode", () => {
-      testGuard("number", v.number({
-        strict: false
-      }), {
-        options: {strict: false},
+      testScalar(
+        "number",
+        v.number({
+          strict: false,
+        }),
+        {
+          options: { strict: false },
+          valid: [
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1 },
+            { value: 1.5 },
+            { value: "-1.5", expect: -1.5 },
+            { value: "-1", expect: -1 },
+            { value: "0", expect: 0 },
+            { value: "1", expect: 1 },
+            { value: "1.5", expect: 1.5 },
+          ],
+          invalid: [
+            { value: "" },
+            { value: "foo" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
+
+      testScalar("number", v.number, {
+        context: { strict: false },
         valid: [
           { value: -1.5 },
           { value: -1 },
@@ -425,8 +465,8 @@ describe("vality.number", () => {
         ],
       });
 
-      testGuard("number", v.number, {
-        context: {strict: false},
+      testScalar("number", v.number, {
+        config: { strict: false },
         valid: [
           { value: -1.5 },
           { value: -1 },
@@ -456,38 +496,7 @@ describe("vality.number", () => {
         ],
       });
 
-      testGuard("number", v.number, {
-        config: {strict: false},
-        valid: [
-          { value: -1.5 },
-          { value: -1 },
-          { value: 0 },
-          { value: 1 },
-          { value: 1.5 },
-          { value: "-1.5", expect: -1.5 },
-          { value: "-1", expect: -1 },
-          { value: "0", expect: 0 },
-          { value: "1", expect: 1 },
-          { value: "1.5", expect: 1.5 },
-        ],
-        invalid: [
-          { value: "" },
-          { value: "foo" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: true },
-          { value: false },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
-
-      testGuard("number", v.number, {
+      testScalar("number", v.number, {
         valid: [
           { value: -1.5 },
           { value: -1 },
@@ -521,7 +530,7 @@ describe("vality.number", () => {
 
   describe("options", () => {
     test("min", () => {
-      testGuard("number", v.number({ min: 2 }), {
+      testScalar("number", v.number({ min: 2 }), {
         option: "min",
         options: {
           min: 2,
@@ -532,7 +541,7 @@ describe("vality.number", () => {
     });
 
     test("max", () => {
-      testGuard("number", v.number({ max: 2 }), {
+      testScalar("number", v.number({ max: 2 }), {
         option: "max",
         options: {
           max: 2,
@@ -542,20 +551,20 @@ describe("vality.number", () => {
       });
     });
 
-    test("integer", () => {
-      testGuard("number", v.number({ integer: true }), {
-        option: "integer",
+    test("onlyInteger", () => {
+      testScalar("number", v.number({ onlyInteger: true }), {
+        option: "onlyInteger",
         options: {
-          integer: true,
+          onlyInteger: true,
         },
         valid: [{ value: 1 }, { value: 2 }, { value: 3 }],
         invalid: [{ value: 1.5 }, { value: 2.5 }, { value: 3.5 }],
       });
 
-      testGuard("number", v.number({ integer: false }), {
-        option: "integer",
+      testScalar("number", v.number({ onlyInteger: false }), {
+        option: "onlyInteger",
         options: {
-          integer: false,
+          onlyInteger: false,
         },
         valid: [
           { value: 1.5 },
@@ -569,11 +578,12 @@ describe("vality.number", () => {
       });
     });
 
-    test("unsafe", () => {
-      testGuard("number", v.number({ unsafe: true }), {
-        option: "unsafe",
+    test("allowUnsafe", () => {
+      testScalar("number", v.number({ allowUnsafe: true, allowNaN: true }), {
+        option: "allowUnsafe",
         options: {
-          unsafe: true,
+          allowNaN: true,
+          allowUnsafe: true,
         },
         valid: [
           { value: Infinity },
@@ -583,14 +593,18 @@ describe("vality.number", () => {
           { value: 0 },
           { value: 1 },
           { value: 2 ** 69 },
+          { value: 2 ** -69 },
+          { value: -(2 ** 69) },
+          { value: -(2 ** -69) },
         ],
         invalid: [],
       });
 
-      testGuard("number", v.number({ unsafe: false }), {
-        option: "unsafe",
+      testScalar("number", v.number({ allowUnsafe: false, allowNaN: true }), {
+        option: "allowUnsafe",
         options: {
-          unsafe: false,
+          allowNaN: true,
+          allowUnsafe: false,
         },
         valid: [{ value: -1 }, { value: 0 }, { value: 1 }],
         invalid: [
@@ -598,7 +612,32 @@ describe("vality.number", () => {
           { value: -Infinity },
           { value: NaN },
           { value: 2 ** 69 },
+          { value: 2 ** -69 },
+          { value: -(2 ** 69) },
+          { value: -(2 ** -69) },
         ],
+      });
+    });
+
+    test("allowNaN", () => {
+      testScalar("number", v.number({ allowUnsafe: true, allowNaN: true }), {
+        option: "allowNaN",
+        options: {
+          allowNaN: true,
+          allowUnsafe: true,
+        },
+        valid: [{ value: 0 }, { value: NaN }],
+        invalid: [],
+      });
+
+      testScalar("number", v.number({ allowUnsafe: true, allowNaN: false }), {
+        option: "allowNaN",
+        options: {
+          allowNaN: false,
+          allowUnsafe: true,
+        },
+        valid: [{ value: 0 }],
+        invalid: [{ value: NaN }],
       });
     });
   });
@@ -612,7 +651,7 @@ describe("vality.number", () => {
 describe("vality.boolean", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      testGuard("boolean", v.boolean({strict: true}), {
+      testScalar("boolean", v.boolean({ strict: true }), {
         options: { strict: true },
         valid: [{ value: true }, { value: false }],
         invalid: [
@@ -635,7 +674,7 @@ describe("vality.boolean", () => {
         ],
       });
 
-      testGuard("boolean", v.boolean, {
+      testScalar("boolean", v.boolean, {
         context: { strict: true },
         valid: [{ value: true }, { value: false }],
         invalid: [
@@ -658,7 +697,7 @@ describe("vality.boolean", () => {
         ],
       });
 
-      testGuard("boolean", v.boolean, {
+      testScalar("boolean", v.boolean, {
         config: { strict: true },
         valid: [{ value: true }, { value: false }],
         invalid: [
@@ -683,7 +722,7 @@ describe("vality.boolean", () => {
     });
 
     test("in non-strict mode", () => {
-      testGuard("boolean", v.boolean({strict: false}), {
+      testScalar("boolean", v.boolean({ strict: false }), {
         options: { strict: false },
         valid: [
           { value: true },
@@ -713,7 +752,7 @@ describe("vality.boolean", () => {
         ],
       });
 
-      testGuard("boolean", v.boolean, {
+      testScalar("boolean", v.boolean, {
         context: { strict: false },
         valid: [
           { value: true },
@@ -743,7 +782,7 @@ describe("vality.boolean", () => {
         ],
       });
 
-      testGuard("boolean", v.boolean, {
+      testScalar("boolean", v.boolean, {
         config: { strict: false },
         valid: [
           { value: true },
@@ -773,7 +812,7 @@ describe("vality.boolean", () => {
         ],
       });
 
-      testGuard("boolean", v.boolean, {
+      testScalar("boolean", v.boolean, {
         valid: [
           { value: true },
           { value: false },
@@ -813,7 +852,7 @@ describe("vality.boolean", () => {
 describe("vality.date", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      testGuard("date", v.date({strict: true}), {
+      testScalar("date", v.date({ strict: true }), {
         options: { strict: true },
         valid: [{ value: new Date() }, { value: new Date(NaN) }],
         invalid: [
@@ -838,7 +877,7 @@ describe("vality.date", () => {
         ],
       });
 
-      testGuard("date", v.date, {
+      testScalar("date", v.date, {
         context: { strict: true },
         valid: [{ value: new Date() }, { value: new Date(NaN) }],
         invalid: [
@@ -863,7 +902,7 @@ describe("vality.date", () => {
         ],
       });
 
-      testGuard("date", v.date, {
+      testScalar("date", v.date, {
         config: { strict: true },
         valid: [{ value: new Date() }, { value: new Date(NaN) }],
         invalid: [
@@ -890,7 +929,7 @@ describe("vality.date", () => {
     });
 
     test("in non-strict mode", () => {
-      testGuard("date", v.date({strict: false}), {
+      testScalar("date", v.date({ strict: false }), {
         options: { strict: false },
         valid: [
           { value: new Date() },
@@ -942,7 +981,7 @@ describe("vality.date", () => {
         ],
       });
 
-      testGuard("date", v.date, {
+      testScalar("date", v.date, {
         context: { strict: false },
         valid: [
           { value: new Date() },
@@ -994,7 +1033,7 @@ describe("vality.date", () => {
         ],
       });
 
-      testGuard("date", v.date, {
+      testScalar("date", v.date, {
         config: { strict: false },
         valid: [
           { value: new Date() },
@@ -1046,7 +1085,7 @@ describe("vality.date", () => {
         ],
       });
 
-      testGuard("date", v.date, {
+      testScalar("date", v.date, {
         valid: [
           { value: new Date() },
           {
@@ -1101,7 +1140,7 @@ describe("vality.date", () => {
 
   describe("options", () => {
     test("min", () => {
-      testGuard("date", v.date({ min: new Date(0) }), {
+      testScalar("date", v.date({ min: new Date(0) }), {
         option: "min",
         options: {
           min: new Date(0),
@@ -1116,7 +1155,7 @@ describe("vality.date", () => {
     });
 
     test("max", () => {
-      testGuard("date", v.date({ max: new Date(0) }), {
+      testScalar("date", v.date({ max: new Date(0) }), {
         option: "max",
         options: {
           max: new Date(0),
@@ -1133,7 +1172,7 @@ describe("vality.date", () => {
     test("past", () => {
       jest.useFakeTimers().setSystemTime(1234);
 
-      testGuard("date", v.date({ past: true }), {
+      testScalar("date", v.date({ past: true }), {
         option: "past",
         options: {
           past: true,
@@ -1150,17 +1189,16 @@ describe("vality.date", () => {
     test("future", () => {
       jest.useFakeTimers().setSystemTime(1234);
 
-      testGuard("date", v.date({ future: true }), {
+      testScalar("date", v.date({ future: true }), {
         option: "future",
         options: {
           future: true,
         },
-        valid: [{ value: new Date(1235) }],
+        valid: [{ value: new Date(1235) }, { value: new Date(1234) }],
         invalid: [
           { value: new Date(-1) },
           { value: new Date(0) },
           { value: new Date(1233) },
-          { value: new Date(1234) },
         ],
       });
     });
@@ -1175,60 +1213,68 @@ describe("vality.date", () => {
 describe("vality.literal", () => {
   describe("base type check", () => {
     test("in strict mode", () => {
-      testGuard("literal", v.literal("foo")({
-        strict: true,
-      }), {
-        options: { strict: true },
-        valid: [{ value: "foo" }],
-        invalid: [
-          { value: "" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: -1.5 },
-          { value: -1 },
-          { value: 0 },
-          { value: 1 },
-          { value: 1.5 },
-          { value: true },
-          { value: false },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
+      testScalar(
+        "literal",
+        v.literal("foo")({
+          strict: true,
+        }),
+        {
+          options: { strict: true },
+          valid: [{ value: "foo" }],
+          invalid: [
+            { value: "" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1 },
+            { value: 1.5 },
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
 
-      testGuard("literal", v.literal(7)({
-        strict: true,
-      }), {
-        options: { strict: true },
-        valid: [{ value: 7 }],
-        invalid: [
-          { value: "" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: "7" },
-          { value: -1.5 },
-          { value: -1 },
-          { value: 0 },
-          { value: 1 },
-          { value: 1.5 },
-          { value: true },
-          { value: false },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
+      testScalar(
+        "literal",
+        v.literal(7)({
+          strict: true,
+        }),
+        {
+          options: { strict: true },
+          valid: [{ value: 7 }],
+          invalid: [
+            { value: "" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: "7" },
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1 },
+            { value: 1.5 },
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
 
-      testGuard("literal", v.literal(7), {
+      testScalar("literal", v.literal(7), {
         context: { strict: true },
         valid: [{ value: 7 }],
         invalid: [
@@ -1253,7 +1299,7 @@ describe("vality.literal", () => {
         ],
       });
 
-      testGuard("literal", v.literal(7), {
+      testScalar("literal", v.literal(7), {
         config: { strict: true },
         valid: [{ value: 7 }],
         invalid: [
@@ -1280,143 +1326,163 @@ describe("vality.literal", () => {
     });
 
     test("in non-strict mode", () => {
-      testGuard("literal", v.literal("foo")({
-        strict: false,
-      }), {
-        options: { strict: false },
-        valid: [{ value: "foo" }],
-        invalid: [
-          { value: "" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: -1.5 },
-          { value: -1 },
-          { value: 0 },
-          { value: 1 },
-          { value: 1.5 },
-          { value: true },
-          { value: false },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
+      testScalar(
+        "literal",
+        v.literal("foo")({
+          strict: false,
+        }),
+        {
+          options: { strict: false },
+          valid: [{ value: "foo" }],
+          invalid: [
+            { value: "" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1 },
+            { value: 1.5 },
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
 
-      testGuard("literal", v.literal("7")({
-        strict: false,
-      }), {
-        options: { strict: false },
-        valid: [{ value: "7" }, { value: 7, expect: "7" }],
-        invalid: [
-          { value: "" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: -1.5 },
-          { value: -1 },
-          { value: 0 },
-          { value: 1 },
-          { value: 1.5 },
-          { value: true },
-          { value: false },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
+      testScalar(
+        "literal",
+        v.literal("7")({
+          strict: false,
+        }),
+        {
+          options: { strict: false },
+          valid: [{ value: "7" }, { value: 7, expect: "7" }],
+          invalid: [
+            { value: "" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1 },
+            { value: 1.5 },
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
 
-      testGuard("literal", v.literal(7.5)({
-        strict: false,
-      }), {
-        options: { strict: false },
-        valid: [{ value: 7.5 }, { value: "7.5", expect: 7.5 }],
-        invalid: [
-          { value: "" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: -1.5 },
-          { value: -1 },
-          { value: 0 },
-          { value: 1 },
-          { value: 1.5 },
-          { value: true },
-          { value: false },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
+      testScalar(
+        "literal",
+        v.literal(7.5)({
+          strict: false,
+        }),
+        {
+          options: { strict: false },
+          valid: [{ value: 7.5 }, { value: "7.5", expect: 7.5 }],
+          invalid: [
+            { value: "" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1 },
+            { value: 1.5 },
+            { value: true },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
 
-      testGuard("literal", v.literal(true)({
-        strict: false,
-      }), {
-        options: { strict: false },
-        valid: [
-          { value: true },
-          { value: "true", expect: true },
-          { value: "1", expect: true },
-          { value: 1, expect: true },
-        ],
-        invalid: [
-          { value: "" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: -1.5 },
-          { value: -1 },
-          { value: 0 },
-          { value: 1.5 },
-          { value: false },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
+      testScalar(
+        "literal",
+        v.literal(true)({
+          strict: false,
+        }),
+        {
+          options: { strict: false },
+          valid: [
+            { value: true },
+            { value: "true", expect: true },
+            { value: "1", expect: true },
+            { value: 1, expect: true },
+          ],
+          invalid: [
+            { value: "" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: -1.5 },
+            { value: -1 },
+            { value: 0 },
+            { value: 1.5 },
+            { value: false },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
 
-      testGuard("literal", v.literal(false)({
-        strict: false,
-      }), {
-        options: { strict: false },
-        valid: [
-          { value: false },
-          { value: "false", expect: false },
-          { value: "0", expect: false },
-          { value: 0, expect: false },
-        ],
-        invalid: [
-          { value: "" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: -1.5 },
-          { value: -1 },
-          { value: 1 },
-          { value: 1.5 },
-          { value: true },
-          { value: undefined },
-          { value: null },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      });
+      testScalar(
+        "literal",
+        v.literal(false)({
+          strict: false,
+        }),
+        {
+          options: { strict: false },
+          valid: [
+            { value: false },
+            { value: "false", expect: false },
+            { value: "0", expect: false },
+            { value: 0, expect: false },
+          ],
+          invalid: [
+            { value: "" },
+            { value: "bar" },
+            { value: "foo bar" },
+            { value: -1.5 },
+            { value: -1 },
+            { value: 1 },
+            { value: 1.5 },
+            { value: true },
+            { value: undefined },
+            { value: null },
+            { value: {} },
+            { value: { foo: "bar" } },
+            { value: [] },
+            { value: ["foo"] },
+            { value: () => {} },
+          ],
+        }
+      );
 
-      testGuard("literal", v.literal(false), {
+      testScalar("literal", v.literal(false), {
         context: { strict: false },
         valid: [
           { value: false },
@@ -1443,7 +1509,7 @@ describe("vality.literal", () => {
         ],
       });
 
-      testGuard("literal", v.literal(false), {
+      testScalar("literal", v.literal(false), {
         config: { strict: false },
         valid: [
           { value: false },
@@ -1470,7 +1536,7 @@ describe("vality.literal", () => {
         ],
       });
 
-      testGuard("literal", v.literal(false), {
+      testScalar("literal", v.literal(false), {
         valid: [
           { value: false },
           { value: "false", expect: false },
@@ -1500,7 +1566,7 @@ describe("vality.literal", () => {
 
   describe("options", () => {
     test("default", () => {
-      testGuard("literal", v.literal("foo")({ default: true }), {
+      testScalar("literal", v.literal("foo")({ default: true }), {
         options: {
           default: true,
         },
@@ -1525,7 +1591,7 @@ describe("vality.literal", () => {
         ],
       });
 
-      testGuard("literal", v.literal("foo")({ default: false }), {
+      testScalar("literal", v.literal("foo")({ default: false }), {
         valid: [{ value: "foo" }],
         invalid: [
           { value: "" },
@@ -1566,41 +1632,9 @@ describe("vality.literal", () => {
   });
 });
 
-describe("vality.relation", () => {
-  test("base type check", () => {
-    testGuard(
-      "relation",
-      v.relation(() => ({})),
-      {
-        valid: [{ value: null }, { value: 0 }, { value: 1 }],
-        invalid: [
-          { value: "" },
-          { value: "foo" },
-          { value: "bar" },
-          { value: "foo bar" },
-          { value: true },
-          { value: false },
-          { value: undefined },
-          { value: {} },
-          { value: { foo: "bar" } },
-          { value: [] },
-          { value: ["foo"] },
-          { value: () => {} },
-        ],
-      }
-    );
-  });
-
-  test("type", () => {
-    type M = { my: "model" };
-    const guard = v.relation(null as any as () => M);
-    expectType<TypeEqual<M, Parse<typeof guard>>>(true);
-  });
-});
-
 describe("vality.any", () => {
   describe("base type check", () => {
-    testGuard("any", v.any, {
+    testScalar("any", v.any, {
       valid: [
         { value: null },
         { value: 0 },
@@ -1629,7 +1663,7 @@ describe("vality.any", () => {
 
 describe("vality.never", () => {
   describe("base type check", () => {
-    testGuard("never", v.never, {
+    testScalar("never", v.never, {
       invalid: [
         { value: null },
         { value: 0 },

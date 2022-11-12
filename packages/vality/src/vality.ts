@@ -1,9 +1,10 @@
 declare global {
   namespace vality {
-    interface guards {}
-    interface valits {}
+    interface scalars {}
+    interface compounds {}
+    interface flags {}
   }
-  interface vality extends vality.guards, vality.valits {}
+  interface vality extends vality.scalars, vality.compounds, vality.flags {}
 }
 
 export const vality = {} as vality;
