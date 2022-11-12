@@ -43,6 +43,12 @@ jobs:
           path: docs/node_modules/.cache/webpack
           key: docs-webpack-cache
           restore-keys: docs-webpack-cache
+      - name: x
+        run: ls -la ./docs/node_modules/vality
+      - name: xy
+        run: ls -la ./docs/node_modules/vality/dist
+      - name: xyzg
+        run: cat ./docs/node_modules/vality/package.json
       - name: Build docs
         run: pnpm --filter docs run build
       - name: Cache webpack build

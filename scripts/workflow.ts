@@ -72,6 +72,18 @@ const workflow = {
           },
         },
         {
+          "name": "x",
+          "run": "ls -la ./docs/node_modules/vality",
+        },
+        {
+          "name": "xy",
+          "run": "ls -la ./docs/node_modules/vality/dist",
+        },
+        {
+          "name": "xyzg",
+          "run": "cat ./docs/node_modules/vality/package.json",
+        },
+        {
           name: "Build docs",
           run: "pnpm --filter docs run build",
         },
