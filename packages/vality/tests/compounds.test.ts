@@ -2790,31 +2790,110 @@ describe("vality.dict", () => {
   });
 });
 
-// describe("vality.enum", () => {
-//   describe("member type check", () => {
-//     it("passes (value, context, path, parent) correctly", () => {});
+describe("vality.enum", () => {
+  describe("member type check", () => {
+    it("passes (value, context, path, parent) correctly", () => {
+      const guard = jest.fn(() => ({
+        valid: false,
+        data: undefined,
+        errors: [],
+      }));
+      const guard2 = jest.fn(() => ({
+        valid: false,
+        data: undefined,
+        errors: [],
+      }));
 
-//     it("works with Shorts", () => {});
+      testCompound("array", v.enum({ [_guard]: guard }, { [_guard]: guard2 }), {
+        context: {
+          strict: false,
+        },
+        ignore: [{ value: "foo" }],
+      });
 
-//     it("returns first match", () => {});
+      expect(guard).toHaveBeenCalledWith(
+        "foo",
+        { strict: false },
+        [],
+        undefined
+      );
+      expect(guard2).toHaveBeenCalledWith(
+        "foo",
+        { strict: false },
+        [],
+        undefined
+      );
+    });
 
-//     it("fails if all members fail", () => {});
-//   });
+    it("works with Shorts", () => {
+      testCompound("enum", v.enum([v.string], v.number), {
+        context: { strict: true },
+        valid: [
+          { value: [] },
+          {
+            value: ["foo", "bar"],
+          },
+          {
+            value: 5,
+          },
+        ],
+        invalid: [
+          {
+            value: "foo",
+          },
+          {
+            value: [1],
+          },
+        ],
+      });
+    });
 
-//   describe("type", () => {
-//     describe("Short", () => {
-//       test("flat", () => {});
+    it("returns first match", () => {
+      testCompound(
+        "enum",
+        v.enum(
+          v.string({ transform: (x) => x + "foo" }),
+          v.string({ transform: (x) => x + "bar" })
+        ),
+        {
+          valid: [
+            {
+              value: "foo",
+              expect: "foofoo",
+            },
+          ],
+        }
+      );
+    });
 
-//       test("nested", () => {});
-//     });
+    it("fails if all members fail", () => {
+      testCompound("enum", v.enum(v.string, v.number), {
+        invalid: [
+          {
+            value: true,
+          },
+          { value: {} },
+        ],
+      });
+    });
+  });
 
-//     describe("Valit", () => {
-//       test("flat", () => {});
+  describe("type", () => {
+    describe("Valit", () => {
+      test("flat", () => {
+        const guard = v.enum(v.string, v.number);
+        expectType<TypeEqual<string | number, Parse<typeof guard>>>(true);
+      });
 
-//       test("nested", () => {});
-//     });
-//   });
-// });
+      test("nested", () => {
+        const guard = v.enum(v.enum(v.string, v.number), v.boolean);
+        expectType<TypeEqual<string | number | boolean, Parse<typeof guard>>>(
+          true
+        );
+      });
+    });
+  });
+});
 
 // describe("vality.and", () => {
 //   test("base type check", () => {});

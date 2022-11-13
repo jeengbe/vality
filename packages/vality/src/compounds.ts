@@ -45,9 +45,6 @@ declare global {
           allowExtraProperties: boolean;
         }
       >;
-      // /*
-      //  * Complex
-      //  */
       enum: <E extends Eny[]>(...es: E) => Compound<"enum", E[number]>;
       // and: <E extends OneOrEnumOfTOrGuard<RSE | RSE[]>[]>(
       //   ...es: E
