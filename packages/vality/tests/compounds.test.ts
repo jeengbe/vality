@@ -3429,7 +3429,7 @@ describe("vality.and", () => {
     describe("flat", () => {
       test("object + object", () => {
         const guard = v.and({ foo: v.string }, { bar: v.string });
-        type Expect = { foo: string } & { bar: string };
+        type Expect = { foo: string; bar: string };
         type Got = Parse<typeof guard>;
         expectType<TypeEqual<Expect, Got>>(true);
       });
@@ -3450,11 +3450,7 @@ describe("vality.and", () => {
           v.and({ foo: v.string }, { bar: v.string }),
           v.and({ baz: v.string }, { qux: v.string })
         );
-        type Expect = { foo: string } & { bar: string } & {
-          baz: string;
-        } & {
-          qux: string;
-        };
+        type Expect = { foo: string; bar: string; baz: string; qux: string };
         type Got = Parse<typeof guard>;
         expectType<TypeEqual<Expect, Got>>(true);
       });
@@ -3474,7 +3470,7 @@ describe("vality.and", () => {
           { foo: v.string },
           v.and({ bar: v.string }, { baz: v.string })
         );
-        type Expect = { foo: string } & { bar: string } & { baz: string };
+        type Expect = { foo: string; bar: string; baz: string };
         type Got = Parse<typeof guard>;
         expectType<TypeEqual<Expect, Got>>(true);
       });
@@ -3486,7 +3482,6 @@ describe("vality.and", () => {
         );
         type Expect = ({ foo: string } | { bar: string }) & {
           baz: string;
-        } & {
           qux: string;
         };
         type Got = Parse<typeof guard>;
