@@ -1,5 +1,5 @@
 import { v } from "vality";
-import { _name, _type } from "vality/symbols";
+import { _guard, _name, _type } from "vality/symbols";
 import { types } from "vality/types";
 import { getName, intersect, simplifyEnum } from "vality/typeUtils";
 
@@ -153,12 +153,14 @@ describe("getName", () => {
 
   it("resolves custom types from the map", () => {
     types.set("foo", "string");
-    expect(getName({[_name]: "foo"})).toBe("string");
+    // @ts-expect-error Our [_guard] is... questionable but required for this no to be interpreted as an object Short
+    expect(getName({[_name]: "foo", [_guard]: "I'm just here"})).toBe("string");
   });
 
   it("throws on circular types", () => {
     types.set("foo", "bar");
     types.set("bar", "foo");
-    expect(() => getName({[_name]: "foo"})).toThrow("Circular type extension");
+    // @ts-expect-error
+    expect(() => getName({[_name]: "foo", [_guard]: "I'm just here"})).toThrow("Circular type extension");
   });
 });
