@@ -207,3 +207,17 @@ describe("vality.optional", () => {
     expectType<TypeEqual<number | undefined, Parse<typeof valit>>>(true);
   });
 });
+
+describe("vality.readonly", () => {
+  it("only allows undefined", () => {
+    testFlag("readonly", v.readonly(v.number), {
+      valid: [{ value: undefined }],
+      invalid: [{ value: 1 }],
+    });
+  });
+
+  test("type", () => {
+    const valit = v.readonly(v.number);
+    expectType<TypeEqual<number, Parse<typeof valit>>>(true);
+  });
+});

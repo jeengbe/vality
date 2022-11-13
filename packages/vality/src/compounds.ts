@@ -1,7 +1,14 @@
 import { Compound, compound } from "./compound";
 import { _guard } from "./symbols";
 import { getName } from "./typeUtils";
-import { Eny, enyToGuard, enyToGuardFn, getFlags, RSE } from "./utils";
+import {
+  Eny,
+  enyToGuard,
+  enyToGuardFn,
+  getFlags,
+  OneOrEnumOfTOrGuard,
+  RSE
+} from "./utils";
 import { Error, mergeOptions } from "./validate";
 import { vality } from "./vality";
 
@@ -19,7 +26,6 @@ declare global {
         }
       >;
       tuple: <E extends Eny[]>(...es: E) => Compound<"tuple", E>;
-      enum: <E extends Eny[]>(...es: E) => Compound<"enum", E[number]>;
       object: <O extends RSE>(
         o: O
       ) => Compound<
@@ -29,13 +35,20 @@ declare global {
           allowExtraProperties: boolean;
         }
       >;
+      dict: <K extends OneOrEnumOfTOrGuard<string | number>, V extends Eny>(
+        k: K,
+        v: V
+      ) => Compound<
+        "dict",
+        [typeof k, typeof v],
+        {
+          allowExtraProperties: boolean;
+        }
+      >;
       // /*
       //  * Complex
       //  */
-      // dict: <K extends OneOrEnumOfTOrGuard<string | number>, V extends Eny>(
-      //   k: K,
-      //   v: V
-      // ) => Compound<"dict", [typeof k, typeof v]>;
+      // enum: <E extends Eny[]>(...es: E) => Compound<"enum", E[number]>;
       // and: <E extends OneOrEnumOfTOrGuard<RSE | RSE[]>[]>(
       //   ...es: E
       // ) => Compound<
@@ -92,6 +105,32 @@ vality.array = compound(
     maxLength: (val, o) => val.length <= o,
   }
 );
+
+vality.tuple = compound("tuple", (...es) => (value, options, context, path) => {
+  if (!Array.isArray(value))
+    return {
+      valid: false,
+      data: undefined,
+      errors: [{ message: "vality.tuple.base", path, options, value }],
+    };
+
+  const { bail } = mergeOptions(options, context);
+
+  const data: any = [];
+  const errors: Error[] = [];
+  for (let i = 0; i < es.length; i++) {
+    const res = enyToGuardFn(es[i])(value[i], context, [...path, i], value);
+    if (!res.valid) {
+      errors.push(...res.errors);
+      if (bail) break;
+    } else {
+      data[i] = res.data;
+    }
+  }
+
+  if (errors.length) return { valid: false, data: undefined, errors };
+  return { valid: true, data, errors: [] };
+});
 
 vality.object = compound(
   "object",
@@ -207,59 +246,21 @@ vality.object = compound(
   }
 );
 
-vality.enum = compound(
-  "enum",
-  (...es) =>
-    (value, options, context, path, parent) => {
-      for (const e of es) {
-        const res = enyToGuardFn(e)(value, context, path, parent);
-        if (res.valid) return res;
-      }
-      return {
-        valid: false,
-        data: undefined,
-        errors: [{ message: "vality.enum.base", path, options, value }],
-      };
-    }
-);
-
-vality.tuple = compound("tuple", (...es) => (value, options, context, path) => {
-  if (!Array.isArray(value))
-    return {
-      valid: false,
-      data: undefined,
-      errors: [{ message: "vality.tuple.base", path, options, value }],
-    };
-
-  const { bail, allowExtraProperties } = mergeOptions(options, context);
-
-  const data: any = [];
-  const errors: Error[] = [];
-  for (let i = 0; i < es.length; i++) {
-    const res = enyToGuardFn(es[i])(value[i], context, [...path, i], value);
-    if (!res.valid) {
-      errors.push(...res.errors);
-      if (bail) break;
-    } else {
-      data[i] = res.data;
-    }
-  }
-
-  if (!allowExtraProperties) {
-    for (let i = es.length; i < value.length; i++) {
-      errors.push({
-        message: "vality.tuple.extraProperty",
-        path: [...path, i],
-        options,
-        value: value[i],
-      });
-      if (bail) break;
-    }
-  }
-
-  if (errors.length) return { valid: false, data: undefined, errors };
-  return { valid: true, data, errors: [] };
-});
+// vality.enum = compound(
+//   "enum",
+//   (...es) =>
+//     (value, options, context, path, parent) => {
+//       for (const e of es) {
+//         const res = enyToGuardFn(e)(value, context, path, parent);
+//         if (res.valid) return res;
+//       }
+//       return {
+//         valid: false,
+//         data: undefined,
+//         errors: [{ message: "vality.enum.base", path, options, value }],
+//       };
+//     }
+// );
 
 // // @ts-expect-error 'IntersectItems<RSE[]>' gives 'never'
 // vality.and = compound(

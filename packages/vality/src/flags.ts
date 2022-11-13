@@ -42,7 +42,7 @@ vality.optional = flag(
   }
 );
 
-// We still attach _validate, though, as (for whatever reason) this valit may still be called directly, and we really don't want a runtime error in that situation
+// We still provide an implementation as a flagged Guard may still be called directly, and we also want to handle those cases
 // If we ever encounter 'vality.readonly.base' in tests, it means that we handle readonly keys incorrectly somewhere
 vality.readonly = flag(
   "readonly",

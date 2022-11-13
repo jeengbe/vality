@@ -516,6 +516,260 @@ describe("vality.array", () => {
   });
 });
 
+describe("vality.tuple", () => {
+  test("base type check", () => {
+    testCompound("tuple", v.tuple(v.number, v.string), {
+      valid: [{ value: [1, "2"] }],
+      invalid: [
+        {
+          value: 1,
+        },
+      ],
+    });
+  });
+
+  describe("check items", () => {
+    it("passes (value, context, path, parent) correctly", () => {
+      const guard = jest.fn(() => ({
+        valid: true,
+        data: undefined,
+        errors: [],
+      }));
+
+      testCompound("array", v.tuple({ [_guard]: guard }, { [_guard]: guard }), {
+        context: {
+          strict: false,
+        },
+        ignore: [{ value: ["foo", "bar"] }],
+      });
+
+      expect(guard).toHaveBeenCalledWith(
+        "foo",
+        { strict: false },
+        [0],
+        ["foo", "bar"]
+      );
+      expect(guard).toHaveBeenCalledWith(
+        "bar",
+        { strict: false },
+        [1],
+        ["foo", "bar"]
+      );
+    });
+
+    it("works with Shorts", () => {
+      testCompound("tuple", v.tuple([v.number], v.string), {
+        context: { strict: true },
+        valid: [{ value: [[1], "2"] }, { value: [[1, 1], "2"] }],
+        invalid: [
+          {
+            value: [1, "2"],
+            errors: [
+              {
+                message: "vality.array.base",
+                options: {},
+                path: [0],
+                value: 1,
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("fails if member fails", () => {
+      testCompound("tuple", v.tuple(v.number, v.string), {
+        context: { strict: true },
+        valid: [{ value: [1, "2"] }],
+        invalid: [
+          {
+            value: [1, 2],
+            errors: [
+              {
+                message: "vality.string.base",
+                options: {},
+                path: [1],
+                value: 2,
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    describe("respects bail", () => {
+      test("options", () => {
+        testCompound("tuple", v.tuple(v.number, v.number)({ bail: true }), {
+          options: { bail: true },
+          context: { strict: true },
+          invalid: [
+            {
+              value: ["1", "2"],
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [0],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("tuple", v.tuple(v.number, v.number)({ bail: false }), {
+          options: { bail: false },
+          context: { strict: true },
+          invalid: [
+            {
+              value: ["1", "2"],
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [0],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [1],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("context", () => {
+        testCompound("tuple", v.tuple(v.number, v.number), {
+          context: { strict: true, bail: true },
+          invalid: [
+            {
+              value: ["1", "2"],
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [0],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("tuple", v.tuple(v.number, v.number), {
+          context: { strict: true, bail: false },
+          invalid: [
+            {
+              value: ["1", "2"],
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [0],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [1],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("tuple", v.tuple(v.number, v.number), {
+          config: { bail: true },
+          context: { strict: true },
+          invalid: [
+            {
+              value: ["1", "2"],
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [0],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("tuple", v.tuple(v.number, v.number), {
+          config: { bail: false },
+          context: { strict: true },
+          invalid: [
+            {
+              value: ["1", "2"],
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [0],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [1],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("default", () => {
+        testCompound("tuple", v.tuple(v.number, v.number), {
+          context: { strict: true },
+          invalid: [
+            {
+              value: ["1", "2"],
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [0],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: [1],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+    });
+  });
+
+  describe("type", () => {
+    test("flat", () => {
+      const valit = v.tuple(v.number, v.string);
+      expectType<TypeEqual<[number, string], Parse<typeof valit>>>(true);
+    });
+
+    test("nested", () => {
+      const valit = v.tuple(v.tuple(v.number, v.string), v.string);
+      expectType<TypeEqual<[[number, string], string], Parse<typeof valit>>>(
+        true
+      );
+    });
+  });
+});
+
 describe("vality.object", () => {
   test("base type check", () => {
     testCompound("object", v.object({}), {
@@ -785,7 +1039,7 @@ describe("vality.object", () => {
     describe("allows 'key[]' as 'key' if value is of type array", () => {
       it("works with a Valit", () => {
         testCompound("object", v.object({ foo: v.array(v.number) }), {
-          context: { strict: true },
+          context: { strict: true, allowExtraProperties: false },
           valid: [
             { value: { foo: [1, 2] } },
             { value: { "foo[]": [1, 2] }, expect: { foo: [1, 2] } },
@@ -861,6 +1115,31 @@ describe("vality.object", () => {
             },
           ],
         });
+      });
+    });
+
+    it("errors on 'key[]' if 'key' is not an array", () => {
+      testCompound("object", v.object({ foo: v.number }), {
+        context: { bail: false, allowExtraProperties: false },
+        invalid: [
+          {
+            value: { "foo[]": 1 },
+            errors: [
+              {
+                message: "vality.number.base",
+                options: {},
+                path: ["foo"],
+                value: undefined,
+              },
+              {
+                message: "vality.object.extraProperty",
+                options: {},
+                path: ["foo[]"],
+                value: 1,
+              },
+            ],
+          },
+        ],
       });
     });
 
@@ -1200,72 +1479,6 @@ describe("vality.object", () => {
   });
 });
 
-describe("vality.enum", () => {
-  describe("member type check", () => {
-    it("passes (value, context, path, parent) correctly", () => {});
-
-    it("works with Shorts", () => {});
-
-    it("returns first match", () => {});
-
-    it("fails if all members fail", () => {});
-  });
-
-  describe("type", () => {
-    describe("Short", () => {
-      test("flat", () => {});
-
-      test("nested", () => {});
-    });
-
-    describe("Valit", () => {
-      test("flat", () => {});
-
-      test("nested", () => {});
-    });
-  });
-});
-
-describe("vality.tuple", () => {
-  test("base type check", () => {});
-
-  describe("allows non-array values in non-strict mode", () => {
-    test("order of priority", () => {});
-  });
-
-  describe("check items", () => {
-    it("passes (value, context, path, parent) correctly", () => {});
-
-    it("works with Shorts", () => {});
-
-    it("fails if member fails", () => {});
-  });
-
-  test("type", () => {});
-});
-
-test("vality.readonly", () => {});
-
-describe("vality.and", () => {
-  test("base type check", () => {});
-
-  describe("member type check", () => {
-    it("passes (value, context, path, parent) correctly to values", () => {});
-
-    test("object + object", () => {});
-
-    test("object + enum", () => {});
-
-    test("object + vality.and", () => {});
-
-    it("works with Shorts", () => {});
-
-    it("fails if member fails", () => {});
-  });
-
-  // TODO
-});
-
 describe("vality.dict", () => {
   test("base type check", () => {});
 
@@ -1309,3 +1522,49 @@ describe("vality.dict", () => {
 
   test("type", () => {});
 });
+
+// describe("vality.enum", () => {
+//   describe("member type check", () => {
+//     it("passes (value, context, path, parent) correctly", () => {});
+
+//     it("works with Shorts", () => {});
+
+//     it("returns first match", () => {});
+
+//     it("fails if all members fail", () => {});
+//   });
+
+//   describe("type", () => {
+//     describe("Short", () => {
+//       test("flat", () => {});
+
+//       test("nested", () => {});
+//     });
+
+//     describe("Valit", () => {
+//       test("flat", () => {});
+
+//       test("nested", () => {});
+//     });
+//   });
+// });
+
+// describe("vality.and", () => {
+//   test("base type check", () => {});
+
+//   describe("member type check", () => {
+//     it("passes (value, context, path, parent) correctly to values", () => {});
+
+//     test("object + object", () => {});
+
+//     test("object + enum", () => {});
+
+//     test("object + vality.and", () => {});
+
+//     it("works with Shorts", () => {});
+
+//     it("fails if member fails", () => {});
+//   });
+
+//   // TODO
+// });
