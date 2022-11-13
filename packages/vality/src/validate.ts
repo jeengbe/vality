@@ -1,8 +1,6 @@
 import { config } from "./config";
 import { Parse } from "./parse";
-import { _guard } from "./symbols";
 import { Eny, enyToGuardFn, RSA } from "./utils";
-import { vality } from "./vality";
 
 export interface Error {
   message: string;
@@ -76,9 +74,5 @@ export function validate<E extends Eny>(
   val: unknown,
   context?: RSA
 ): ValidationResult<Parse<E>> {
-  // Call top-level functions (So they're not treated as relations)
-  if (typeof schema === "function" && !(_guard in schema))
-    schema = vality.object(schema()) as unknown as E;
-
   return enyToGuardFn(schema)(val, context ?? {}, [], undefined);
 }
