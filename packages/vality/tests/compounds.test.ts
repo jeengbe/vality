@@ -3439,8 +3439,23 @@ describe("vality.and", () => {
           v.enum({ foo: v.string }, { bar: v.string }),
           v.enum({ baz: v.string }, { qux: v.string })
         );
-        type Expect = ({ foo: string } | { bar: string }) &
-          ({ baz: string } | { qux: string });
+        type Expect =
+          | {
+              foo: string;
+              baz: string;
+            }
+          | {
+              foo: string;
+              qux: string;
+            }
+          | {
+              bar: string;
+              baz: string;
+            }
+          | {
+              bar: string;
+              qux: string;
+            };
         type Got = Parse<typeof guard>;
         expectType<TypeEqual<Expect, Got>>(true);
       });
@@ -3460,7 +3475,9 @@ describe("vality.and", () => {
           { foo: v.string },
           v.enum({ bar: v.string }, { baz: v.string })
         );
-        type Expect = { foo: string } & ({ bar: string } | { baz: string });
+        type Expect =
+          | { foo: string; bar: string }
+          | { foo: string; baz: string };
         type Got = Parse<typeof guard>;
         expectType<TypeEqual<Expect, Got>>(true);
       });
@@ -3480,10 +3497,9 @@ describe("vality.and", () => {
           v.enum({ foo: v.string }, { bar: v.string }),
           v.and({ baz: v.string }, { qux: v.string })
         );
-        type Expect = ({ foo: string } | { bar: string }) & {
-          baz: string;
-          qux: string;
-        };
+        type Expect =
+          | { foo: string; baz: string; qux: string }
+          | { bar: string; baz: string; qux: string };
         type Got = Parse<typeof guard>;
         expectType<TypeEqual<Expect, Got>>(true);
       });
