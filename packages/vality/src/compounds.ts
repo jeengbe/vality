@@ -261,27 +261,30 @@ vality.dict = compound("dict", (k, v) => (value, options, context, path) => {
   const { bail, allowExtraProperties } = mergeOptions(options, context);
 
   // First, we resolve the key
-  const simpleKeyGuard = simplifyEnum(k);
-  const type = getName(simpleKeyGuard);
+  const type = getName(k);
 
-  let literalKeys;
-  let typeKeys;
+  let literalKeys: any[];
+  let typeKeys: any[];
 
   switch (type) {
     case "literal":
-      literalKeys = [simpleKeyGuard];
+      literalKeys = [k];
       typeKeys = [];
       break;
     case "enum":
-      [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce(
-        // @ts-expect-error
+      // @ts-expect-error
+      const simpleKeyGuard = simplifyEnum(k[_type]);
+
+      [literalKeys, typeKeys] = simpleKeyGuard.reduce(
         (acc, key) => {
           const guard = enyToGuard(key);
           // No need to simplify here, as simplify flattens out nested enums
           const type = getName(guard);
           if (type === "literal") {
+            // @ts-expect-error
             acc[0].push(guard);
           } else {
+            // @ts-expect-error
             acc[1].push(guard);
           }
           return acc;
@@ -291,7 +294,7 @@ vality.dict = compound("dict", (k, v) => (value, options, context, path) => {
       break;
     default:
       literalKeys = [];
-      typeKeys = [simpleKeyGuard];
+      typeKeys = [k];
       break;
   }
 

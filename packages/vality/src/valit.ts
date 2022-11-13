@@ -69,8 +69,8 @@ export type CallOptions<Type, Options> = [Options] extends [never]
   : // We Omit keyof Options here to allow Options to override default extra option implementations
     Partial<Options & Omit<SpecialOptions<Type, Options>, keyof Options>>;
 
-export type FnArgs<Type, Options> = [
-  value: unknown,
+export type FnArgs<Type, Options, ValueType = unknown> = [
+  value: ValueType,
   options: Partial<CallOptions<Type, Options>>,
   context: Context,
   path: Path,

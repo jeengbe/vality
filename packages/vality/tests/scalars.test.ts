@@ -1,6 +1,7 @@
 import { expectType, TypeEqual } from "ts-expect";
 import { Error, Parse, v, validate } from "vality";
 import { config } from "vality/config";
+import { _type } from "vality/symbols";
 import { RSA } from "vality/utils";
 import { Guard } from "vality/valit";
 
@@ -1614,6 +1615,12 @@ describe("vality.literal", () => {
         ],
       });
     });
+  });
+
+  it("attaches the value to the Guard", () => {
+    const val = {};
+    // @ts-expect-error We use an object to check for reference equality
+    expect(v.literal(val)[_type][0][_type]).toBe(val);
   });
 
   test("type", () => {

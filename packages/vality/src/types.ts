@@ -1,1 +1,1 @@
-export const types = {} as Record<string, string>;
+export const types = new Map<string, string>();
