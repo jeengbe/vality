@@ -1,6 +1,6 @@
 import { Compound, compound } from "./compound";
-import { _guard } from "./symbols";
-import { getName } from "./typeUtils";
+import { _guard, _type } from "./symbols";
+import { getName, simplifyEnum } from "./typeUtils";
 import {
   Eny,
   enyToGuard,
@@ -48,7 +48,7 @@ declare global {
       // /*
       //  * Complex
       //  */
-      // enum: <E extends Eny[]>(...es: E) => Compound<"enum", E[number]>;
+      enum: <E extends Eny[]>(...es: E) => Compound<"enum", E[number]>;
       // and: <E extends OneOrEnumOfTOrGuard<RSE | RSE[]>[]>(
       //   ...es: E
       // ) => Compound<
@@ -246,21 +246,157 @@ vality.object = compound(
   }
 );
 
-// vality.enum = compound(
-//   "enum",
-//   (...es) =>
-//     (value, options, context, path, parent) => {
-//       for (const e of es) {
-//         const res = enyToGuardFn(e)(value, context, path, parent);
-//         if (res.valid) return res;
-//       }
-//       return {
-//         valid: false,
-//         data: undefined,
-//         errors: [{ message: "vality.enum.base", path, options, value }],
-//       };
-//     }
-// );
+vality.dict = compound("dict", (k, v) => (value, options, context, path) => {
+  if (typeof value !== "object" || value === null) {
+    return {
+      valid: false,
+      data: undefined,
+      errors: [{ message: "vality.dict.base", path, options, value }],
+    };
+  }
+
+  if (getFlags(v).has("readonly")) {
+    // If the key is readonly, we don't expect it to be set
+    return { valid: true, data: undefined, errors: [] };
+  }
+
+  const { bail, allowExtraProperties } = mergeOptions(options, context);
+
+  // First, we resolve the key
+  const simpleKeyGuard = simplifyEnum(k);
+  const type = getName(simpleKeyGuard);
+
+  let literalKeys;
+  let typeKeys;
+
+  switch (type) {
+    case "literal":
+      literalKeys = [simpleKeyGuard];
+      typeKeys = [];
+      break;
+    case "enum":
+      [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce(
+        // @ts-expect-error
+        (acc, key) => {
+          const guard = enyToGuard(key);
+          // No need to simplify here, as simplify flattens out nested enums
+          const type = getName(guard);
+          if (type === "literal") {
+            acc[0].push(guard);
+          } else {
+            acc[1].push(guard);
+          }
+          return acc;
+        },
+        [[], []]
+      );
+      break;
+    default:
+      literalKeys = [];
+      typeKeys = [simpleKeyGuard];
+      break;
+  }
+
+  const valueGuard = enyToGuard(v);
+
+  // We check all literal keys first
+  const data: any = {};
+  const errors: Error[] = [];
+
+  const seenKeys = new Set();
+
+  for (const literal of literalKeys) {
+    const literalGuard = enyToGuard(literal);
+    const literalValue = literalGuard[_type][0][_type];
+
+    const res = valueGuard[_guard](
+      // @ts-expect-error
+      value[literalValue],
+      context,
+      [...path, literalValue],
+      value
+    );
+
+    if (!res.valid) {
+      errors.push(...res.errors);
+      if (bail) break;
+    } else {
+      seenKeys.add(literalValue);
+      data[literalValue] = res.data;
+    }
+  }
+
+  if (bail && errors.length) return { valid: false, data: undefined, errors };
+
+  // Check remaining properties to fulfil type key requirements
+  // Because of potential key remapping, we can't already !allowExtraProperties and skip this step entirely here :(
+  for (const valueKey in value) {
+    if (seenKeys.has(valueKey)) continue;
+
+    let remappedKey;
+
+    for (const typeKey of typeKeys) {
+      const res = typeKey[_guard](
+        valueKey,
+        context,
+        [...path, valueKey],
+        value
+      );
+
+      if (res.valid) {
+        remappedKey = res.data;
+        break;
+      }
+    }
+
+    if (remappedKey === undefined) {
+      if (!allowExtraProperties) {
+        errors.push({
+          message: "vality.dict.extraProperty",
+          path: [...path, valueKey],
+          options,
+          // @ts-expect-error
+          value: value[valueKey],
+        });
+        if (bail) break;
+      }
+    } else {
+      const res = valueGuard[_guard](
+        // @ts-expect-error
+        value[valueKey],
+        context,
+        [...path, valueKey],
+        value
+      );
+
+      if (!res.valid) {
+        errors.push(...res.errors);
+        if (bail) break;
+      } else {
+        data[remappedKey] = res.data;
+      }
+    }
+  }
+
+  if (errors.length) return { valid: false, data: undefined, errors };
+  return { valid: true, data, errors: [] };
+});
+
+vality.enum = compound(
+  "enum",
+  (...es) =>
+    (value, options, context, path, parent) => {
+      for (const e of es) {
+        const res = enyToGuardFn(e)(value, context, path, parent);
+        if (res.valid) return res;
+      }
+      return {
+        valid: false,
+        data: undefined,
+        errors: [{ message: "vality.enum.base", path, options, value }],
+      };
+    }
+);
 
 // // @ts-expect-error 'IntersectItems<RSE[]>' gives 'never'
 // vality.and = compound(
@@ -283,146 +419,3 @@ vality.object = compound(
 //       ) as ValidationResult<typeof es>;
 //     }
 // );
-
-// vality.dict = compound("dict", (k, v) => (value, options, context, path) => {
-//   if (typeof value !== "object" || value === null) {
-//     return {
-//       valid: false,
-//       data: undefined,
-//       errors: [{ message: "vality.dict.base", path, options, value }],
-//     };
-//   }
-
-//   const { bail, allowExtraProperties } = mergeOptions(options, context);
-
-//   // First, we resolve the key
-//   const keyGuard = enyToGuard(k);
-//   const simpleKeyGuard = simplifyEnumGuard(keyGuard);
-//   const type = getRootType(simpleKeyGuard);
-
-//   let literalKeys;
-//   let typeKeys;
-
-//   switch (type) {
-//     case "string":
-//     case "number":
-//       literalKeys = [];
-//       typeKeys = [simpleKeyGuard];
-//       break;
-//     case "literal":
-//       literalKeys = [simpleKeyGuard];
-//       typeKeys = [];
-//       break;
-//     case "enum":
-//       [literalKeys, typeKeys] = simpleKeyGuard[_type].reduce(
-//         // @ts-expect-error
-//         (acc, key) => {
-//           const guard = enyToGuard(key);
-//           // No need to simplify here, as simplify flattens out nested enums
-//           const type = getRootType(guard);
-//           if (type === "literal") {
-//             acc[0].push(guard);
-//           } else {
-//             acc[1].push(guard);
-//           }
-//           return acc;
-//         },
-//         [[], []]
-//       );
-//       break;
-//     default:
-//       throw new Error(
-//         "vality.dict: Unexpected type of property: " + simpleKeyGuard[_name]
-//       );
-//   }
-
-//   const errors: Error[] = [];
-
-//   // First, make sure that all literal keys are set
-//   const valueKeys = Object.keys(value);
-//   const newProperties: [string, string | number][] = [];
-//   for (const literalKey of literalKeys) {
-//     let foundProperty: [string, string | number] | undefined;
-//     for (const k of valueKeys) {
-//       const res = literalKey[_guard](k, path, value, context);
-//       if (res.valid) {
-//         foundProperty = [k, res.data];
-//         break;
-//       }
-//     }
-//     if (foundProperty) {
-//       newProperties.push(foundProperty);
-//     } else {
-//       if (
-//         ((typeof v === "object" && v !== null) || typeof v === "function") &&
-//         // @ts-expect-error Is ok since if it is undefined, then that's ok too
-//         v[_name] !== "optional"
-//       ) {
-//         errors.push({
-//           message: "vality.dict.missingProperty",
-//           path,
-//           options,
-//           value: literalKey[_type][0][_type],
-//         });
-//         if (bail) break;
-//       }
-//     }
-//   }
-
-//   if (bail && errors.length) return { valid: false, data: undefined, errors };
-
-//   // All remaining keys must be covered by our type keys
-//   const remainingProperties = valueKeys.filter(
-//     (k) => !newProperties.some((nk) => nk[0] === k)
-//   );
-//   for (const remainingKey of remainingProperties) {
-//     /**
-//      * @key Actual key in the object
-//      * @value Key it will be mapped to
-//      */
-//     let newProperty: [string, string | number] | undefined;
-//     for (const typeKey of typeKeys) {
-//       const res = typeKey[_guard](remainingKey, path, value, context);
-//       if (res.valid) {
-//         newProperty = [remainingKey, res.data];
-//         break;
-//       }
-//     }
-//     if (newProperty) {
-//       newProperties.push(newProperty);
-//     } else {
-//       if (!allowExtraProperties) {
-//         errors.push({
-//           message: "vality.dict.unexpectedProperty",
-//           path,
-//           options,
-//           value: remainingKey,
-//         });
-//         if (bail) break;
-//       }
-//     }
-//   }
-
-//   if (bail && errors.length) return { valid: false, data: undefined, errors };
-
-//   // Construct return object
-//   const data: any = {};
-//   const valueGuard = enyToGuard(v);
-//   for (const [oldKey, newKey] of newProperties) {
-//     const res = valueGuard[_guard](
-//       // @ts-expect-error
-//       value[oldKey],
-//       context,
-//       [...path, oldKey],
-//       value
-//     );
-//     if (res.valid) {
-//       data[newKey] = res.data;
-//     } else {
-//       errors.push(...res.errors);
-//       if (bail) break;
-//     }
-//   }
-//   if (errors.length) return { valid: false, data: undefined, errors };
-//   return { valid: true, data, errors: [] };
-// });

@@ -2,8 +2,12 @@ import { CompoundFn } from "./compound";
 import { RSA } from "./utils";
 import { FnArgs, makeValit, Valit, ValitParameters } from "./valit";
 
-export interface Scalar<Name, Type, Options extends RSA = never>
-  extends Valit<Name, Type, Options, false> {}
+export type Scalar<Name, Type, Options extends RSA = never> = Valit<
+  Name,
+  Type,
+  Options,
+  false
+>;
 
 type GetScalarOptions<
   Name extends keyof vality.scalars,

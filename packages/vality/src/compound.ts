@@ -2,8 +2,12 @@ import { RSA } from "./utils";
 import type { ValidationResult } from "./validate";
 import { FnArgs, makeValit, Valit, ValitParameters } from "./valit";
 
-export interface Compound<Name, Type, Options extends RSA = never>
-  extends Valit<Name, Type, Options, true> {}
+export type Compound<Name, Type, Options extends RSA = never> = Valit<
+  Name,
+  Type,
+  Options,
+  true
+>;
 
 export type GetCompoundOptions<
   Name extends keyof vality.compounds,

@@ -1,7 +1,7 @@
 import { expectType, TypeEqual } from "ts-expect";
 import { Error, Parse, v, validate } from "vality";
 import { config } from "vality/config";
-import { _guard } from "vality/symbols";
+import { _guard, _type } from "vality/symbols";
 import { RSA } from "vality/utils";
 import { Guard } from "vality/valit";
 
@@ -1400,45 +1400,168 @@ describe("vality.object", () => {
       });
     });
 
-    it("bails on extra properties", () => {
-      testCompound("object", v.object({ foo: v.number, bar: v.number }), {
-        context: { allowExtraProperties: false, bail: true },
-        invalid: [
+    describe("bails on extra properties", () => {
+      test("options", () => {
+        testCompound(
+          "object",
+          v.object({ foo: v.number, bar: v.number })({ bail: true }),
           {
-            value: { foo: 1, bar: 1, baz: 1, qux: 1 },
-            errors: [
+            options: { bail: true },
+            context: { allowExtraProperties: false },
+            invalid: [
               {
-                message: "vality.object.extraProperty",
-                options: {},
-                path: ["baz"],
-                value: 1,
+                value: { foo: 1, bar: 1, baz: 1, qux: 1 },
+                errors: [
+                  {
+                    message: "vality.object.extraProperty",
+                    options: { bail: true },
+                    path: ["baz"],
+                    value: 1,
+                  },
+                ],
               },
             ],
-          },
-        ],
+          }
+        );
+
+        testCompound(
+          "object",
+          v.object({ foo: v.number, bar: v.number })({ bail: false }),
+          {
+            options: { bail: false },
+            context: { allowExtraProperties: false },
+            invalid: [
+              {
+                value: { foo: 1, bar: 1, baz: 1, qux: 1 },
+                errors: [
+                  {
+                    message: "vality.object.extraProperty",
+                    options: { bail: false },
+                    path: ["baz"],
+                    value: 1,
+                  },
+                  {
+                    message: "vality.object.extraProperty",
+                    options: { bail: false },
+                    path: ["qux"],
+                    value: 1,
+                  },
+                ],
+              },
+            ],
+          }
+        );
       });
 
-      testCompound("object", v.object({ foo: v.number, bar: v.number }), {
-        context: { allowExtraProperties: false, bail: false },
-        invalid: [
-          {
-            value: { foo: 1, bar: 1, baz: 1, qux: 1 },
-            errors: [
-              {
-                message: "vality.object.extraProperty",
-                options: {},
-                path: ["baz"],
-                value: 1,
-              },
-              {
-                message: "vality.object.extraProperty",
-                options: {},
-                path: ["qux"],
-                value: 1,
-              },
-            ],
-          },
-        ],
+      test("context", () => {
+        testCompound("object", v.object({ foo: v.number, bar: v.number }), {
+          context: { allowExtraProperties: false, bail: true },
+          invalid: [
+            {
+              value: { foo: 1, bar: 1, baz: 1, qux: 1 },
+              errors: [
+                {
+                  message: "vality.object.extraProperty",
+                  options: {},
+                  path: ["baz"],
+                  value: 1,
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("object", v.object({ foo: v.number, bar: v.number }), {
+          context: { allowExtraProperties: false, bail: false },
+          invalid: [
+            {
+              value: { foo: 1, bar: 1, baz: 1, qux: 1 },
+              errors: [
+                {
+                  message: "vality.object.extraProperty",
+                  options: {},
+                  path: ["baz"],
+                  value: 1,
+                },
+                {
+                  message: "vality.object.extraProperty",
+                  options: {},
+                  path: ["qux"],
+                  value: 1,
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("object", v.object({ foo: v.number, bar: v.number }), {
+          context: { allowExtraProperties: false },
+          config: { bail: true },
+          invalid: [
+            {
+              value: { foo: 1, bar: 1, baz: 1, qux: 1 },
+              errors: [
+                {
+                  message: "vality.object.extraProperty",
+                  options: {},
+                  path: ["baz"],
+                  value: 1,
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("object", v.object({ foo: v.number, bar: v.number }), {
+          context: { allowExtraProperties: false },
+          config: { bail: false },
+          invalid: [
+            {
+              value: { foo: 1, bar: 1, baz: 1, qux: 1 },
+              errors: [
+                {
+                  message: "vality.object.extraProperty",
+                  options: {},
+                  path: ["baz"],
+                  value: 1,
+                },
+                {
+                  message: "vality.object.extraProperty",
+                  options: {},
+                  path: ["qux"],
+                  value: 1,
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("default", () => {
+        testCompound("object", v.object({ foo: v.number, bar: v.number }), {
+          context: { allowExtraProperties: false },
+          invalid: [
+            {
+              value: { foo: 1, bar: 1, baz: 1, qux: 1 },
+              errors: [
+                {
+                  message: "vality.object.extraProperty",
+                  options: {},
+                  path: ["baz"],
+                  value: 1,
+                },
+                {
+                  message: "vality.object.extraProperty",
+                  options: {},
+                  path: ["qux"],
+                  value: 1,
+                },
+              ],
+            },
+          ],
+        });
       });
     });
   });
@@ -1480,47 +1603,1191 @@ describe("vality.object", () => {
 });
 
 describe("vality.dict", () => {
-  test("base type check", () => {});
-
-  describe("check properties", () => {
-    test("type keys", () => {});
-
-    test("literal keys", () => {});
-
-    test("enum keys (mixed)", () => {});
-
-    it("uses keys' return value as properties in data", () => {});
-
-    describe("fails if literal key missing", () => {
-      it("works", () => {});
-
-      it("ignores optional keys", () => {});
-
-      it("respects bail", () => {});
-    });
-
-    describe("fails if remaining property not covered by type keys", () => {
-      it("works", () => {});
-
-      it("respects allowExtraProperties", () => {});
-
-      it("respects bail", () => {});
+  test("base type check", () => {
+    testCompound("dict", v.dict(v.string, v.number), {
+      valid: [{ value: {} }, { value: { foo: 1 } }],
+      invalid: [
+        { value: -1 },
+        { value: 0 },
+        { value: 1 },
+        { value: "" },
+        { value: "foo" },
+        { value: "foo bar" },
+        { value: true },
+        { value: false },
+        { value: undefined },
+        { value: null },
+        { value: () => {} },
+      ],
     });
   });
 
-  describe("return data", () => {
-    it("uses keys' return value as properties in data", () => {});
-
-    it("passes (value, context, path, parent) correctly to values", () => {});
-
-    it("works with Shorts", () => {});
-
-    it("fails if member fails", () => {});
-
-    it("respects bail", () => {});
+  it("returns undefined if the value is readonly", () => {
+    testCompound("dict", v.dict(v.string, v.readonly(v.any)), {
+      valid: [
+        { value: {}, expect: undefined },
+        { value: { foo: "bar", baz: "qux" }, expect: undefined },
+      ],
+      invalid: [
+        {
+          value: "foo",
+        },
+      ],
+    });
   });
 
-  test("type", () => {});
+  it("works with one literal key", () => {
+    testCompound("dict", v.dict(v.literal("foo"), v.number), {
+      valid: [{ value: { foo: 1 } }],
+      invalid: [
+        {
+          value: {},
+          errors: [
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["foo"],
+              value: undefined,
+            },
+          ],
+        },
+        {
+          value: { foo: "bar" },
+          errors: [
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["foo"],
+              value: "bar",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("works with one type key", () => {
+    testCompound("dict", v.dict(v.string, v.number), {
+      valid: [
+        { value: {} },
+        { value: { foo: 1 } },
+        { value: { foo: 1, bar: 1 } },
+      ],
+      invalid: [
+        {
+          value: { foo: "bar" },
+          errors: [
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["foo"],
+              value: "bar",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("works with only literal keys", () => {
+    testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+      valid: [
+        { value: { foo: 1, bar: 2 } },
+        { value: { foo: 1, bar: 2, baz: 3 }, expect: { foo: 1, bar: 2 } },
+      ],
+      invalid: [
+        {
+          value: {},
+          errors: [
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["foo"],
+              value: undefined,
+            },
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["bar"],
+              value: undefined,
+            },
+          ],
+        },
+        {
+          value: { foo: 1 },
+          errors: [
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["bar"],
+              value: undefined,
+            },
+          ],
+        },
+        {
+          value: { bar: 2 },
+          errors: [
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["foo"],
+              value: undefined,
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("works with only type keys", () => {
+    testCompound("dict", v.dict(v.enum(v.string, v.number), v.number), {
+      context: { allowExtraProperties: false },
+      valid: [
+        { value: {} },
+        { value: { foo: 1 } },
+        { value: { foo: 1, bar: 2 } },
+        { value: { 1: 1, bar: 2 } },
+        { value: { 1: 1, bar: 2, "3": 3 } },
+      ],
+    });
+  });
+
+  it("works with mixed keys", () => {
+    testCompound("dict", v.dict(v.enum("foo", v.number), v.number), {
+      valid: [
+        { value: { foo: 1 } },
+        { value: { foo: 1, 2: 2 } },
+        { value: { foo: 1, 2: 2, 3: 3 } },
+        { value: { foo: 1, 2: 2, bar: "3" }, expect: { foo: 1, 2: 2 } },
+      ],
+      invalid: [
+        {
+          value: {},
+          errors: [
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["foo"],
+              value: undefined,
+            },
+          ],
+        },
+        {
+          value: { 1: 1 },
+          errors: [
+            {
+              message: "vality.number.base",
+              options: {},
+              path: ["foo"],
+              value: undefined,
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  describe("literal keys", () => {
+    it("passes (value, context, path, parent) correctly to the value", () => {
+      const guard = jest.fn(() => ({
+        valid: true,
+        data: undefined,
+        errors: [],
+      }));
+
+      testCompound("dict", v.dict(v.enum("foo", "bar"), { [_guard]: guard }), {
+        context: {
+          strict: false,
+        },
+        ignore: [{ value: { foo: "bar", bar: "baz" } }],
+      });
+
+      expect(guard).toHaveBeenCalledWith("bar", { strict: false }, ["foo"], {
+        foo: "bar",
+        bar: "baz",
+      });
+      expect(guard).toHaveBeenCalledWith("baz", { strict: false }, ["bar"], {
+        foo: "bar",
+        bar: "baz",
+      });
+    });
+
+    it("works with Shorts", () => {
+      testCompound("dict", v.dict(v.enum("foo", "bar"), [v.number]), {
+        context: { strict: true, bail: true },
+        valid: [{ value: { foo: [1], bar: [2] } }],
+        invalid: [
+          {
+            value: { foo: 1, bar: "2" },
+            errors: [
+              {
+                message: "vality.array.base",
+                options: {},
+                path: ["foo"],
+                value: 1,
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    describe("respects bail", () => {
+      test("options", () => {
+        testCompound(
+          "dict",
+          v.dict(v.enum("foo", "bar"), v.number)({ bail: true }),
+          {
+            options: { bail: true },
+            context: { strict: true },
+            valid: [{ value: { foo: 1, bar: 2 } }],
+            invalid: [
+              {
+                value: { foo: "1", bar: "2" },
+                errors: [
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["foo"],
+                    value: "1",
+                  },
+                ],
+              },
+            ],
+          }
+        );
+
+        testCompound(
+          "dict",
+          v.dict(v.enum("foo", "bar"), v.number)({ bail: false }),
+          {
+            options: { bail: false },
+            context: { strict: true },
+            valid: [{ value: { foo: 1, bar: 2 } }],
+            invalid: [
+              {
+                value: { foo: "1", bar: "2" },
+                errors: [
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["foo"],
+                    value: "1",
+                  },
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["bar"],
+                    value: "2",
+                  },
+                ],
+              },
+            ],
+          }
+        );
+      });
+
+      test("context", () => {
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          context: { bail: true, strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          context: { bail: false, strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          config: { bail: true },
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          config: { bail: false },
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("default", () => {
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+    });
+
+    it("fails if value fails", () => {
+      testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+        context: { strict: true, bail: true },
+        valid: [{ value: { foo: 1, bar: 2 } }],
+        invalid: [
+          {
+            value: { foo: "1", bar: "2" },
+            errors: [
+              {
+                message: "vality.number.base",
+                options: {},
+                path: ["foo"],
+                value: "1",
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    describe("respects bail", () => {
+      test("options", () => {
+        testCompound(
+          "dict",
+          v.dict(v.enum("foo", "bar"), v.number)({ bail: true }),
+          {
+            options: { bail: true },
+            context: { strict: true },
+            invalid: [
+              {
+                value: { foo: "1", bar: "2" },
+                errors: [
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["foo"],
+                    value: "1",
+                  },
+                ],
+              },
+            ],
+          }
+        );
+
+        testCompound(
+          "dict",
+          v.dict(v.enum("foo", "bar"), v.number)({ bail: false }),
+          {
+            options: { bail: false },
+            context: { strict: true },
+            valid: [{ value: { foo: 1, bar: 2 } }],
+            invalid: [
+              {
+                value: { foo: "1", bar: "2" },
+                errors: [
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["foo"],
+                    value: "1",
+                  },
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["bar"],
+                    value: "2",
+                  },
+                ],
+              },
+            ],
+          }
+        );
+      });
+
+      test("context", () => {
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          context: { bail: true, strict: true },
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          context: { bail: false, strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          config: { bail: true },
+          context: { strict: true },
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          config: { bail: false },
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("default", () => {
+        testCompound("dict", v.dict(v.enum("foo", "bar"), v.number), {
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+    });
+  });
+
+  describe("type keys", () => {
+    it("passes (value, context, path, parent) correctly to the key", () => {
+      const guard = jest.fn((x) => ({
+        valid: true,
+        data: x,
+        errors: [],
+      }));
+
+      testCompound(
+        "dict",
+        // @ts-expect-error
+        v.dict({ [_guard]: guard, [_type]: "string" }, v.number),
+        {
+          context: {
+            strict: false,
+          },
+          ignore: [{ value: { foo: "bar", bar: "baz" } }],
+        }
+      );
+
+      expect(guard).toHaveBeenCalledWith("foo", { strict: false }, ["foo"], {
+        foo: "bar",
+        bar: "baz",
+      });
+      expect(guard).toHaveBeenCalledWith("bar", { strict: false }, ["bar"], {
+        foo: "bar",
+        bar: "baz",
+      });
+    });
+
+    it("passes (value, context, path, parent) correctly to the value", () => {
+      const guard = jest.fn(() => ({
+        valid: true,
+        data: undefined,
+        errors: [],
+      }));
+
+      testCompound("dict", v.dict(v.string, { [_guard]: guard }), {
+        context: {
+          strict: false,
+        },
+        ignore: [{ value: { foo: "bar", bar: "baz" } }],
+      });
+
+      expect(guard).toHaveBeenCalledWith("bar", { strict: false }, ["foo"], {
+        foo: "bar",
+        bar: "baz",
+      });
+      expect(guard).toHaveBeenCalledWith("baz", { strict: false }, ["bar"], {
+        foo: "bar",
+        bar: "baz",
+      });
+    });
+
+    it("works with Shorts", () => {
+      testCompound("dict", v.dict(v.string, [v.number]), {
+        context: { strict: true, bail: true },
+        valid: [{ value: { foo: [1], bar: [2] } }],
+        invalid: [
+          {
+            value: { foo: 1, bar: "2" },
+            errors: [
+              {
+                message: "vality.array.base",
+                options: {},
+                path: ["foo"],
+                value: 1,
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    describe("respects bail", () => {
+      test("options", () => {
+        testCompound("dict", v.dict(v.string, v.number)({ bail: true }), {
+          options: { bail: true },
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.string, v.number)({ bail: false }), {
+          options: { bail: false },
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("context", () => {
+        testCompound("dict", v.dict(v.string, v.number), {
+          context: { bail: true, strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.string, v.number), {
+          context: { bail: false, strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("dict", v.dict(v.string, v.number), {
+          config: { bail: true },
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.string, v.number), {
+          config: { bail: false },
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("default", () => {
+        testCompound("dict", v.dict(v.string, v.number), {
+          context: { strict: true },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: "1", bar: "2" },
+              errors: [
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["foo"],
+                  value: "1",
+                },
+                {
+                  message: "vality.number.base",
+                  options: {},
+                  path: ["bar"],
+                  value: "2",
+                },
+              ],
+            },
+          ],
+        });
+      });
+    });
+
+    it("fails if value fails", () => {
+      testCompound("dict", v.dict(v.string, v.number), {
+        context: { strict: true, bail: true },
+        valid: [{ value: { foo: 1, bar: 2 } }],
+        invalid: [
+          {
+            value: { foo: "1", bar: "2" },
+            errors: [
+              {
+                message: "vality.number.base",
+                options: {},
+                path: ["foo"],
+                value: "1",
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("remaps properties", () => {
+      testCompound(
+        "dict",
+        v.dict(
+          v.string({
+            transform: (x) => x + "bar",
+          }),
+          v.number
+        ),
+        {
+          context: { strict: true, bail: true },
+          valid: [
+            { value: {} },
+            { value: { foo: 1, bar: 2 }, expect: { foobar: 1, barbar: 2 } },
+          ],
+        }
+      );
+    });
+
+    describe("allows extra properties", () => {
+      test("options", () => {
+        testCompound(
+          "dict",
+          v.dict(
+            v.string({ maxLength: 3 }),
+            v.number
+          )({ allowExtraProperties: true }),
+          {
+            options: { allowExtraProperties: true },
+            valid: [
+              { value: { foo: 1, bar: 2 } },
+              {
+                value: { foo: 1, bar: 2, foobar: 3 },
+                expect: { foo: 1, bar: 2 },
+              },
+            ],
+          }
+        );
+
+        testCompound(
+          "dict",
+          v.dict(
+            v.string({ maxLength: 3 }),
+            v.number
+          )({ allowExtraProperties: false }),
+          {
+            options: { allowExtraProperties: false },
+            valid: [{ value: { foo: 1, bar: 2 } }],
+            invalid: [
+              {
+                value: { foo: 1, bar: 2, foobar: 3 },
+                errors: [
+                  {
+                    message: "vality.dict.extraProperty",
+                    options: { allowExtraProperties: false },
+                    path: ["foobar"],
+                    value: 3,
+                  },
+                ],
+              },
+            ],
+          }
+        );
+      });
+
+      test("context", () => {
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          context: { allowExtraProperties: true },
+          valid: [
+            { value: { foo: 1, bar: 2 } },
+            {
+              value: { foo: 1, bar: 2, foobar: 3 },
+              expect: { foo: 1, bar: 2 },
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          context: { allowExtraProperties: false },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: 1, bar: 2, foobar: 3 },
+              errors: [
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["foobar"],
+                  value: 3,
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          valid: [
+            { value: { foo: 1, bar: 2 } },
+            {
+              value: { foo: 1, bar: 2, foobar: 3 },
+              expect: { foo: 1, bar: 2 },
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          config: { allowExtraProperties: true },
+          valid: [
+            { value: { foo: 1, bar: 2 } },
+            {
+              value: { foo: 1, bar: 2, foobar: 3 },
+              expect: { foo: 1, bar: 2 },
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          config: { allowExtraProperties: false },
+          valid: [{ value: { foo: 1, bar: 2 } }],
+          invalid: [
+            {
+              value: { foo: 1, bar: 2, foobar: 3 },
+              errors: [
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["foobar"],
+                  value: 3,
+                },
+              ],
+            },
+          ],
+        });
+      });
+    });
+
+    describe("bails on extra properties", () => {
+      test("options", () => {
+        testCompound(
+          "dict",
+          v.dict(v.string({ maxLength: 3 }), v.number)({ bail: true }),
+          {
+            options: { bail: true },
+            context: { allowExtraProperties: false },
+            invalid: [
+              {
+                value: { foobar: 1, barbar: 2 },
+                errors: [
+                  {
+                    message: "vality.dict.extraProperty",
+                    options: { bail: true },
+                    path: ["foobar"],
+                    value: 1,
+                  },
+                ],
+              },
+            ],
+          }
+        );
+
+        testCompound(
+          "dict",
+          v.dict(v.string({ maxLength: 3 }), v.number)({ bail: false }),
+          {
+            options: { bail: false },
+            context: { allowExtraProperties: false },
+            invalid: [
+              {
+                value: { foobar: 1, barbar: 2 },
+                errors: [
+                  {
+                    message: "vality.dict.extraProperty",
+                    options: { bail: false },
+                    path: ["foobar"],
+                    value: 1,
+                  },
+                  {
+                    message: "vality.dict.extraProperty",
+                    options: { bail: false },
+                    path: ["barbar"],
+                    value: 2,
+                  },
+                ],
+              },
+            ],
+          }
+        );
+      });
+
+      test("context", () => {
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          context: { bail: true, allowExtraProperties: false },
+          invalid: [
+            {
+              value: { foobar: 1, barbar: 2 },
+              errors: [
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["foobar"],
+                  value: 1,
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          context: { bail: false, allowExtraProperties: false },
+          invalid: [
+            {
+              value: { foobar: 1, barbar: 2 },
+              errors: [
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["foobar"],
+                  value: 1,
+                },
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["barbar"],
+                  value: 2,
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          context: { allowExtraProperties: false },
+          config: { bail: true },
+          invalid: [
+            {
+              value: { foobar: 1, barbar: 2 },
+              errors: [
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["foobar"],
+                  value: 1,
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          context: { allowExtraProperties: false },
+          config: { bail: false },
+          invalid: [
+            {
+              value: { foobar: 1, barbar: 2 },
+              errors: [
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["foobar"],
+                  value: 1,
+                },
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["barbar"],
+                  value: 2,
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("default", () => {
+        testCompound("dict", v.dict(v.string({ maxLength: 3 }), v.number), {
+          context: { allowExtraProperties: false },
+          invalid: [
+            {
+              value: { foobar: 1, barbar: 2 },
+              errors: [
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["foobar"],
+                  value: 1,
+                },
+                {
+                  message: "vality.dict.extraProperty",
+                  options: {},
+                  path: ["barbar"],
+                  value: 2,
+                },
+              ],
+            },
+          ],
+        });
+      });
+    });
+  });
+
+  describe("type", () => {
+    test("one literal key", () => {
+      const guard = v.dict(v.literal("foo"), v.number);
+      expectType<TypeEqual<{ foo: number }, Parse<typeof guard>>>(true);
+    });
+
+    test("one type key", () => {
+      const guard = v.dict(v.string, v.number);
+      expectType<TypeEqual<{ [key: string]: number }, Parse<typeof guard>>>(
+        true
+      );
+    });
+
+    test("only literal keys", () => {
+      const guard = v.dict(v.enum("foo" as const, "bar" as const), v.number);
+      expectType<TypeEqual<{ foo: number; bar: number }, Parse<typeof guard>>>(
+        true
+      );
+    });
+
+    test("only type keys", () => {
+      const guard = v.dict(v.enum(v.string, v.number), v.number);
+      expectType<
+        TypeEqual<
+          { [key: string]: number; [key: number]: number },
+          Parse<typeof guard>
+        >
+      >(true);
+    });
+  });
 });
 
 // describe("vality.enum", () => {
