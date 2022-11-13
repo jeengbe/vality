@@ -227,7 +227,7 @@ describe("valit", () => {
 
   describe("symbols", () => {
     describe("no options", () => {
-      it("attaches [_validate]", () => {
+      it("attaches [_guard]", () => {
         const { valit } = testValit();
         expect(valit[_guard]).toEqual(expect.any(Function));
       });
@@ -256,7 +256,7 @@ describe("valit", () => {
     });
 
     describe("options object", () => {
-      it("attaches [_validate]", () => {
+      it("attaches [_guard]", () => {
         const { valit } = testValit({ options: { foo: "bar" } });
         expect(valit[_guard]).toEqual(expect.any(Function));
       });
@@ -291,7 +291,7 @@ describe("valit", () => {
     });
 
     describe("options function", () => {
-      it("attaches [_validate]", () => {
+      it("attaches [_guard]", () => {
         const { valit } = testValit({ options: () => ({ foo: "bar" }) });
         expect(valit[_guard]).toEqual(expect.any(Function));
       });

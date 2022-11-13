@@ -78,11 +78,11 @@ export function simplifyEnum(objs: Eny[]): Guard<any, any, any>[] {
   return values;
 }
 
-export function isNever(g: Guard<any, any, any>): boolean {
+function isNever(g: Guard<any, any, any>): boolean {
   return getName(g) === "never";
 }
 
-export function isAny(g: Guard<any, any, any>): boolean {
+function isAny(g: Guard<any, any, any>): boolean {
   return getName(g) === "any";
 }
 

@@ -16,7 +16,6 @@ export type Eny =
   | Guard<any, any, any>
   | readonly TOrGuard<Eny>[]
   | Primitive
-  | (() => RSE)
   | RSE;
 
 export type EnyToGuard<T> = T extends Guard<any, any, any>
@@ -50,8 +49,6 @@ export function enyToGuard<E extends Eny>(eny: E): Guard<any, any, any> {
   // The code is minified for the link to fit into this comment, but expanding it shows the issue more clearly.
 
   if (isGuard(eny)) return eny;
-  // Needs to be checked after isGuard since functions can be guards
-  if (typeof eny === "function") return vality.object(eny());
 
   if (
     typeof eny === "string" ||
@@ -64,7 +61,7 @@ export function enyToGuard<E extends Eny>(eny: E): Guard<any, any, any> {
 
   if (Array.isArray(eny)) {
     // Model is malformed, it's ok to throw an error here
-    if (eny.length === 0) throw new Error("Empty array short");
+    if (eny.length === 0) throw new Error("Empty array Short");
     if (eny.length === 1) return vality.array(enyToGuard(eny[0]));
     return vality.enum(...eny.map(enyToGuard));
   }

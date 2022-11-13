@@ -112,7 +112,7 @@ describe("simplifyEnum()", () => {
   });
 });
 
-describe("getName", () => {
+describe("getName()", () => {
   it("resolves the name of own scalars", () => {
     expect(getName(v.string)).toBe("string");
     expect(getName(v.string({}))).toBe("string");
