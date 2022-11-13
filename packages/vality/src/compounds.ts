@@ -1,6 +1,7 @@
 import { Compound, compound } from "./compound";
+import { Parse } from "./parse";
 import { _guard, _type } from "./symbols";
-import { getName, simplifyEnum } from "./typeUtils";
+import { getName, intersect, simplifyEnum } from "./typeUtils";
 import {
   Eny,
   enyToGuard,
@@ -46,17 +47,17 @@ declare global {
         }
       >;
       enum: <E extends Eny[]>(...es: E) => Compound<"enum", E[number]>;
-      // and: <E extends OneOrEnumOfTOrGuard<RSE | RSE[]>[]>(
-      //   ...es: E
-      // ) => Compound<
-      //   "and",
-      //   typeof es,
-      //   {
-      //     transform: (
-      //       val: Parse<Compound<"and", E>>
-      //     ) => Parse<Compound<"and", E>>;
-      //   }
-      // >;
+      and: <E extends OneOrEnumOfTOrGuard<RSE | RSE[]>[]>(
+        ...es: E
+      ) => Compound<
+        "and",
+        typeof es,
+        {
+          transform: (
+            val: Parse<Compound<"and", E>>
+          ) => Parse<Compound<"and", E>>;
+        }
+      >;
     }
   }
 }
@@ -395,24 +396,34 @@ vality.enum = compound(
     }
 );
 
-// // @ts-expect-error 'IntersectItems<RSE[]>' gives 'never'
-// vality.and = compound(
-//   "and",
-//   (...es) =>
-//     (value, options, context, path, parent) => {
-//       if (typeof value !== "object" || value === null)
-//         return {
-//           valid: false,
-//           data: undefined,
-//           errors: [{ message: "vality.and.base", path, options, value }],
-//         };
+// @ts-expect-error 'IntersectItems<RSE[]>' gives 'never'
+vality.and = compound(
+  "and",
+  (...es) =>
+    (value, options, context, path, parent) => {
+      if (typeof value !== "object" || value === null)
+        return {
+          valid: false,
+          data: undefined,
+          errors: [{ message: "vality.and.base", path, options, value }],
+        };
 
-//       // @ts-expect-error
-//       return intersect(es)(options)[_guard](
-//         value,
-//         context,
-//         path,
-//         parent
-//       ) as ValidationResult<typeof es>;
-//     }
-// );
+      const { bail } = mergeOptions(options, context);
+
+      const data: any = {};
+      const errors: Error[] = [];
+
+      for (const e of intersect(es)) {
+        const res = enyToGuardFn(e)(value, context, path, parent);
+        if (!res.valid) {
+          errors.push(...res.errors);
+          if (bail) break;
+        } else {
+          Object.assign(data, res.data);
+        }
+      }
+
+      if (errors.length) return { valid: false, data: undefined, errors };
+      return { valid: true, data, errors: [] };
+    }
+);

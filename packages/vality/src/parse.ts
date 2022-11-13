@@ -34,6 +34,7 @@ export type Parse<T, _D = "out"> = IsAny<T> extends true
   : T extends Guard<"tuple", infer U, any>
   ? { [K in keyof U]: Parse<U[K], DecD<_D>> }
   : T extends Guard<"and", infer U extends Eny[], true>
+  // ? { [K in keyof IntersectItems<U>]: IntersectItems<U>[K] }
   ? IntersectItems<U>
   : T extends Guard<
       "dict",

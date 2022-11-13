@@ -505,13 +505,17 @@ describe("vality.array", () => {
 
   describe("type", () => {
     test("flat", () => {
-      const valit = v.array(v.number);
-      expectType<TypeEqual<number[], Parse<typeof valit>>>(true);
+      const guard = v.array(v.number);
+      type Expect = number[];
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
 
     test("nested", () => {
-      const valit = v.array(v.array(v.number));
-      expectType<TypeEqual<number[][], Parse<typeof valit>>>(true);
+      const guard = v.array(v.array(v.number));
+      type Expect = number[][];
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
   });
 });
@@ -757,15 +761,17 @@ describe("vality.tuple", () => {
 
   describe("type", () => {
     test("flat", () => {
-      const valit = v.tuple(v.number, v.string);
-      expectType<TypeEqual<[number, string], Parse<typeof valit>>>(true);
+      const guard = v.tuple(v.number, v.string);
+      type Expect = [number, string];
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
 
     test("nested", () => {
-      const valit = v.tuple(v.tuple(v.number, v.string), v.string);
-      expectType<TypeEqual<[[number, string], string], Parse<typeof valit>>>(
-        true
-      );
+      const guard = v.tuple(v.tuple(v.number, v.string), v.string);
+      type Expect = [[number, string], string];
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
   });
 });
@@ -1568,36 +1574,33 @@ describe("vality.object", () => {
 
   describe("type", () => {
     test("flat", () => {
-      const valit = v.object({ foo: v.number, bar: v.string });
-      expectType<TypeEqual<{ foo: number; bar: string }, Parse<typeof valit>>>(
-        true
-      );
+      const guard = v.object({ foo: v.number, bar: v.string });
+      type Expect = { foo: number; bar: string };
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
 
     test("nested", () => {
-      const valit = v.object({
+      const guard = v.object({
         foo: { bar: v.number, baz: { qux: v.string } },
       });
-      expectType<
-        TypeEqual<
-          {
-            foo: {
-              bar: number;
-              baz: {
-                qux: string;
-              };
-            };
-          },
-          Parse<typeof valit>
-        >
-      >(true);
+      type Expect = {
+        foo: {
+          bar: number;
+          baz: {
+            qux: string;
+          };
+        };
+      };
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
 
     test("marks optional properties as optional", () => {
-      const valit = { foo: v.optional(v.number), bar: v.string };
-      expectType<
-        TypeEqual<{ foo: number | undefined; bar: string }, Parse<typeof valit>>
-      >(true);
+      const guard = { foo: v.optional(v.number), bar: v.string };
+      type Expect = { foo: number | undefined; bar: string };
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
   });
 });
@@ -2761,31 +2764,30 @@ describe("vality.dict", () => {
   describe("type", () => {
     test("one literal key", () => {
       const guard = v.dict(v.literal("foo"), v.number);
-      expectType<TypeEqual<{ foo: number }, Parse<typeof guard>>>(true);
+      type Expect = { foo: number };
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
 
     test("one type key", () => {
       const guard = v.dict(v.string, v.number);
-      expectType<TypeEqual<{ [key: string]: number }, Parse<typeof guard>>>(
-        true
-      );
+      type Expect = { [key: string]: number };
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
 
     test("only literal keys", () => {
       const guard = v.dict(v.enum("foo" as const, "bar" as const), v.number);
-      expectType<TypeEqual<{ foo: number; bar: number }, Parse<typeof guard>>>(
-        true
-      );
+      type Expect = { foo: number; bar: number };
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
 
     test("only type keys", () => {
       const guard = v.dict(v.enum(v.string, v.number), v.number);
-      expectType<
-        TypeEqual<
-          { [key: string]: number; [key: number]: number },
-          Parse<typeof guard>
-        >
-      >(true);
+      type Expect = { [key: string]: number; [key: number]: number };
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
     });
   });
 });
@@ -2882,35 +2884,614 @@ describe("vality.enum", () => {
     describe("Valit", () => {
       test("flat", () => {
         const guard = v.enum(v.string, v.number);
-        expectType<TypeEqual<string | number, Parse<typeof guard>>>(true);
+        type Expect = string | number;
+        type Got = Parse<typeof guard>;
+        expectType<TypeEqual<Expect, Got>>(true);
       });
 
       test("nested", () => {
         const guard = v.enum(v.enum(v.string, v.number), v.boolean);
-        expectType<TypeEqual<string | number | boolean, Parse<typeof guard>>>(
-          true
-        );
+        type Expect = string | number | boolean;
+        type Got = Parse<typeof guard>;
+        expectType<TypeEqual<Expect, Got>>(true);
       });
     });
   });
 });
 
-// describe("vality.and", () => {
-//   test("base type check", () => {});
+describe("vality.and", () => {
+  test("base type check", () => {
+    testCompound("and", v.and({ foo: v.string }, { bar: v.string }), {
+      valid: [{ value: { foo: "bar", bar: "baz" } }],
+      invalid: [{ value: true }],
+    });
+  });
 
-//   describe("member type check", () => {
-//     it("passes (value, context, path, parent) correctly to values", () => {});
+  describe("member type check", () => {
+    it("passes (value, context, path, parent) correctly to values", () => {
+      const guard = jest.fn(() => ({
+        valid: true,
+        data: undefined,
+        errors: [],
+      }));
+      const guard2 = jest.fn(() => ({
+        valid: true,
+        data: undefined,
+        errors: [],
+      }));
 
-//     test("object + object", () => {});
+      testCompound("and", v.and({ [_guard]: guard }, { [_guard]: guard2 }), {
+        context: {
+          strict: false,
+        },
+        ignore: [{ value: { foo: "bar", bar: "baz" } }],
+      });
 
-//     test("object + enum", () => {});
+      expect(guard).toHaveBeenCalledWith(
+        { foo: "bar", bar: "baz" },
+        { strict: false },
+        [],
+        undefined
+      );
+      expect(guard2).toHaveBeenCalledWith(
+        { foo: "bar", bar: "baz" },
+        { strict: false },
+        [],
+        undefined
+      );
+    });
 
-//     test("object + vality.and", () => {});
+    test("object + object", () => {
+      testCompound("and", v.and({ foo: v.string }, { bar: v.string }), {
+        valid: [{ value: { foo: "bar", bar: "baz" } }],
+        invalid: [
+          {
+            value: {},
+            errors: [
+              {
+                message: "vality.string.base",
+                options: {},
+                path: ["foo"],
+                value: undefined,
+              },
+              {
+                message: "vality.string.base",
+                options: {},
+                path: ["bar"],
+                value: undefined,
+              },
+            ],
+          },
+          {
+            value: { foo: "bar" },
+            errors: [
+              {
+                message: "vality.string.base",
+                options: {},
+                path: ["bar"],
+                value: undefined,
+              },
+            ],
+          },
+          {
+            value: { bar: "baz" },
+            errors: [
+              {
+                message: "vality.string.base",
+                options: {},
+                path: ["foo"],
+                value: undefined,
+              },
+            ],
+          },
+        ],
+      });
+    });
 
-//     it("works with Shorts", () => {});
+    test("enum + enum", () => {
+      testCompound(
+        "and",
+        v.and(
+          v.enum({ foo: v.string }, { bar: v.string }),
+          v.enum({ baz: v.string }, { qux: v.string })
+        ),
+        {
+          valid: [
+            {
+              value: { foo: "bar", baz: "qux" },
+            },
+            {
+              value: { bar: "baz", baz: "qux" },
+            },
+            {
+              value: { foo: "bar", qux: "quux" },
+            },
+            {
+              value: { bar: "baz", qux: "quux" },
+            },
+          ],
+          invalid: [
+            {
+              value: { foo: "bar" },
+              errors: [
+                {
+                  message: "vality.enum.base",
+                  options: {},
+                  path: [],
+                  value: { foo: "bar" },
+                },
+              ],
+            },
+            {
+              value: { bar: "baz" },
+              errors: [
+                {
+                  message: "vality.enum.base",
+                  options: {},
+                  path: [],
+                  value: { bar: "baz" },
+                },
+              ],
+            },
+          ],
+        }
+      );
+    });
 
-//     it("fails if member fails", () => {});
-//   });
+    test("vality.and + vality.and", () => {
+      testCompound(
+        "and",
+        v.and(
+          v.and({ foo: v.string }, { bar: v.string }),
+          v.and({ baz: v.string }, { qux: v.string })
+        ),
+        {
+          valid: [
+            {
+              value: { foo: "bar", bar: "baz", baz: "qux", qux: "quux" },
+            },
+          ],
+          invalid: [
+            {
+              value: { foo: "bar", bar: "baz", baz: "qux" },
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["qux"],
+                  value: undefined,
+                },
+              ],
+            },
+            {
+              value: { foo: "bar", bar: "baz" },
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["baz"],
+                  value: undefined,
+                },
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["qux"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        }
+      );
+    });
 
-//   // TODO
-// });
+    test("object + enum", () => {
+      testCompound(
+        "and",
+        v.and({ foo: v.string }, v.enum({ bar: v.string }, { baz: v.string })),
+        {
+          valid: [
+            {
+              value: { foo: "bar", bar: "baz" },
+            },
+            {
+              value: { foo: "bar", baz: "qux" },
+            },
+          ],
+          invalid: [
+            {
+              value: { foo: "bar" },
+              errors: [
+                {
+                  message: "vality.enum.base",
+                  options: {},
+                  path: [],
+                  value: { foo: "bar" },
+                },
+              ],
+            },
+            {
+              value: { bar: "baz" },
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["foo"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        }
+      );
+    });
+
+    test("object + vality.and", () => {
+      testCompound(
+        "and",
+        v.and({ foo: v.string }, v.and({ bar: v.string }, { baz: v.string })),
+        {
+          valid: [
+            {
+              value: { foo: "bar", bar: "baz", baz: "qux" },
+            },
+          ],
+          invalid: [
+            {
+              value: { foo: "bar", bar: "baz" },
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["baz"],
+                  value: undefined,
+                },
+              ],
+            },
+            {
+              value: { foo: "bar" },
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["bar"],
+                  value: undefined,
+                },
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["baz"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        }
+      );
+    });
+
+    test("enum + vality.and", () => {
+      testCompound(
+        "and",
+        v.and(
+          v.enum({ foo: v.string }, { bar: v.string }),
+          v.and({ baz: v.string }, { qux: v.string })
+        ),
+        {
+          valid: [
+            {
+              value: { foo: "bar", baz: "qux", qux: "quux" },
+            },
+            {
+              value: { bar: "baz", baz: "qux", qux: "quux" },
+            },
+          ],
+          invalid: [
+            {
+              value: { foo: "bar", baz: "qux" },
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["qux"],
+                  value: undefined,
+                },
+              ],
+            },
+            {
+              value: { bar: "baz", baz: "qux" },
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["qux"],
+                  value: undefined,
+                },
+              ],
+            },
+            {
+              value: { foo: "bar" },
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["baz"],
+                  value: undefined,
+                },
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["qux"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        }
+      );
+    });
+
+    it("works with Shorts", () => {
+      testCompound(
+        "and",
+        v.and({ foo: v.string }, [{ bar: v.string }, { baz: v.string }]),
+        {
+          valid: [
+            {
+              value: { foo: "bar", bar: "baz", baz: "qux" },
+              expect: { foo: "bar", bar: "baz" },
+            },
+          ],
+        }
+      );
+    });
+
+    it("fails if member fails", () => {
+      testCompound("and", v.and({ foo: v.string }, { bar: v.string }), {
+        invalid: [
+          {
+            value: { foo: "bar" },
+            errors: [
+              {
+                message: "vality.string.base",
+                options: {},
+                path: ["bar"],
+                value: undefined,
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    describe("respects bail", () => {
+      test("options", () => {
+        testCompound(
+          "and",
+          v.and({ foo: v.string }, { bar: v.string })({ bail: true }),
+          {
+            options: { bail: true },
+            invalid: [
+              {
+                value: {},
+                errors: [
+                  {
+                    message: "vality.string.base",
+                    options: {},
+                    path: ["foo"],
+                    value: undefined,
+                  },
+                ],
+              },
+            ],
+          }
+        );
+
+        testCompound(
+          "and",
+          v.and({ foo: v.string }, { bar: v.string })({ bail: false }),
+          {
+            options: { bail: false },
+            invalid: [
+              {
+                value: {},
+                errors: [
+                  {
+                    message: "vality.string.base",
+                    options: {},
+                    path: ["foo"],
+                    value: undefined,
+                  },
+                  {
+                    message: "vality.string.base",
+                    options: {},
+                    path: ["bar"],
+                    value: undefined,
+                  },
+                ],
+              },
+            ],
+          }
+        );
+      });
+
+      test("context", () => {
+        testCompound("and", v.and({ foo: v.string }, { bar: v.string }), {
+          context: { bail: true },
+          invalid: [
+            {
+              value: {},
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["foo"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("and", v.and({ foo: v.string }, { bar: v.string }), {
+          context: { bail: false },
+          invalid: [
+            {
+              value: {},
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["foo"],
+                  value: undefined,
+                },
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["bar"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("config", () => {
+        testCompound("and", v.and({ foo: v.string }, { bar: v.string }), {
+          config: { bail: true },
+          invalid: [
+            {
+              value: {},
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["foo"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        });
+
+        testCompound("and", v.and({ foo: v.string }, { bar: v.string }), {
+          config: { bail: false },
+          invalid: [
+            {
+              value: {},
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["foo"],
+                  value: undefined,
+                },
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["bar"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        });
+      });
+
+      test("default", () => {
+        testCompound("and", v.and({ foo: v.string }, { bar: v.string }), {
+          invalid: [
+            {
+              value: {},
+              errors: [
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["foo"],
+                  value: undefined,
+                },
+                {
+                  message: "vality.string.base",
+                  options: {},
+                  path: ["bar"],
+                  value: undefined,
+                },
+              ],
+            },
+          ],
+        });
+      });
+    });
+  });
+
+  describe("type", () => {
+    describe("flat", () => {
+      test("object + object", () => {
+        const guard = v.and({ foo: v.string }, { bar: v.string });
+        type Expect = { foo: string } & { bar: string };
+        type Got = Parse<typeof guard>;
+        expectType<TypeEqual<Expect, Got>>(true);
+      });
+
+      test("enum + enum", () => {
+        const guard = v.and(
+          v.enum({ foo: v.string }, { bar: v.string }),
+          v.enum({ baz: v.string }, { qux: v.string })
+        );
+        type Expect = ({ foo: string } | { bar: string }) &
+          ({ baz: string } | { qux: string });
+        type Got = Parse<typeof guard>;
+        expectType<TypeEqual<Expect, Got>>(true);
+      });
+
+      test("vality.and + vality.and", () => {
+        const guard = v.and(
+          v.and({ foo: v.string }, { bar: v.string }),
+          v.and({ baz: v.string }, { qux: v.string })
+        );
+        type Expect = { foo: string } & { bar: string } & {
+          baz: string;
+        } & {
+          qux: string;
+        };
+        type Got = Parse<typeof guard>;
+        expectType<TypeEqual<Expect, Got>>(true);
+      });
+
+      test("object + enum", () => {
+        const guard = v.and(
+          { foo: v.string },
+          v.enum({ bar: v.string }, { baz: v.string })
+        );
+        type Expect = { foo: string } & ({ bar: string } | { baz: string });
+        type Got = Parse<typeof guard>;
+        expectType<TypeEqual<Expect, Got>>(true);
+      });
+
+      test("object + vality.and", () => {
+        const guard = v.and(
+          { foo: v.string },
+          v.and({ bar: v.string }, { baz: v.string })
+        );
+        type Expect = { foo: string } & { bar: string } & { baz: string };
+        type Got = Parse<typeof guard>;
+        expectType<TypeEqual<Expect, Got>>(true);
+      });
+
+      test("enum + vality.and", () => {
+        const guard = v.and(
+          v.enum({ foo: v.string }, { bar: v.string }),
+          v.and({ baz: v.string }, { qux: v.string })
+        );
+        type Expect = ({ foo: string } | { bar: string }) & {
+          baz: string;
+        } & {
+          qux: string;
+        };
+        type Got = Parse<typeof guard>;
+        expectType<TypeEqual<Expect, Got>>(true);
+      });
+    });
+  });
+});
