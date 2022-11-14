@@ -44,3 +44,13 @@ type Person = Parse<typeof Person>;
 Now that I have your attention, head over to https://ts-vality.io/vality to find out what's going on here. You won't regret it ;)
 
 Or head to [GitHub](https://github.com/jeengbe/vality) to find more useful packages (such as [Vality ESLint Plugin](https://github.com/jeengbe/vality/tree/master/packages/eslint-plugin-vality)).
+
+And before you complain about errors, make sure your tsconfig supports at least the following:
+```json
+{
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "lib": ["ES2015"]
+  }
+}
+```

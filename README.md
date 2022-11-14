@@ -39,7 +39,7 @@ type Person = Parse<typeof Person>;
 } */
 ```
 
-Now that I have your attention, head over to https://ts-vality.io/vality to find out what's going on here. You won't regret it ;)
+Now that I have your attention, head over to https://ts-vality.io/vality to find out what's going on here. You won't regret it ;) Or check out [packages/vality](packages/vality).
 
 Or continue scrolling down to see what else is in this repository.
 
@@ -80,3 +80,5 @@ type Brand = Parse<typeof Brand>;
 ```
 
 Forgetting this sucks and can quickly become a source of frustration when suddenly types are weird. ESLint to the rescue! It will warn you when you forget to add `as const` in places where is may backfire and adds it automatically for you.
+
+Find more information on https://ts-vality.io/eslint-plugin-vality or check out [packages/eslint-plugin-vality](packages/eslint-plugin-vality).
