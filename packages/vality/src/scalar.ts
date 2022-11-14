@@ -1,8 +1,9 @@
 import { CompoundFn } from "./compound";
+import { _guard } from "./symbols";
 import { types } from "./types";
 import { getName } from "./typeUtils";
 import { RSA } from "./utils";
-import { FnArgs, makeValit, Valit, ValitParameters } from "./valit";
+import { FnArgs, Guard, makeValit, Valit, ValitParameters } from "./valit";
 
 export type Scalar<Name, Type, Options extends RSA = never> = Valit<
   Name,
@@ -26,7 +27,7 @@ export interface ScalarFn<
   ValueType = unknown,
   NewType = BaseType
 > {
-  (...args: FnArgs<BaseType, Options, ValueType>): NewType | undefined;
+  (...args: FnArgs<NewType, Options, ValueType>): NewType | undefined;
 }
 
 export function scalar<
@@ -76,22 +77,30 @@ type GetScalars<S> = S extends (...args: any[]) => infer R ? R : S;
 
 export function extendScalar<
   Base extends GetScalars<vality.scalars[keyof vality.scalars]>,
-  BaseType extends Base extends Scalar<any, infer Type, any> ? Type : never
+  BaseType extends Base extends Guard<any, infer Type, any> ? Type : never
 >(base: Base) {
   return function extendedScalar<
     Name extends keyof vality.scalars,
     Type extends GetScalarOptions<Name>[0],
     Options extends GetScalarOptions<Name>[1]
   >(
-    ...args: ValitParameters<
+    ...[name, scalarFn, handleOptions, defaultOptions]: ValitParameters<
       Name,
       Type,
       Options,
       ScalarFn<BaseType, Options, BaseType, Type>
     >
   ): Valit<Name, Type, Options, false> {
-    types.set(args[0], getName(base));
-    // @ts-expect-error These types won't exactly match but they're exactly the runtime we need
-    return scalar(...args);
+    types.set(name, getName(base));
+    return scalar<Name, Type, Options>(
+      name,
+      (val, options, context, path, parent) => {
+        const res = base[_guard](val, context, path, parent);
+        if (!res.valid) return undefined;
+        return scalarFn(res.data as BaseType, options, context, path, parent);
+      },
+      handleOptions,
+      defaultOptions
+    );
   };
 }
