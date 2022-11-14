@@ -40,7 +40,7 @@ const workflow = {
     "build-docs": {
       name: "Build docs",
       "runs-on": "ubuntu-latest",
-      needs: ["install"],
+      needs: ["install", "build-vality"],
       steps: [
         {
           name: "Checkout",
@@ -55,13 +55,21 @@ const workflow = {
           },
         },
         {
+          name: "Download Vality build artifact",
+          uses: "actions/download-artifact@v2",
+          with: {
+            name: `build-vality`,
+            path: `./packages/vality`,
+          },
+        },
+        {
           name: "Restore webpack cache",
           uses: "actions/cache@v3",
           with: {
             path: "docs/node_modules/.cache/webpack",
             key: "docs-webpack-cache",
             "restore-keys": "docs-webpack-cache",
-          }
+          },
         },
         {
           name: "Build docs",
@@ -73,7 +81,7 @@ const workflow = {
           with: {
             path: "docs/node_modules/.cache/webpack",
             key: "docs-webpack-cache",
-          }
+          },
         },
         {
           name: "Upload docs artifact",
@@ -95,7 +103,7 @@ const workflow = {
       if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}",
       environment: {
         name: "Docs",
-        url: "${{ steps.deployment.outputs.page_url }}"
+        url: "${{ steps.deployment.outputs.page_url }}",
       },
       concurrency: {
         group: "deploy-docs",
@@ -105,7 +113,7 @@ const workflow = {
         {
           name: "Deploy",
           id: "deployment",
-          uses: "actions/deploy-pages@v1"
+          uses: "actions/deploy-pages@v1",
         },
       ],
     },
@@ -137,8 +145,8 @@ for (const pkg of getPackages()) {
         },
       ],
     },
-    [`test-${pkg}`]: {
-      name: `Test: ${pkg}`,
+    [`unit-test-${pkg}`]: {
+      name: `Unit Test: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: ["install"],
       strategy: {
@@ -162,7 +170,7 @@ for (const pkg of getPackages()) {
         {
           name: "Test",
           if: "${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}",
-          run: `pnpm --filter ${pkg} run test`,
+          run: `pnpm --filter ${pkg} run test:unit`,
         },
         {
           name: "Test (coverage)",
@@ -177,6 +185,30 @@ for (const pkg of getPackages()) {
             name: `coverage-${pkg}`,
             path: `./packages/${pkg}/coverage`,
           },
+        },
+      ],
+    },
+    [`type-test-${pkg}`]: {
+      name: `Type Test: ${pkg}`,
+      "runs-on": "ubuntu-latest",
+      needs: ["install"],
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v3",
+        },
+        {
+          name: "Install dependencies",
+          uses: "./.github/actions/setup",
+          with: {
+            package: pkg,
+            "node-version": "${{ matrix.node-version }}",
+          },
+        },
+        {
+          name: "Test",
+          if: "${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}",
+          run: `pnpm --filter ${pkg} run test:type`,
         },
       ],
     },
@@ -223,7 +255,7 @@ for (const pkg of getPackages()) {
           with: {
             "file-name": `./packages/${pkg}/package.json`,
             "file-url": `https://unpkg.com/${pkg}/package.json`,
-            "static-checking": "localIsNew"
+            "static-checking": "localIsNew",
           },
         },
       ],
@@ -233,11 +265,10 @@ for (const pkg of getPackages()) {
       "runs-on": "ubuntu-latest",
       needs: [
         `lint-${pkg}`,
-        `test-${pkg}`,
+        `unit-test-${pkg}`,
+        `type-test-${pkg}`,
         `typecheck-${pkg}`,
-        `check-version-${pkg}`,
       ],
-      if: `\${{ needs.check-version-${pkg}.outputs.should-publish == 'true' }}`,
       steps: [
         {
           name: "Checkout",
@@ -252,10 +283,6 @@ for (const pkg of getPackages()) {
           },
         },
         {
-          name: "Update 'tsconfig.json > sourceRoot'",
-          run: `sed -i 's/SOURCE_ROOT/https:\\/\\/raw.githubusercontent.com\\/jeengbe\\/vality\\/\${{ github.sha }}\\/packages\\/${pkg}\\/src\\//g' ./packages/${pkg}/src/tsconfig.json`,
-        },
-        {
           name: "Build",
           run: `pnpm --filter ${pkg} run build`,
         },
@@ -265,7 +292,7 @@ for (const pkg of getPackages()) {
           with: {
             name: `build-${pkg}`,
             path: `./packages/${pkg}/dist
-./packages/${pkg}/mjs
+./packages/${pkg}/src
 ./packages/${pkg}/package.json
 ./packages/${pkg}/README.md
 ./packages/${pkg}/LICENSE.json`,
@@ -276,7 +303,7 @@ for (const pkg of getPackages()) {
     [`coverage-${pkg}`]: {
       name: `Upload coverage: ${pkg}`,
       "runs-on": "ubuntu-latest",
-      needs: [`test-${pkg}`],
+      needs: [`unit-test-${pkg}`],
       steps: [
         {
           name: "Checkout",
@@ -304,6 +331,7 @@ for (const pkg of getPackages()) {
       name: `Publish: ${pkg}`,
       "runs-on": "ubuntu-latest",
       needs: [`build-${pkg}`, `check-version-${pkg}`],
+      if: `\${{ needs.check-version-${pkg}.outputs.should-publish == 'true' }}`,
       environment: {
         name: `npm: ${pkg}`,
         url: `https://www.npmjs.com/package/${pkg}`,
@@ -316,12 +344,6 @@ for (const pkg of getPackages()) {
             name: `build-${pkg}`,
             path: `./packages/${pkg}`,
           },
-        },
-        {
-          name: "Move dist/ to /",
-          "working-directory": `./packages/${pkg}`,
-          run: `mv ./dist/* ./
-rm -rf ./dist`,
         },
         {
           name: "Install Node.js",

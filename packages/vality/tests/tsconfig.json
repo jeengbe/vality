@@ -9,9 +9,10 @@
     "paths": {
       "vality": ["../src"],
       "vality/*": ["../src/*"]
-    }
+    },
+    "skipLibCheck": true
   },
   "include": [
     "**/*.ts"
-  ]
+  ],
 }

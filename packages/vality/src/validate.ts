@@ -1,7 +1,6 @@
-import { ParseIn } from "./parse";
-import { _name, _type, _validate } from "./symbols";
-import { CallOptions, Eny, enyToGuardFn, RSE } from "./utils";
-import { vality } from "./vality";
+import { config } from "./config";
+import { Parse } from "./parse";
+import { Eny, enyToGuardFn, RSA } from "./utils";
 
 export interface Error {
   message: string;
@@ -10,49 +9,68 @@ export interface Error {
   value: unknown;
 }
 
-// Providing a type-safe signature for (parent: any) seems impossible to me. It would depend on whether the guard is contained in a model
-// and that would create some sort of circular type reference which is not possible to represent with TypeScript.
-// We'll have to rely on tests for this one
-export type Validate<Name extends string, Type, O, IsValit> = Face<
-  Name,
-  Type,
-  IsValit
-> &
-  ((
-    options:
-      | Partial<CallOptions<Type, O>>
-      | ((parent: any) => Partial<CallOptions<Type, O>>)
-  ) => Face<Name, Type, IsValit>);
-
-// isValit isn't there at runtime so no worries about it not being a symbol :)
-export type Face<Name, Type, IsValit> = {
-  [_name]: Name;
-  [_validate]: ValidateFn<Type>;
-  [_type]: Type;
-  isValit?: IsValit;
-};
-
-export type ValidateFn<T> = (
-  val: unknown,
-  path: Path,
-  parent: any
-) => ValidationResult<T>;
 export type ValidationResult<T> =
-  | { valid: true; data: T; errors: never[] }
-  | { valid: false; data: undefined; errors: Error[] };
+  | { valid: true; data: T; errors: readonly never[] }
+  | { valid: false; data: undefined; errors: readonly Error[] };
 
 export type Path = (string | number)[];
 
-// NOTE: bail only works for purely passed schemas, not object guards
+/**
+ * The context holds data per validation operation, e.g. whether to allow excess properties on objects
+ *
+ * For all values holds the following order of priority:
+ * - Options
+ * - if above undefined, Context
+ * - if above undefined, Config
+ * - if above undefined, Default
+ */
+export interface Context {
+  /**
+   * Controls whether object guards should allow extra keys that are not defined in the model
+   *
+   * @default true
+   */
+  allowExtraProperties?: boolean;
+
+  /**
+   * Controls whether the validation should happen in strict mode
+   *
+   * @default false
+   */
+  strict?: boolean;
+
+  /**
+   * Controls whether to bail on first error
+   *
+   * @default false
+   */
+  bail?: boolean;
+}
+
+const defaults = {
+  allowExtraProperties: true,
+  strict: false,
+  bail: false,
+};
+
+export function mergeOptions<Options extends RSA, Fields extends keyof Options>(
+  options: Options,
+  context: Partial<RSA>,
+  fields: Fields[]
+): Required<Pick<Options, Fields>> {
+  const result: any = {};
+  for (const field of fields) {
+    result[field] =
+    // @ts-expect-error
+      options[field] ?? context[field] ?? config[field] ?? defaults[field];
+  }
+  return result;
+}
+
 export function validate<E extends Eny>(
   schema: E,
   val: unknown,
-  bail = false
-): ValidationResult<ParseIn<E>> {
-  if (typeof schema === "function" && !(_validate in schema))
-    schema = vality.object((schema as () => RSE)())(
-      bail === true ? { bail } : {}
-    ) as unknown as E;
-
-  return enyToGuardFn(schema)(val, [], undefined);
+  context?: RSA
+): ValidationResult<Parse<E>> {
+  return enyToGuardFn(schema)(val, context ?? {}, [], undefined);
 }

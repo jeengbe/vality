@@ -2,11 +2,12 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": [
+      "ESNext"
+    ],
     "types": [
       "node"
-    ],
-    "outDir": "./../dist",
-    "sourceRoot": "SOURCE_ROOT"
+    ]
   },
   "include": [
     "./index.ts"

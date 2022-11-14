@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - install
+      - build-vality
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -31,6 +32,11 @@ jobs:
         with:
           package: ../docs
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Download Vality build artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: build-vality
+          path: ./packages/vality
       - name: Restore webpack cache
         uses: actions/cache@v3
         with:
@@ -82,8 +88,8 @@ jobs:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Lint
         run: pnpm --filter eslint-plugin-vality run lint
-  test-eslint-plugin-vality:
-    name: "Test: eslint-plugin-vality"
+  unit-test-eslint-plugin-vality:
+    name: "Unit Test: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -103,7 +109,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Test
         if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
-        run: pnpm --filter eslint-plugin-vality run test
+        run: pnpm --filter eslint-plugin-vality run test:unit
       - name: Test (coverage)
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
         run: pnpm --filter eslint-plugin-vality run test:coverage
@@ -113,6 +119,22 @@ jobs:
         with:
           name: coverage-eslint-plugin-vality
           path: ./packages/eslint-plugin-vality/coverage
+  type-test-eslint-plugin-vality:
+    name: "Type Test: eslint-plugin-vality"
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: eslint-plugin-vality
+          node-version: ${{ matrix.node-version }}
+      - name: Test
+        if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
+        run: pnpm --filter eslint-plugin-vality run test:type
   typecheck-eslint-plugin-vality:
     name: "Typecheck: eslint-plugin-vality"
     runs-on: ubuntu-latest
@@ -150,11 +172,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - lint-eslint-plugin-vality
-      - test-eslint-plugin-vality
+      - unit-test-eslint-plugin-vality
+      - type-test-eslint-plugin-vality
       - typecheck-eslint-plugin-vality
-      - check-version-eslint-plugin-vality
-    if: ${{ needs.check-version-eslint-plugin-vality.outputs.should-publish ==
-      'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -163,11 +183,6 @@ jobs:
         with:
           package: eslint-plugin-vality
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
-      - name: Update 'tsconfig.json > sourceRoot'
-        run: sed -i
-          's/SOURCE_ROOT/https:\/\/raw.githubusercontent.com\/jeengbe\/vality\/${{
-          github.sha }}\/packages\/eslint-plugin-vality\/src\//g'
-          ./packages/eslint-plugin-vality/src/tsconfig.json
       - name: Build
         run: pnpm --filter eslint-plugin-vality run build
       - name: Upload build artifact
@@ -176,7 +191,7 @@ jobs:
           name: build-eslint-plugin-vality
           path: |-
             ./packages/eslint-plugin-vality/dist
-            ./packages/eslint-plugin-vality/mjs
+            ./packages/eslint-plugin-vality/src
             ./packages/eslint-plugin-vality/package.json
             ./packages/eslint-plugin-vality/README.md
             ./packages/eslint-plugin-vality/LICENSE.json
@@ -184,7 +199,7 @@ jobs:
     name: "Upload coverage: eslint-plugin-vality"
     runs-on: ubuntu-latest
     needs:
-      - test-eslint-plugin-vality
+      - unit-test-eslint-plugin-vality
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -204,6 +219,8 @@ jobs:
     needs:
       - build-eslint-plugin-vality
       - check-version-eslint-plugin-vality
+    if: ${{ needs.check-version-eslint-plugin-vality.outputs.should-publish ==
+      'true' }}
     environment:
       name: "npm: eslint-plugin-vality"
       url: https://www.npmjs.com/package/eslint-plugin-vality
@@ -213,11 +230,6 @@ jobs:
         with:
           name: build-eslint-plugin-vality
           path: ./packages/eslint-plugin-vality
-      - name: Move dist/ to /
-        working-directory: ./packages/eslint-plugin-vality
-        run: |-
-          mv ./dist/* ./
-          rm -rf ./dist
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
@@ -243,8 +255,8 @@ jobs:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
       - name: Lint
         run: pnpm --filter vality run lint
-  test-vality:
-    name: "Test: vality"
+  unit-test-vality:
+    name: "Unit Test: vality"
     runs-on: ubuntu-latest
     needs:
       - install
@@ -264,7 +276,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Test
         if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
-        run: pnpm --filter vality run test
+        run: pnpm --filter vality run test:unit
       - name: Test (coverage)
         if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
         run: pnpm --filter vality run test:coverage
@@ -274,6 +286,22 @@ jobs:
         with:
           name: coverage-vality
           path: ./packages/vality/coverage
+  type-test-vality:
+    name: "Type Test: vality"
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: vality
+          node-version: ${{ matrix.node-version }}
+      - name: Test
+        if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
+        run: pnpm --filter vality run test:type
   typecheck-vality:
     name: "Typecheck: vality"
     runs-on: ubuntu-latest
@@ -311,10 +339,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - lint-vality
-      - test-vality
+      - unit-test-vality
+      - type-test-vality
       - typecheck-vality
-      - check-version-vality
-    if: ${{ needs.check-version-vality.outputs.should-publish == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -323,11 +350,6 @@ jobs:
         with:
           package: vality
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
-      - name: Update 'tsconfig.json > sourceRoot'
-        run: sed -i
-          's/SOURCE_ROOT/https:\/\/raw.githubusercontent.com\/jeengbe\/vality\/${{
-          github.sha }}\/packages\/vality\/src\//g'
-          ./packages/vality/src/tsconfig.json
       - name: Build
         run: pnpm --filter vality run build
       - name: Upload build artifact
@@ -336,7 +358,7 @@ jobs:
           name: build-vality
           path: |-
             ./packages/vality/dist
-            ./packages/vality/mjs
+            ./packages/vality/src
             ./packages/vality/package.json
             ./packages/vality/README.md
             ./packages/vality/LICENSE.json
@@ -344,7 +366,7 @@ jobs:
     name: "Upload coverage: vality"
     runs-on: ubuntu-latest
     needs:
-      - test-vality
+      - unit-test-vality
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -364,6 +386,7 @@ jobs:
     needs:
       - build-vality
       - check-version-vality
+    if: ${{ needs.check-version-vality.outputs.should-publish == 'true' }}
     environment:
       name: "npm: vality"
       url: https://www.npmjs.com/package/vality
@@ -373,11 +396,6 @@ jobs:
         with:
           name: build-vality
           path: ./packages/vality
-      - name: Move dist/ to /
-        working-directory: ./packages/vality
-        run: |-
-          mv ./dist/* ./
-          rm -rf ./dist
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:

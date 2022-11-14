@@ -1,13 +1,10 @@
-export { };
-
 declare global {
   namespace vality {
     interface Config {
-      // RelationType: string;
+      bail: boolean;
+      strict: boolean;
     }
   }
 }
 
-export const config = {
-  strict: false,
-};
+export const config: Partial<vality.Config> = {};

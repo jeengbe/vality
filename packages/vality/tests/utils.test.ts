@@ -1,39 +1,33 @@
-import { assert, falseFn, flat, identity, trueFn } from "vality/utils";
+import { v } from "vality";
+import { getName } from "vality/typeUtils";
+import { enyToGuard } from "vality/utils";
 
-describe("assert", () => {
-  it("throws an error if the condition is false", () => {
-    expect(() => {
-      assert(null, false);
-    }).toThrowError("Assertion failed");
+describe("enyToGuard()", () => {
+  it("returns guards untouched", () => {
+    const guard = v.string({});
+    expect(enyToGuard(guard)).toBe(guard);
   });
-});
 
-// TODO: shorts
+  it("converts string, numbers, booleans and null to literals", () => {
+    expect(getName(enyToGuard("foo"))).toBe("literal");
+    expect(getName(enyToGuard(1))).toBe("literal");
+    expect(getName(enyToGuard(true))).toBe("literal");
+    expect(getName(enyToGuard(null))).toBe("literal");
+  });
 
-test("flat", () => {
-  expect(flat([[1], [2], [3]])).toEqual([1, 2, 3]);
-  expect(flat([[1], [2], [3], [4, 5]])).toEqual([1, 2, 3, 4, 5]);
-  // We only implement a depth of 1 since we don't need more
-  expect(flat([[1], [2], [3], [4, 5, [6, 7]]])).toEqual([1, 2, 3, 4, 5, [6, 7]]);
-});
+  it("throws on array with no items", () => {
+    expect(() => enyToGuard([])).toThrow("Empty array Short");
+  });
 
-test("identity", () => {
-  expect(identity(1)).toBe(1);
-  expect(identity("foo")).toBe("foo");
-  expect(identity(true)).toBe(true);
-  expect(identity(false)).toBe(false);
-  expect(identity(null)).toBe(null);
-  expect(identity(undefined)).toBe(undefined);
-  expect(identity({})).toEqual({});
-  expect(identity([])).toEqual([]);
-});
+  it("converts array with one item to arrays", () => {
+    expect(getName(enyToGuard(["foo"]))).toBe("array");
+  });
 
-test("trueFn", () => {
-  expect(trueFn()).toBe(true);
-  expect(trueFn("foo")).toBe(true);
-});
+  it("converts array with multiple items to enums", () => {
+    expect(getName(enyToGuard(["foo", "bar"]))).toBe("enum");
+  });
 
-test("falseFn", () => {
-  expect(falseFn()).toBe(false);
-  expect(falseFn("foo")).toBe(false);
+  it("converts object to object", () => {
+    expect(getName(enyToGuard({}))).toBe("object");
+  });
 });

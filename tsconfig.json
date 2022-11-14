@@ -1,15 +1,9 @@
 {
   "compilerOptions": {
     "strict": true,
-    "lib": [
-      "ESNext"
-    ],
-    "target": "ESNext",
-    "module": "CommonJS",
     "noErrorTruncation": true,
     "removeComments": true,
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "moduleResolution": "node"
   }
 }
