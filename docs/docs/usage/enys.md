@@ -108,32 +108,6 @@ vality.literal("a");
 `vality.literal(value)` also accepts `null` and can therefore test for null.
 :::
 
-### Relation
-
-When another Model is used as an eny, it is treated as a relation to that model. Specifically, this means that you can model recursive (and self-referential) structures.
-
-```ts twoslash
-import { vality, Parse } from "vality";
-// ---cut---
-const Person = () =>
-  ({
-    name: vality.string,
-    pets: [Pet],
-  } as const);
-
-const Pet = () => ({
-  owner: Person,
-});
-
-type Person = Parse<typeof Person>;
-//   ^?
-```
-
-:::info
-Here, a distinction is made between "ingoing" and "outgoing" schema relations. When data comes _from_ an api/database, it is said to be "outgoing", and that is when relations are recursively expanded. "Ingoing" data in turn, requires relations to be defined in a specific way (`string` for ArangoDB, `number` for SQL, `{ id: number }` for Directus etc.). This difference is accounted for in specific implementations for each "direction" of dataflow. See more on `ParseIn<T>` [here](todo), and how this can be customized [here](../config#relations)
-TODO
-:::
-
 ## Composability
 
 Enys (and valits) are build in a composable way, meaning you can nest enys arbitrarily deeply.

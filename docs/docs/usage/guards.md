@@ -179,78 +179,9 @@ No options.
 
 However, the `default` option behaves differently here. As seen above, it accepts boolean values that simply indicate whether to use the literal value as the default value. (This is mainly to remove the need of writing the actual literal twice: once in the facory call, for the option.)
 
-### model => vality.relation {#list-of-guards-relation}
+#### `Parse<T>`
 
-This is a guard factory as well. It is intended to check for valid relations to insert into a database. The model you pass to it is not actually used for validation, insted it is only used for the TypeScript type. To compensate this, Vality provides two different parse types:
-
-#### `Parse<T>` and `ParseIn<T>`
-
-`Parse` (alias `ParseOut`) is used to represent a schema that is coming from the backend, an _outgoing_ data structure. Relations are expanded to the actual model in this mode.
-
-`ParseIn` on the other hand models _ingoing_ data, where the relation is merely denoted by an identifier of the referenced model. Therefore, relations are treated as mere numbers and accordingly typed.
-
-<details>
-  <summary>Example</summary>
-
-This example shows the difference between `ParseOut` and `ParseIn`
-
-```ts twoslash
-import { vality, ParseOut, ParseIn } from "vality";
-
-const Person = () =>
-  ({
-    bestFriend: vality.relation(Person),
-  } as const);
-
-type PersonOut = ParseOut<typeof Person>;
-//   ^?
-type PersonIn = ParseIn<typeof Person>;
-//   ^?
-```
-
-`...` stands for a circular reference. `Person["bestFriend"]` is actually just `Person`, which is represented with three dots.
-
-</details>
-
-#### Customisation {#customisation}
-
-By default, relations are assumed to be non-negative integers. If, however, this does not fit your database (for example if you use ArangoDB), it is possible to entirely overwrite all related options in Vality. This can be accomplished by simply reassigning `vality.relation`, and specifying a custom relation type to be used for `ParseIn`. This is done by simplicy setting a property in the global configuration interface.
-
-For example, if your database uses strings as keys, the following code does the correct validation:
-
-```ts twoslash
-const MyModel = () => ({});
-// ---cut---
-import { vality, validate, ParseIn } from "vality";
-import { guard } from "vality/guard";
-import type { Valit } from "vality/valit";
-import type { RelationType } from "vality/parse";
-
-declare global {
-  namespace vality {
-    interface Config {
-      RelationType: string | null;
-    }
-  }
-}
-
-vality.relation = () =>
-  guard("relation", val => {
-    return validate(
-      [
-        null,
-        vality.string({
-          minLength: 1,
-        }),
-      ],
-      val
-    ).data as unknown as undefined;
-  }) as any;
-
-const rel = vality.relation(MyModel);
-type rel = ParseIn<typeof rel>;
-//   ^?
-```
+`Parse` is used to represent a schema that is coming from the backend, an _outgoing_ data structure.
 
 ### vality.any {#list-of-guards-any}
 
