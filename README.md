@@ -23,11 +23,11 @@ import { v, Parse } from "vality";
 
 const Person = {
   name: v.string,
-  age: v.number({ min: 0 }),
+  age: v.number({ min: 6 }),
   email: v.email,
   referral: ["friends", "ad", "media", null],
   languages: [["de", "en", "fr", "se"]],
-};
+}; as const
 
 type Person = Parse<typeof Person>;
 /* {
@@ -79,4 +79,4 @@ type Brand = Parse<typeof Brand>;
 } */
 ```
 
-Forgetting this sucks and can quickly become a source of frustration when suddenly types are weird.  ESLint to the rescue! It will warn you when you forget to add `as const` in places where is may backfire and adds it automatically for you.
+Forgetting this sucks and can quickly become a source of frustration when suddenly types are weird. ESLint to the rescue! It will warn you when you forget to add `as const` in places where is may backfire and adds it automatically for you.
