@@ -33,7 +33,7 @@ vality.optional = flag(
     if (enyVal.valid) return enyVal;
     if (val === undefined) return { valid: true, data: undefined, errors: [] };
 
-    const { strict } = mergeOptions(options, context);
+    const { strict } = mergeOptions(options, context, ["strict"]);
 
     // Allow `null` in non-strict mode
     if (!strict && val === null)

@@ -53,20 +53,18 @@ const defaults = {
   bail: false,
 };
 
-export function mergeOptions(
-  options: Partial<RSA>,
-  context: Partial<RSA>
-): Required<Context> {
-  return {
-    allowExtraProperties:
-      options.allowExtraProperties ??
-      context.allowExtraProperties ??
-      config.allowExtraProperties ??
-      defaults.allowExtraProperties,
-    strict:
-      options.strict ?? context.strict ?? config.strict ?? defaults.strict,
-    bail: options.bail ?? context.bail ?? config.bail ?? defaults.bail,
-  };
+export function mergeOptions<Options extends RSA, Fields extends keyof Options>(
+  options: Options,
+  context: Partial<RSA>,
+  fields: Fields[]
+): Required<Pick<Options, Fields>> {
+  const result: any = {};
+  for (const field of fields) {
+    result[field] =
+    // @ts-expect-error
+      options[field] ?? context[field] ?? config[field] ?? defaults[field];
+  }
+  return result;
 }
 
 export function validate<E extends Eny>(

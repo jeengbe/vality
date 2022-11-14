@@ -218,7 +218,7 @@ vality.string = scalar(
   (val, options, context) => {
     if (typeof val === "string") return val;
 
-    const { strict } = mergeOptions(options, context);
+    const { strict } = mergeOptions(options, context, ["strict"]);
 
     if (strict) return undefined;
     if (typeof val !== "number") return undefined;
@@ -236,7 +236,7 @@ vality.number = scalar(
   (val, options, context) => {
     if (typeof val === "number") return val;
 
-    const { strict } = mergeOptions(options, context);
+    const { strict } = mergeOptions(options, context, ["strict"]);
 
     if (strict) return undefined;
     if (typeof val !== "string") return undefined;
@@ -267,7 +267,7 @@ const n = new Set().add("0").add(0).add("false");
 vality.boolean = scalar("boolean", (val, options, context) => {
   if (typeof val === "boolean") return val;
 
-  const { strict } = mergeOptions(options, context);
+  const { strict } = mergeOptions(options, context, ["strict"]);
 
   if (strict) return undefined;
   if (typeof val !== "string" && typeof val !== "number") return undefined;
@@ -279,7 +279,7 @@ vality.date = scalar(
   (val, options, context) => {
     if (val instanceof Date) return val;
 
-    const { strict } = mergeOptions(options, context);
+    const { strict } = mergeOptions(options, context, ["strict"]);
 
     if (strict) return undefined;
     if (typeof val !== "string" && typeof val !== "number") return undefined;
@@ -318,7 +318,7 @@ vality.literal = (lit) => {
     }
     if (val === lit) return lit;
 
-    const { strict } = mergeOptions(options, context);
+    const { strict } = mergeOptions(options, context, ["strict"]);
 
     if (strict) return undefined;
     if (typeof lit === "string" && typeof val === "number")

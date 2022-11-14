@@ -67,7 +67,7 @@ vality.array = compound(
   (e) => (value, options, context, path) => {
     const fn = enyToGuardFn(e);
 
-    const { strict, bail } = mergeOptions(options, context);
+    const { strict, bail } = mergeOptions(options, context, ["strict", "bail"]);
 
     if (!Array.isArray(value)) {
       if (!strict) {
@@ -112,7 +112,7 @@ vality.tuple = compound("tuple", (...es) => (value, options, context, path) => {
       errors: [{ message: "vality.tuple.base", path, options, value }],
     };
 
-  const { bail } = mergeOptions(options, context);
+  const { bail } = mergeOptions(options, context, ["bail"]);
 
   const data: any = [];
   const errors: Error[] = [];
@@ -142,7 +142,8 @@ vality.object = compound(
 
     const { strict, bail, allowExtraProperties } = mergeOptions(
       options,
-      context
+      context,
+      ["strict", "bail", "allowExtraProperties"]
     );
 
     const data: any = {};
@@ -258,7 +259,7 @@ vality.dict = compound("dict", (k, v) => (value, options, context, path) => {
     return { valid: true, data: undefined, errors: [] };
   }
 
-  const { bail, allowExtraProperties } = mergeOptions(options, context);
+  const { bail, allowExtraProperties } = mergeOptions(options, context, ["bail", "allowExtraProperties"]);
 
   // First, we resolve the key
   const type = getName(k);
@@ -411,7 +412,7 @@ vality.and = compound(
           errors: [{ message: "vality.and.base", path, options, value }],
         };
 
-      const { bail } = mergeOptions(options, context);
+      const { bail } = mergeOptions(options, context, ["bail"]);
 
       const data: any = {};
       const errors: Error[] = [];
