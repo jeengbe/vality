@@ -25,11 +25,11 @@ import { v, Parse } from "vality";
 
 const Person = {
   name: v.string,
-  age: v.number({ min: 0 }),
+  age: v.number({ min: 6 }),
   email: v.email,
   referral: ["friends", "ad", "media", null],
   languages: [["de", "en", "fr", "se"]],
-};
+} as const;
 
 type Person = Parse<typeof Person>;
 /* {
