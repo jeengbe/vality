@@ -87,7 +87,7 @@ export function isWithinRequiresAsConstContext(
 /**
  * Whether the passed node is an identifier for the Vality object
  */
-export function isVality(node: TSESTree.Node): boolean {
+function isVality(node: TSESTree.Node): boolean {
   return (
     node.type === NODES.Identifier &&
     (node.name === "v" || node.name === "vality")
@@ -97,7 +97,7 @@ export function isVality(node: TSESTree.Node): boolean {
 /**
  * Whether the passed node should be within an 'as const' context
  */
-export function requiresAsConst(
+function requiresAsConst(
   node: TSESTree.Node,
   nodeCaches: NodeCaches,
   parentHasTrigger = false,
@@ -185,7 +185,7 @@ export function parentIsTrigger(node: TSESTree.Node): boolean {
 /**
  * Whether the precence of this node indicates that the its containing node is a Vality short
  */
-export function isTrigger(node: TSESTree.Node): boolean {
+function isTrigger(node: TSESTree.Node): boolean {
   switch (node.type) {
     case NODES.ObjectExpression: {
       for (const prop of node.properties) {
