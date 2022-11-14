@@ -146,7 +146,7 @@ describe("getName()", () => {
   });
 
   it("ignores flags", () => {
-    expect(getName(v.optional(v.readonly(v.from("x")(v.string))))).toBe(
+    expect(getName(v.optional(v.virtual(v.from("x")(v.string))))).toBe(
       "string"
     );
   });

@@ -10,7 +10,7 @@ declare global {
       from: <F extends string>(
         key: F
       ) => <E extends Eny>(e: E) => Flagged<E, "from", F>;
-      readonly: <E extends Eny>(e: E) => Flagged<E, "readonly", true>;
+      virtual: <E extends Eny>(e: E) => Flagged<E, "virtual", true>;
     }
   }
 }
@@ -43,9 +43,9 @@ vality.optional = flag(
 );
 
 // We still provide an implementation as a flagged Guard may still be called directly, and we also want to handle those cases
-// If we ever encounter 'vality.readonly.base' in tests, it means that we handle readonly keys incorrectly somewhere
-vality.readonly = flag(
-  "readonly",
+// If we ever encounter 'vality.virtual.base' in tests, it means that we handle virtual keys incorrectly somewhere
+vality.virtual = flag(
+  "virtual",
   true,
   (e) => (val, _options, _context, path) => {
     if (val === undefined)
@@ -59,7 +59,7 @@ vality.readonly = flag(
       data: undefined,
       errors: [
         {
-          message: "vality.readonly.base",
+          message: "vality.virtual.base",
           path,
           options: {},
           value: val,

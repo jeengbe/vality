@@ -153,8 +153,8 @@ vality.object = compound(
       let valueKey: string = objectKey;
       const objectKeyEny: Eny = o[objectKey];
 
-      if (getFlags(objectKeyEny).has("readonly")) {
-        // If the key is readonly, we don't expect it to be set
+      if (getFlags(objectKeyEny).has("virtual")) {
+        // If the key is virtual, we don't expect it to be set
         continue; // We'll deal with these later
       }
 
@@ -222,10 +222,10 @@ vality.object = compound(
           }
         }
 
-        // If there is no eny for this key, or if it's readonly
+        // If there is no eny for this key, or if it's virtual
         if (
           optionsValueEny === undefined ||
-          getFlags(optionsValueEny).has("readonly")
+          getFlags(optionsValueEny).has("virtual")
         ) {
           errors.push({
             message: "vality.object.extraProperty",
@@ -253,8 +253,8 @@ vality.dict = compound("dict", (k, v) => (value, options, context, path) => {
     };
   }
 
-  if (getFlags(v).has("readonly")) {
-    // If the key is readonly, we don't expect it to be set
+  if (getFlags(v).has("virtual")) {
+    // If the key is virtual, we don't expect it to be set
     return { valid: true, data: undefined, errors: [] };
   }
 

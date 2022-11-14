@@ -1286,8 +1286,8 @@ describe("vality.object", () => {
       });
     });
 
-    it("treats readonly properties as not set", () => {
-      testCompound("object", v.object({ foo: v.readonly(v.number) }), {
+    it("treats virtual properties as not set", () => {
+      testCompound("object", v.object({ foo: v.virtual(v.number) }), {
         context: { allowExtraProperties: false },
         valid: [{ value: {} }],
         invalid: [
@@ -1625,8 +1625,8 @@ describe("vality.dict", () => {
     });
   });
 
-  it("returns undefined if the value is readonly", () => {
-    testCompound("dict", v.dict(v.string, v.readonly(v.any)), {
+  it("returns undefined if the value is virtual", () => {
+    testCompound("dict", v.dict(v.string, v.virtual(v.any)), {
       valid: [
         { value: {}, expect: undefined },
         { value: { foo: "bar", baz: "qux" }, expect: undefined },

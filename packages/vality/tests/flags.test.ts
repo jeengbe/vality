@@ -208,16 +208,16 @@ describe("vality.optional", () => {
   });
 });
 
-describe("vality.readonly", () => {
+describe("vality.virtual", () => {
   it("only allows undefined", () => {
-    testFlag("readonly", v.readonly(v.number), {
+    testFlag("virtual", v.virtual(v.number), {
       valid: [{ value: undefined }],
       invalid: [{ value: 1 }],
     });
   });
 
   test("type", () => {
-    const valit = v.readonly(v.number);
+    const valit = v.virtual(v.number);
     expectType<TypeEqual<number, Parse<typeof valit>>>(true);
   });
 });
