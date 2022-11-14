@@ -27,7 +27,7 @@ const Person = {
   email: v.email,
   referral: ["friends", "ad", "media", null],
   languages: [["de", "en", "fr", "se"]],
-}; as const
+} as const;
 
 type Person = Parse<typeof Person>;
 /* {
