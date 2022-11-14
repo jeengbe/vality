@@ -8,7 +8,7 @@ export type Flagged<
   Name extends string,
   Value extends {}
 > = EnyToGuard<E> & {
-  [_flags]: Map<Name, Value>;
+  flags: Map<Name, Value>;
 };
 
 export type GetFlagOptions<
