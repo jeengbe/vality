@@ -124,7 +124,9 @@ describe("vality.optional", () => {
 
   describe("allows 'null' in non-strict mode", () => {
     test("options", () => {
-      testFlag("optional", v.optional(v.number)({ strict: true }), {
+      // We do this here just to also test the function path
+      // Please, me, add flag.test.ts at some point
+      testFlag("optional", v.optional(v.number)(() =>  ({ strict: true })), {
         options: { strict: true },
         invalid: [
           {
