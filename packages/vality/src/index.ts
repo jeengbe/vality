@@ -7,6 +7,6 @@ import "./scalars";
 
 // Export vality
 export * from "./parse";
-export { extendScalar } from "./scalar";
+export { extendScalar, Scalar, ScalarFn } from "./scalar";
 export * from "./validate";
 export * from "./vality";
