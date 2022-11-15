@@ -187,7 +187,7 @@ vality.object = compound(
 
       if (getFlags(objectKeyEny).has("from")) {
         valueKey = getFlags(objectKeyEny).get("from") as string;
-        // @ts-expect-error Expected since we want to check if it's there
+        // @ts-expect-error -- Expected since we want to check if it's there
         if (value[valueKey] === undefined) {
           if (!strict) {
             valueKey = objectKey;
@@ -208,7 +208,7 @@ vality.object = compound(
       }
 
       const res = objectKeyGuard[_guard](
-        // @ts-expect-error We can do this assertion here, since in the worst case, we'll get undefined, which is what we want too (=> e.g. "Expected string, received undefined")
+        // @ts-expect-error -- We can do this assertion here, since in the worst case, we'll get undefined, which is what we want too (=> e.g. "Expected string, received undefined")
         value[valueKey],
         context,
         [...path, valueKey],
@@ -256,7 +256,7 @@ vality.object = compound(
             message: "vality.object.extraProperty",
             path: [...path, valueKey],
             options,
-            // @ts-expect-error If it is undefined, then we'll just take that
+            // @ts-expect-error -- If it is undefined, then we'll just take that
             value: value[valueKey],
           });
           if (bail) break;
@@ -427,7 +427,7 @@ vality.enum = compound(
     }
 );
 
-// @ts-expect-error 'IntersectItems<RSE[]>' gives 'never'
+// @ts-expect-error -- 'IntersectItems<RSE[]>' gives 'never'
 vality.and = compound(
   "and",
   (...es) =>

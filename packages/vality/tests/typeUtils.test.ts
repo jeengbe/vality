@@ -153,14 +153,14 @@ describe("getName()", () => {
 
   it("resolves custom types from the map", () => {
     types.set("foo", "string");
-    // @ts-expect-error Our [_guard] is... questionable but required for this no to be interpreted as an object Short
+    // @ts-ignore -- Our [_guard] is... questionable but required for this no to be interpreted as an object Short
     expect(getName({[_name]: "foo", [_guard]: "I'm just here"})).toBe("string");
   });
 
   it("throws on circular types", () => {
     types.set("foo", "bar");
     types.set("bar", "foo");
-    // @ts-expect-error
+    // @ts-ignore
     expect(() => getName({[_name]: "foo", [_guard]: "I'm just here"})).toThrow("Circular type extension");
   });
 });

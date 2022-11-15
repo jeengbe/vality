@@ -334,7 +334,7 @@ vality.literal = (lit) => {
     }
     return undefined;
   };
-  // @ts-expect-error Symbol is untyped
+  // @ts-expect-error -- Symbol is untyped
   scalarFn[_type] = lit;
 
   return scalar("literal", scalarFn);

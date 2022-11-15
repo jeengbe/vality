@@ -204,6 +204,7 @@ export function makeValit<
     })) as Valit<Name, Type, Options, IsValit>;
 
     validate[_name] = name;
+    // @ts-ignore Error with TS 4.2.2
     validate[_guard] = getGuardFnFromOptions({});
     validate[_type] = args as unknown as Type;
     validate[_flags] = flagsMap;
