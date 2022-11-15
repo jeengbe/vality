@@ -45,7 +45,7 @@ export function flag<
       [_name]: innerGuard[_name],
       [_guard]: (val, context, path, parent) => {
         if (typeof options === "function") options = options(parent, context);
-        // @ts-expect-error Incorrectly narrowed due to use of any
+        // @ts-expect-error -- Incorrectly narrowed due to use of any
         return getGuardFnFromOptions(options)(val, context, path, parent);
       },
       [_type]: innerGuard[_type],

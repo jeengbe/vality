@@ -20,9 +20,6 @@ export type Eny =
 
 export type EnyToGuard<T> = T extends Guard<any, any, any>
   ? T
-  : // prettier-ignore -- Wrongly removes parentheses
-  T extends (() => infer U extends Eny)
-  ? EnyToGuard<U>
   : T extends readonly [TOrGuard<Eny>]
   ? Guard<"array", T, true>
   : T extends Primitive
@@ -35,8 +32,10 @@ export type EnyToGuard<T> = T extends Guard<any, any, any>
     : null extends T
     ? Guard<"null", T, false>
     : Guard<"literal", T, false>
-  : T extends EnumOfTOrGuard<infer U extends Eny>
-  ? Guard<"enum", U, true>
+  : T extends EnumOfTOrGuard<infer U>
+  ? U extends Eny
+    ? Guard<"enum", U, true>
+    : never
   : T extends RSE
   ? Guard<"object", T, true>
   : never;
@@ -56,6 +55,7 @@ export function enyToGuard<E extends Eny>(eny: E): Guard<any, any, any> {
     typeof eny === "boolean" ||
     eny === null
   ) {
+    // @ts-ignore -- TS 4.2.3 not narrowing down correctly
     return vality.literal(eny);
   }
 
@@ -66,7 +66,7 @@ export function enyToGuard<E extends Eny>(eny: E): Guard<any, any, any> {
     return vality.enum(...eny.map(enyToGuard));
   }
 
-  // @ts-expect-error See above reason, and also, Array.isArray doesn't correctly narrow the type
+  // @ts-expect-error -- See above reason, and also, Array.isArray doesn't correctly narrow the type
   return vality.object(eny);
 }
 
@@ -102,7 +102,7 @@ type EnumOfTOrGuard<T> = readonly [
   ...OneOrEnumOfTOrGuard<T>[]
 ];
 
- type TOrGuard<T> =
+type TOrGuard<T> =
   | T
   | Guard<any, T, false>
   | Guard<any, OneOrEnumOfTOrGuard<T>, true>;
