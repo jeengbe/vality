@@ -1,7 +1,7 @@
 {
   "name": "vality",
   "description": "A TypeScript schema descriptor library with zero dependencies.",
-  "version": "6.2.1",
+  "version": "6.2.2",
   "author": "Jesper Engberg <jeengbe@gmail.com>",
   "homepage": "https://ts-vality.io",
   "repository": {
@@ -41,7 +41,7 @@
     "typecheck": "concurrently \"tsc --noEmit -p src/tsconfig.cjs.json\" \"tsc --noEmit -p src/tsconfig.esm.json\"",
     "test:watch": "jest --watchAll --coverage tests"
   },
-  "optionalDependencies": {
+  "peerDependencies": {
     "typescript": ">=4.2.2"
   },
   "main": "./dist/cjs/index.js",
