@@ -15,5 +15,6 @@
     "Valits",
     "vality",
     "Vality"
-  ]
+  ],
+  "typescript.tsdk": "./packages/vality/node_modules/typescript/lib"
 }

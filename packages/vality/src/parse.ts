@@ -23,48 +23,48 @@ type Intersect<U> = (U extends any ? (k: U) => void : never) extends (
   ? I
   : never;
 
-type ParseWorker<T> = IsAny<T> extends true
+export type Parse<T> = IsAny<T> extends true
   ? any
   : T extends Flagged<infer U, infer Name, infer Value>
   ? Name extends "optional"
-    ? ParseWorker<U> | undefined
-    : ParseWorker<U>
+    ? Parse<U> | undefined
+    : Parse<U>
   : T extends Guard<"tuple", infer U, any>
-  ? { [K in keyof U]: ParseWorker<U[K]> }
+  ? { [K in keyof U]: Parse<U[K]> }
   : T extends Guard<"and", infer U, true>
   ? U extends Eny[]
     ? Mapp<IntersectItems<U>>
     : never
   : T extends Guard<"dict", [OneOrEnumOfTOrGuard<infer L>, infer V], true>
-  ? Intersect<
-      L extends string | number
-        ? {
-            [P in L]: ParseWorker<V>;
-          }
-        : never
+  ? Expand<
+      Intersect<
+        L extends string | number
+          ? {
+              [P in L]: Parse<V>;
+            }
+          : never
+      >
     >
   : T extends readonly [infer U] // Array Short
-  ? ParseWorker<U>[]
+  ? Parse<U>[]
   : T extends Guard<any, (infer U)[], true> // Array Valit
-  ? ParseWorker<U>[]
+  ? Parse<U>[]
   : T extends readonly (infer U)[] // Enum Short
-  ? ParseWorker<U>
+  ? Parse<U>
   : T extends Guard<any, infer U, true> // Compounds' content needs to be parsed again
-  ? ParseWorker<U>
+  ? Parse<U>
   : T extends Guard<any, infer U, false> // Whereas Scalars' doesn't
   ? U
   : {
       -readonly [K in GetObjectKeys<T> as K extends `${infer U}?` ? U : K]:
-        | ParseWorker<T[K]>
+        | Expand<Parse<T[K]>>
         | (K extends `${string}?` ? undefined : never);
     };
 
-type GetObjectKeys<T> = ParseWorker<T[keyof T]> extends never ? never : keyof T;
+type GetObjectKeys<T> = Parse<T[keyof T]> extends never ? never : keyof T;
 
-type ExpandRecursively<T> = T extends object
+type Expand<T> = T extends object
   ? T extends infer U
     ? { [K in keyof U]: U[K] }
     : never
   : T;
-
-export type Parse<T> = ExpandRecursively<ParseWorker<T>>;
