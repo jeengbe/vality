@@ -1306,6 +1306,21 @@ describe("vality.object", () => {
       });
     });
 
+    test("properties that end with '?' are treated as optional", () => {
+      testCompound("object", v.object({ "foo?": v.string }), {
+        valid: [{ value: {} }, { value: { foo: 1 }, expect: { foo: "1" } }],
+      });
+    });
+
+    it("works with 'key[]' as value", () => {
+      testCompound("object", v.object({ "foo?": v.array(v.string) }), {
+        valid: [
+          { value: {}, expect: {} },
+          { value: { "foo[]": [1] }, expect: { foo: ["1"] } },
+        ],
+      });
+    });
+
     describe("allows extra properties", () => {
       test("options", () => {
         testCompound(
@@ -1596,9 +1611,16 @@ describe("vality.object", () => {
       expectType<TypeEqual<Expect, Got>>(true);
     });
 
-    test("marks optional properties as optional", () => {
+    it("marks optional properties as optional", () => {
       const guard = { foo: v.optional(v.number), bar: v.string };
       type Expect = { foo: number | undefined; bar: string };
+      type Got = Parse<typeof guard>;
+      expectType<TypeEqual<Expect, Got>>(true);
+    });
+
+    it("marks keys 'key?' as optional", () => {
+      const guard = { foo: v.number, "bar?": v.string };
+      type Expect = { foo: number; bar: string | undefined };
       type Got = Parse<typeof guard>;
       expectType<TypeEqual<Expect, Got>>(true);
     });

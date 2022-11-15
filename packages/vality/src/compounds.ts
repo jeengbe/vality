@@ -150,13 +150,21 @@ vality.object = compound(
     const errors: Error[] = [];
 
     // We iterate the passed object (the model) first
-    for (const objectKey in o) {
+    for (let objectKey in o) {
       let valueKey: string = objectKey;
-      const objectKeyEny: Eny = o[objectKey];
+      let objectKeyEny: Eny = o[objectKey];
 
       if (getFlags(objectKeyEny).has("virtual")) {
         // If the key is virtual, we don't expect it to be set
         continue; // We'll deal with these later
+      }
+
+      if (objectKey.slice(-1) === "?") {
+        const sliced = objectKey.slice(0, -1);
+        // @ts-expect-error
+        objectKey = sliced;
+        valueKey = sliced;
+        objectKeyEny = vality.optional(objectKeyEny);
       }
 
       const objectKeyGuard = enyToGuard(objectKeyEny);
@@ -167,11 +175,11 @@ vality.object = compound(
         // If 'key' is not set on the value, but 'key[]' is, we'll use that one to acquire the value
         if (
           // @ts-expect-error
-          value[objectKey] === undefined &&
+          value[valueKey] === undefined &&
           // @ts-expect-error
-          value[`${objectKey}[]`] !== undefined
+          value[`${valueKey}[]`] !== undefined
         ) {
-          valueKey = `${objectKey}[]`;
+          valueKey = `${valueKey}[]`;
         }
       }
 
@@ -204,8 +212,10 @@ vality.object = compound(
 
     // And then check for excess keys
     if (!allowExtraProperties) {
-      for (const valueKey in value) {
+      for (let valueKey in value) {
         const optionsValueEny = o[valueKey];
+
+
 
         // If we get 'key[]', allow if 'key' is not set, but expected to be an array
         // Holy cow, this seems expensive
@@ -259,7 +269,10 @@ vality.dict = compound("dict", (k, v) => (value, options, context, path) => {
     return { valid: true, data: undefined, errors: [] };
   }
 
-  const { bail, allowExtraProperties } = mergeOptions(options, context, ["bail", "allowExtraProperties"]);
+  const { bail, allowExtraProperties } = mergeOptions(options, context, [
+    "bail",
+    "allowExtraProperties",
+  ]);
 
   // First, we resolve the key
   const type = getName(k);

@@ -13,9 +13,9 @@ export type IsAny<T> = 0 extends 1 & T ? true : false;
 // Thank you kind stranger https://discord.com/channels/508357248330760243/1041442977920319488/1041463546195751062
 type Mapp<T> = T extends T
   ? {
-      [K in keyof T]: T[K]
+      [K in keyof T]: T[K];
     }
-  : never
+  : never;
 
 export type Parse<T> = IsAny<T> extends true
   ? any
@@ -48,5 +48,7 @@ export type Parse<T> = IsAny<T> extends true
   : {
       -readonly [K in keyof T as Parse<T[K]> extends never
         ? never
-        : K]: Parse<T[K]>;
+        : K extends `${infer U}?`
+        ? U
+        : K]: Parse<T[K]> | (K extends `${string}?` ? undefined : never);
     };
