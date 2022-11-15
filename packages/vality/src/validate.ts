@@ -49,6 +49,7 @@ export interface Context {
 
 const defaults = {
   allowExtraProperties: true,
+  convertToCamelCase: true,
   strict: false,
   bail: false,
 };

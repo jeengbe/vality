@@ -3,6 +3,7 @@ import { Parse } from "./parse";
 import { _guard, _type } from "./symbols";
 import { getName, intersect, simplifyEnum } from "./typeUtils";
 import {
+  convertToSnakeCase,
   Eny,
   enyToGuard,
   enyToGuardFn,
@@ -34,6 +35,7 @@ declare global {
         O,
         {
           allowExtraProperties: boolean;
+          convertToCamelCase: boolean;
         }
       >;
       dict: <K extends OneOrEnumOfTOrGuard<string | number>, V extends Eny>(
@@ -132,7 +134,7 @@ vality.tuple = compound("tuple", (...es) => (value, options, context, path) => {
 
 vality.object = compound(
   "object",
-  (o) => (value, options, context, path, flags) => {
+  (o) => (value, options, context, path) => {
     if (typeof value !== "object" || value === null || Array.isArray(value))
       return {
         valid: false,
@@ -140,10 +142,10 @@ vality.object = compound(
         errors: [{ message: "vality.object.base", path, options, value }],
       };
 
-    const { strict, bail, allowExtraProperties } = mergeOptions(
+    const { strict, bail, allowExtraProperties, convertToCamelCase } = mergeOptions(
       options,
       context,
-      ["strict", "bail", "allowExtraProperties"]
+      ["strict", "bail", "allowExtraProperties", "convertToCamelCase"]
     );
 
     const data: any = {};
@@ -189,6 +191,18 @@ vality.object = compound(
         if (value[valueKey] === undefined) {
           if (!strict) {
             valueKey = objectKey;
+          }
+        }
+      }
+
+      // @ts-expect-error
+      if (convertToCamelCase && value[valueKey] === undefined) {
+        // If we don't have a value for this key, we'll check whether we have a snake_case match
+        const snakeCaseValueKey = convertToSnakeCase(valueKey);
+        if (snakeCaseValueKey !== valueKey) {
+          // @ts-expect-error
+          if (value[snakeCaseValueKey] !== undefined) {
+            valueKey = snakeCaseValueKey;
           }
         }
       }

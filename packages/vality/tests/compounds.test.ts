@@ -1042,6 +1042,157 @@ describe("vality.object", () => {
       });
     });
 
+    describe("accepts and maps snake_case properties if key is in camelCase", () => {
+      test("options", () => {
+        testCompound(
+          "object",
+          v.object({ fooBar: v.number })({ convertToCamelCase: true }),
+          {
+            valid: [
+              { value: { foo_bar: 1 }, expect: { fooBar: 1 } },
+              {
+                value: { foo_bar: 2, fooBar: 1 },
+                expect: { fooBar: 1 },
+              },
+            ],
+          }
+        );
+
+        testCompound(
+          "object",
+          v.object({ fooBar: v.number })({ convertToCamelCase: false }),
+          {
+            valid: [
+              {
+                value: { foo_bar: 2, fooBar: 1 },
+                expect: { fooBar: 1 },
+              },
+            ],
+            invalid: [
+              {
+                value: { value: { foo_bar: 1 }, expect: { fooBar: 1 } },
+
+                errors: [
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["fooBar"],
+                    value: undefined,
+                  },
+                ],
+              },
+            ],
+          }
+        );
+      });
+
+      test("context", () => {
+        testCompound(
+          "object",
+          v.object({ fooBar: v.number }),
+          {
+            context: { convertToCamelCase: true },
+            valid: [
+              { value: { foo_bar: 1 }, expect: { fooBar: 1 } },
+              {
+                value: { foo_bar: 2, fooBar: 1 },
+                expect: { fooBar: 1 },
+              },
+            ],
+          }
+        );
+
+        testCompound(
+          "object",
+          v.object({ fooBar: v.number }),
+          {
+            context: { convertToCamelCase: false },
+            valid: [
+              {
+                value: { foo_bar: 2, fooBar: 1 },
+                expect: { fooBar: 1 },
+              },
+            ],
+            invalid: [
+              {
+                value: { value: { foo_bar: 1 }, expect: { fooBar: 1 } },
+
+                errors: [
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["fooBar"],
+                    value: undefined,
+                  },
+                ],
+              },
+            ],
+          }
+        );
+      });
+
+      test("config", () => {
+        testCompound(
+          "object",
+          v.object({ fooBar: v.number }),
+          {
+            config: { convertToCamelCase: true },
+            valid: [
+              { value: { foo_bar: 1 }, expect: { fooBar: 1 } },
+              {
+                value: { foo_bar: 2, fooBar: 1 },
+                expect: { fooBar: 1 },
+              },
+            ],
+          }
+        );
+
+        testCompound(
+          "object",
+          v.object({ fooBar: v.number }),
+          {
+            config: { convertToCamelCase: false },
+            valid: [
+              {
+                value: { foo_bar: 2, fooBar: 1 },
+                expect: { fooBar: 1 },
+              },
+            ],
+            invalid: [
+              {
+                value: { value: { foo_bar: 1 }, expect: { fooBar: 1 } },
+
+                errors: [
+                  {
+                    message: "vality.number.base",
+                    options: {},
+                    path: ["fooBar"],
+                    value: undefined,
+                  },
+                ],
+              },
+            ],
+          }
+        );
+      });
+
+      test("default", () => {
+        testCompound(
+          "object",
+          v.object({ fooBar: v.number }),
+          {
+            valid: [
+              { value: { foo_bar: 1 }, expect: { fooBar: 1 } },
+              {
+                value: { foo_bar: 2, fooBar: 1 },
+                expect: { fooBar: 1 },
+              },
+            ],
+          }
+        );
+      });
+    });
+
     describe("allows 'key[]' as 'key' if value is of type array", () => {
       it("works with a Valit", () => {
         testCompound("object", v.object({ foo: v.array(v.number) }), {

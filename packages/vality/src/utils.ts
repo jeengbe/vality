@@ -90,6 +90,10 @@ export function getFlags(e: Eny): ReadonlyMap<string, unknown> {
   return e[_flags] ?? emptyMap;
 }
 
+export function convertToSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
 export type OneOrEnumOfTOrGuard<T> = TOrGuard<T> | EnumOfTOrGuard<T>;
 
 type EnumOfTOrGuard<T> = readonly [
