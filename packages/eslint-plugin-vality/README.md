@@ -3,7 +3,7 @@
 
 [![License](https://img.shields.io/npm/l/eslint-plugin-vality)](https://github.com/jeengbe/vality/blob/master/packages/eslint-plugin-vality/LICENSE.md)
 [![Version](https://img.shields.io/npm/v/eslint-plugin-vality)](https://www.npmjs.com/package/eslint-plugin-vality)
-[![Build Status](https://img.shields.io/github/workflow/status/jeengbe/vality/Publish)](https://github.com/jeengbe/vality)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/jeengbe/vality/ci.yml?brach=master)](https://github.com/jeengbe/vality)
 [![Coverage Status](https://img.shields.io/codecov/c/github/jeengbe/vality/master?flag=eslint-plugin-vality&token=L0QZW59UTU)](https://app.codecov.io/gh/jeengbe/vality/tree/master/packages/eslint-plugin-vality)
 
 [![Snyk](https://img.shields.io/snyk/vulnerabilities/github/jeengbe/vality)](https://snyk.io/test/github/jeengbe/vality)
