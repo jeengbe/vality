@@ -3,7 +3,7 @@
   "description": "ESLint plugin for Vality.",
   "version": "2.0.2",
   "author": "Jesper Engberg <jeengbe@gmail.com>",
-  "homepage": "https://ts-vality.io/eslint",
+  "homepage": "https://ts-vality.io/eslint-plugin-vality",
   "repository": {
     "type": "git",
     "url": "git://github.com/jeengbe/vality.git",

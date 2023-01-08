@@ -107,7 +107,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © 2022 Jesper Engberg. Built with Docusaurus.`,
+        copyright: `Copyright © 2023 Jesper Engberg. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,
