@@ -12,6 +12,8 @@ export * from "./vality";
 
 // Stuff for extending Vality
 export * from "./utils";
+export * from "./valit";
+export * from "./symbols";
 export * from "./typeUtils";
 export { scalar, extendScalar, Scalar, ScalarFn } from "./scalar";
 export { compound, Compound, CompoundFn } from "./compound";

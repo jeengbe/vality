@@ -43,7 +43,7 @@ declare global {
         v: V
       ) => Compound<
         "dict",
-        [typeof k, typeof v],
+        [K, V],
         {
           allowExtraProperties: boolean;
         }
@@ -53,7 +53,7 @@ declare global {
         ...es: E
       ) => Compound<
         "and",
-        typeof es,
+        E,
         {
           transform: (
             val: Parse<Compound<"and", E>>
