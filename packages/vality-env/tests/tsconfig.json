@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "types": [
+      "jest",
+      "node"
+    ],
+    "paths": {
+      "vality-env": ["../src"],
+      "vality-env/*": ["../src/*"]
+    },
+    "skipLibCheck": true
+  },
+  "include": [
+    "**/*.ts"
+  ],
+}

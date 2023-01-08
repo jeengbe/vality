@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "outDir": "../dist/esm",
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "../dist/types"
+  }
+}
