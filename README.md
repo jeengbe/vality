@@ -82,3 +82,44 @@ type Brand = Parse<typeof Brand>;
 Forgetting this sucks and can quickly become a source of frustration when suddenly types are weird. ESLint to the rescue! It will warn you when you forget to add `as const` in places where is may backfire and adds it automatically for you.
 
 Find more information on https://ts-vality.io/eslint-plugin-vality or check out [packages/eslint-plugin-vality](packages/eslint-plugin-vality).
+
+## [Vality Env](https://npmjs.com/package/vality-env)
+[![License](https://img.shields.io/npm/l/vality-env)](https://github.com/jeengbe/vality/blob/master/packages/vality-env/LICENSE.md)
+[![Version](https://img.shields.io/npm/v/vality-env)](https://www.npmjs.com/package/vality-env)
+[![Coverage Status](https://img.shields.io/codecov/c/github/jeengbe/vality/master?flag=vality-env&token=L0QZW59UTU)](https://app.codecov.io/gh/jeengbe/vality/tree/master/packages/vality-env)
+
+Use Vality to describe your configuration and load+validate it.
+
+```ts
+import { v } from "vality";
+import { loadEnv } from "vality-env";
+
+const config = {
+  jwt: {
+    privateKey: v.string,
+  },
+  db: {
+    url: v.env("DATABASE_URL", v.string),
+    databaseName: v.env("DATABASE_NAME", v.string({
+      default: "service"
+    })),
+  },
+};
+
+export function loadConfig() {
+  const validatedConfig = loadEnv(config);
+
+  if (!validatedConfig.valid) {
+    console.error(validatedConfig.errors);
+    throw new Error('Invalid config');
+  }
+
+  return validatedConfig.data;
+}
+```
+
+```env
+DATABASE_URL=http://localhost:8259
+# DATABASE_NAME=
+JWT_PRIVATE_KEY=asdasdasdasd
+```

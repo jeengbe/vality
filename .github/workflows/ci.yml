@@ -406,3 +406,169 @@ jobs:
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  lint-vality-env:
+    name: "Lint: vality-env"
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: vality-env
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Lint
+        run: pnpm --filter vality-env run lint
+  unit-test-vality-env:
+    name: "Unit Test: vality-env"
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    strategy:
+      matrix:
+        node-version:
+          - 14
+          - 16
+          - 18
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: vality-env
+          node-version: ${{ matrix.node-version }}
+      - name: Test
+        if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
+        run: pnpm --filter vality-env run test:unit
+      - name: Test (coverage)
+        if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
+        run: pnpm --filter vality-env run test:coverage
+      - name: Upload coverage artifact
+        if: ${{ matrix.node-version == env.PRIMARY_NODE_VERSION }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-vality-env
+          path: ./packages/vality-env/coverage
+  type-test-vality-env:
+    name: "Type Test: vality-env"
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: vality-env
+          node-version: ${{ matrix.node-version }}
+      - name: Test
+        if: ${{ matrix.node-version != env.PRIMARY_NODE_VERSION }}
+        run: pnpm --filter vality-env run test:type
+  typecheck-vality-env:
+    name: "Typecheck: vality-env"
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: vality-env
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Typecheck
+        run: pnpm --filter vality-env run typecheck
+  check-version-vality-env:
+    name: "Check version: vality-env"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    outputs:
+      should-publish: ${{ steps.check.outputs.changed }}
+      current-version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Check for version changes
+        id: check
+        uses: EndBug/version-check@v2
+        with:
+          file-name: ./packages/vality-env/package.json
+          file-url: https://unpkg.com/vality-env/package.json
+          static-checking: localIsNew
+  build-vality-env:
+    name: "Build: vality-env"
+    runs-on: ubuntu-latest
+    needs:
+      - lint-vality-env
+      - unit-test-vality-env
+      - type-test-vality-env
+      - typecheck-vality-env
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+        with:
+          package: vality-env
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+      - name: Build
+        run: pnpm --filter vality-env run build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-vality-env
+          path: |-
+            ./packages/vality-env/dist
+            ./packages/vality-env/src
+            ./packages/vality-env/package.json
+            ./packages/vality-env/README.md
+            ./packages/vality-env/LICENSE.json
+  coverage-vality-env:
+    name: "Upload coverage: vality-env"
+    runs-on: ubuntu-latest
+    needs:
+      - unit-test-vality-env
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: coverage-vality-env
+          path: ./packages/vality-env/coverage
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./packages/vality-env/coverage/lcov.info
+          flags: vality-env
+  publish-vality-env:
+    name: "Publish: vality-env"
+    runs-on: ubuntu-latest
+    needs:
+      - build-vality-env
+      - check-version-vality-env
+    if: ${{ needs.check-version-vality-env.outputs.should-publish == 'true' }}
+    environment:
+      name: "npm: vality-env"
+      url: https://www.npmjs.com/package/vality-env
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: build-vality-env
+          path: ./packages/vality-env
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+      - name: Publish to NPM
+        working-directory: ./packages/vality-env
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
