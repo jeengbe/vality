@@ -1,5 +1,5 @@
 import { Flagged } from "./flag";
-import { Eny, IntersectItems, OneOrEnumOfTOrGuard } from "./utils";
+import { Eny, IntersectItems, OneOrEnumOfTOrGuard, Primitive } from "./utils";
 import { Guard } from "./valit";
 
 declare global {
@@ -10,13 +10,6 @@ declare global {
 
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
-// Thank you kind stranger https://discord.com/channels/508357248330760243/1041442977920319488/1041463546195751062
-type Mapp<T> = T extends T
-  ? {
-      [K in keyof T]: T[K];
-    }
-  : never;
-
 type Intersect<U> = (U extends any ? (k: U) => void : never) extends (
   k: infer I
 ) => void
@@ -25,6 +18,8 @@ type Intersect<U> = (U extends any ? (k: U) => void : never) extends (
 
 export type Parse<T> = IsAny<T> extends true
   ? any
+  : T extends Primitive
+  ? T
   : T extends Flagged<infer U, infer Name, infer Value>
   ? Name extends "optional"
     ? Parse<U> | undefined
@@ -33,7 +28,7 @@ export type Parse<T> = IsAny<T> extends true
   ? { [K in keyof U]: Parse<U[K]> }
   : T extends Guard<"and", infer U, true>
   ? U extends Eny[]
-    ? Mapp<IntersectItems<U>>
+    ? Expand<IntersectItems<U>>
     : never
   : T extends Guard<"dict", [OneOrEnumOfTOrGuard<infer L>, infer V], true>
   ? Expand<
