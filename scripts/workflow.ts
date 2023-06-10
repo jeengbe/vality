@@ -151,7 +151,7 @@ for (const pkg of getPackages()) {
       needs: ["install"],
       strategy: {
         matrix: {
-          "node-version": [14, 16, 18],
+          "node-version": [16, 18, 20],
         },
       },
       steps: [
