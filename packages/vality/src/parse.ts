@@ -16,7 +16,9 @@ type Intersect<U> = (U extends any ? (k: U) => void : never) extends (
   ? I
   : never;
 
-export type Parse<T> = IsAny<T> extends true
+export type Parse<T> = Eny extends T
+  ? unknown
+  : IsAny<T> extends true
   ? any
   : T extends Primitive
   ? T
