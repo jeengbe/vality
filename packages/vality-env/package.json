@@ -1,7 +1,7 @@
 {
   "name": "vality-env",
   "description": "A Vality extension to load environment variables.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Jesper Engberg <jeengbe@gmail.com>",
   "homepage": "https://ts-vality.io/vality-env",
   "repository": {
@@ -24,7 +24,7 @@
     "url": "https://github.com/jeengbe/vality/issues"
   },
   "dependencies": {
-    "vality": "6.3.1"
+    "vality": "^6.3.1"
   },
   "devDependencies": {
     "@swc/core": "1.3.15",
