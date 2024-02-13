@@ -3,7 +3,7 @@
 
 A TypeScript schema descriptor library with zero dependencies.
 
-See https://ts-vality.io for more information.
+See https://jeengbe.github.io/vality for more information.
 
 </div>
 
@@ -16,7 +16,7 @@ See https://ts-vality.io for more information.
 
 Vality is the heart of this repository. It is a declarative **schema description library** with the most **intuitive syntax** and allows for validation and transformation of data. Then extract the types from your schema for **100% type safety**. And all with **0 runtime dependencies**.
 
-Find all of this and much more on https://ts-vality.io/vality.
+Find all of this and much more on https://jeengbe.github.io/vality/vality.
 
 ```ts
 import { v, Parse } from "vality";
@@ -39,7 +39,7 @@ type Person = Parse<typeof Person>;
 } */
 ```
 
-Now that I have your attention, head over to https://ts-vality.io/vality to find out what's going on here. You won't regret it ;) Or check out [packages/vality](packages/vality).
+Now that I have your attention, head over to https://jeengbe.github.io/vality/vality to find out what's going on here. You won't regret it ;) Or check out [packages/vality](packages/vality).
 
 Or continue scrolling down to see what else is in this repository.
 
@@ -62,7 +62,7 @@ type Brand = Parse<typeof Brand>;
 } */
 ```
 
-Can you spot what's wrong with this model? Correct, it's missing the literal types for the keys. This is a common mistake when using Array or Enum Shorts and can be easily fixed by adding `as const`. (Find more information on this mistake [here](https://ts-vality.io/vality/as-const)).
+Can you spot what's wrong with this model? Correct, it's missing the literal types for the keys. This is a common mistake when using Array or Enum Shorts and can be easily fixed by adding `as const`. (Find more information on this mistake [here](https://jeengbe.github.io/vality/vality/as-const)).
 
 ```ts
 const Brand = {
@@ -81,7 +81,7 @@ type Brand = Parse<typeof Brand>;
 
 Forgetting this sucks and can quickly become a source of frustration when suddenly types are weird. ESLint to the rescue! It will warn you when you forget to add `as const` in places where is may backfire and adds it automatically for you.
 
-Find more information on https://ts-vality.io/eslint-plugin-vality or check out [packages/eslint-plugin-vality](packages/eslint-plugin-vality).
+Find more information on https://jeengbe.github.io/vality/eslint-plugin-vality or check out [packages/eslint-plugin-vality](packages/eslint-plugin-vality).
 
 ## [Vality Env](https://npmjs.com/package/vality-env)
 [![License](https://img.shields.io/npm/l/vality-env)](https://github.com/jeengbe/vality/blob/master/packages/vality-env/LICENSE.md)

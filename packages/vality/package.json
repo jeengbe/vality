@@ -1,9 +1,9 @@
 {
   "name": "vality",
   "description": "A TypeScript schema descriptor library with zero dependencies.",
-  "version": "6.3.3",
+  "version": "6.3.4",
   "author": "Jesper Engberg <jeengbe@gmail.com>",
-  "homepage": "https://ts-vality.io",
+  "homepage": "https://jeengbe.github.io/vality",
   "repository": {
     "type": "git",
     "url": "git://github.com/jeengbe/vality.git",

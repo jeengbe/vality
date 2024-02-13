@@ -12,13 +12,13 @@ A TypeScript schema descriptor library with zero dependencies.
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](https://github.com/jeengbe/vality/network/dependencies)
 [![Bundlephobia](https://img.shields.io/bundlephobia/minzip/vality)](https://bundlephobia.com/package/vality)
 
-See https://ts-vality.io for more information.
+See https://jeengbe.github.io/vality for more information.
 
 </div>
 
 Vality is the heart of this repository. It is a declarative **schema description library** with the most **intuitive syntax** and allows for validation and transformation of data. Then extract the types from your schema for **100% type safety**. And all with **0 runtime dependencies**.
 
-Find all of this and much more on https://ts-vality.io/vality.
+Find all of this and much more on https://jeengbe.github.io/vality/vality.
 
 ```ts
 import { v, Parse } from "vality";
@@ -41,7 +41,7 @@ type Person = Parse<typeof Person>;
 } */
 ```
 
-Now that I have your attention, head over to https://ts-vality.io/vality to find out what's going on here. You won't regret it ;)
+Now that I have your attention, head over to https://jeengbe.github.io/vality/vality to find out what's going on here. You won't regret it ;)
 
 Or head to [GitHub](https://github.com/jeengbe/vality) to find more useful packages (such as [Vality ESLint Plugin](https://github.com/jeengbe/vality/tree/master/packages/eslint-plugin-vality)).
 

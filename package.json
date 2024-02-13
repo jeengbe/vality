@@ -3,7 +3,7 @@
 	"private": true,
 	"description": "Monorepo for all Vality projects.",
 	"author": "Jesper Engberg <jeengbe@gmail.com>",
-	"homepage": "https://ts-vality.io",
+	"homepage": "https://jeengbe.github.io/vality",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/jeengbe/vality.git"

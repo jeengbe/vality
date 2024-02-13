@@ -8,9 +8,9 @@
 
 [![Snyk](https://img.shields.io/snyk/vulnerabilities/github/jeengbe/vality)](https://snyk.io/test/github/jeengbe/vality)
 
-See https://ts-vality.io/vality-env for more information.
+See https://jeengbe.github.io/vality/vality-env for more information.
 
-This page also assumes that you are somewhat familiar with [Vality](https://ts-vality.io/vality). If not, check that out first.
+This page also assumes that you are somewhat familiar with [Vality](https://jeengbe.github.io/vality/vality). If not, check that out first.
 
 </div>
 Use Vality to describe your configuration and load+validate it.

@@ -8,7 +8,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const config = {
   title: "Vality",
   tagline: "A TypeScript schema descriptor library with zero dependencies.",
-  url: "https://ts-vality.io",
+  url: "https://jeengbe.github.io/vality",
   baseUrl: "/",
   onBrokenLinks: "warn",
   onBrokenMarkdownLinks: "warn",

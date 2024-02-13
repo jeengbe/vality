@@ -8,9 +8,9 @@
 
 [![Snyk](https://img.shields.io/snyk/vulnerabilities/github/jeengbe/vality)](https://snyk.io/test/github/jeengbe/vality)
 
-See https://ts-vality.io/eslint-plugin-vality for more information.
+See https://jeengbe.github.io/vality/eslint-plugin-vality for more information.
 
-This page also assumes that you are somewhat familiar with [Vality](https://ts-vality.io/vality). If not, check that out first.
+This page also assumes that you are somewhat familiar with [Vality](https://jeengbe.github.io/vality/vality). If not, check that out first.
 
 </div>
 
@@ -27,7 +27,7 @@ type Brand = Parse<typeof Brand>;
 } */
 ```
 
-Can you spot what's wrong with this model? Correct, it's missing the literal types for the keys. This is a common mistake when using Array or Enum Shorts and can be easily fixed by adding `as const`. (Find more information on this mistake [here](https://ts-vality.io/vality/pitfalls/as-const)).
+Can you spot what's wrong with this model? Correct, it's missing the literal types for the keys. This is a common mistake when using Array or Enum Shorts and can be easily fixed by adding `as const`. (Find more information on this mistake [here](https://jeengbe.github.io/vality/vality/pitfalls/as-const)).
 
 ```ts
 const Brand = {
@@ -46,4 +46,4 @@ type Brand = Parse<typeof Brand>;
 
 Forgetting this sucks and can quickly become a source of frustration when suddenly types are weird. ESLint to the rescue! It will warn you when you forget to add `as const` in places where is may backfire and adds it automatically for you.
 
-Now that you are interested, check out the [full documentation](https://ts-vality.io/eslint-plugin-vality) for more information.
+Now that you are interested, check out the [full documentation](https://jeengbe.github.io/vality/eslint-plugin-vality) for more information.
